@@ -1,0 +1,57 @@
+#! /usr/bin/env python
+import re
+import subprocess
+import sys
+
+version_regex = re.compile(r"-    version='(.*)'")
+whitelisted_branches = {'uat', 'stable'}
+
+
+def run_command(command):
+    result = subprocess.check_output(command.split(' ')).decode('utf-8')
+    return result.split('\n')[:-1]
+
+
+def is_branch_whitelist():
+    branch = run_command('git rev-parse --abbrev-ref HEAD')[0]
+    return branch in whitelisted_branches
+
+
+def main(branch):
+    if is_branch_whitelist():
+        print('branch is whitelisted, skipping')
+        return 0
+
+    stat_diff = run_command(f'git diff {branch} --stat .')
+    if not stat_diff:
+        print('No diff')
+        return 0
+
+    diff = run_command(f'git diff {branch} .')
+    version = run_command('python setup.py -V')[0]
+
+    for line in diff:
+        match = re.match(version_regex, line)
+        if not match:
+            continue
+
+        previous_version = match.groups(1)[0]
+        if previous_version < version:
+            print('The version was bumped')
+            return 0
+
+        if previous_version > version:
+            print('Version is less than origin/master, you should rebase!')
+            return 1
+
+    print('Bump your version! run `make bump`')
+    return 1
+
+
+if __name__ == '__main__':
+    try:
+        branch = sys.argv[1]
+    except IndexError:
+        branch = 'origin/master'
+
+    sys.exit(main(branch))

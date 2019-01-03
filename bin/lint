@@ -1,0 +1,19 @@
+#!/bin/bash -u
+
+echo "testing isort"
+isort --recursive --diff --quiet --check src tests || exit 1
+
+echo "testing flake8"
+flake8 --config .flake8.ini src tests || exit 1
+
+echo "testing pydocstyle"
+pydocstyle || exit 1
+
+if [ ${RUN_MYPY:=true} == "true" ]
+then
+    echo "testing mypy"
+    mypy --config-file .mypy.ini src tests || exit 1
+fi
+
+echo "testing bandit"
+bandit -r src || exit 1

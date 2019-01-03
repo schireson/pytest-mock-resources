@@ -1,0 +1,11 @@
+#!/bin/bash
+
+pip install pip-tools
+
+PY_MAJOR="$(python --version 2>&1 | head -c 8 | tail -c 1)"
+if [ "${PY_MAJOR}" == "2" ]; then
+    SUFFIX="-py2"
+fi
+
+pip-compile -o deps/requirements${SUFFIX}.txt deps/requirements.in
+pip-compile -o deps/dev-requirements${SUFFIX}.txt deps/dev-requirements.in deps/requirements${SUFFIX}.txt
