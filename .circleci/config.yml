@@ -1,0 +1,88 @@
+######################################
+# Reusable steps should be added here.
+######################################
+install-dependencies: &install-dependencies
+  run:
+    name: Install Dependencies
+    command: |
+      # pip installing virtualenv in Python 3 will be a no-op
+      pip install virtualenv
+      virtualenv .venv
+      . .venv/bin/activate
+
+      make install-deps
+
+lint: &lint
+  run:
+    name: Run Linters
+    command: |
+      . .venv/bin/activate
+
+      make lint
+
+test: &test
+  run:
+    name: Run Tests
+    command: |
+      . .venv/bin/activate
+
+      make test
+
+###########
+# Workflows
+###########
+version: 2
+workflows:
+  version: 2
+
+  build_all:
+    jobs:
+      - build
+      - build-py2
+
+
+###################
+# Job Definitions
+###################
+jobs:
+
+  build:
+    docker:
+      - image: circleci/python:3.6.4
+      - image: postgres:9.6.10-alpine
+        environment:
+          POSTGRES_DB: dev
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+    steps:
+      - checkout
+      - restore_cache:
+          key: dep-{{ checksum "deps/dev-requirements.txt" }}-{{ checksum "deps/requirements.txt" }}
+      - <<: *install-dependencies
+      - save_cache:
+          paths:
+            - .venv
+          key: dep-{{ checksum "deps/dev-requirements.txt" }}-{{ checksum "deps/requirements.txt" }}
+      - <<: *lint
+      - setup_remote_docker
+      - <<: *test
+
+  build-py2:
+    docker:
+      - image: circleci/python:2.7.14
+      - image: postgres:9.6.10-alpine
+        environment:
+          POSTGRES_DB: dev
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+    steps:
+      - checkout
+      - restore_cache:
+          key: dep-{{ checksum "deps/dev-requirements-py2.txt" }}-{{ checksum "deps/requirements-py2.txt" }}
+      - <<: *install-dependencies
+      - save_cache:
+          paths:
+            - .venv
+          key: dep-{{ checksum "deps/dev-requirements-py2.txt" }}-{{ checksum "deps/requirements-py2.txt" }}
+      - setup_remote_docker
+      - <<: *test
