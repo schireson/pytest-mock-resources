@@ -32,7 +32,7 @@ SETUP_REQUIREMENTS = [
 
 setup(
     name='pytest-dockerdb',
-    version='0.1.0',
+    version='0.1.1',
     url='https://github.com/schireson/schireson-pytest-dockerdb',
     maintainer_email='omar@schireson.com',
     maintainer='Omar Khan',
