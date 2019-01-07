@@ -48,7 +48,7 @@ jobs:
 
   build:
     docker:
-      - image: circleci/python:3.6.4
+      - image: schireson/cicd-python
       - image: postgres:9.6.10-alpine
         environment:
           POSTGRES_DB: dev
