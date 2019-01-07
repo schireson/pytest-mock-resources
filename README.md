@@ -1,3 +1,7 @@
+## Contributing Pre-Requisites
+
+* [Lucha](https://github.com/schireson/lucha/) must be globally installed (preferably via pipx) to run most MakeFile commands.
+
 ## Running the tests
 
 * Running the unit tests: `pytest` or `make test`
