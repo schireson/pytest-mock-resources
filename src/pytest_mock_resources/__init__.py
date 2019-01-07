@@ -4,7 +4,7 @@ import pytest
 
 
 def pytest_addoption(parser):
-    group = parser.getgroup("dockerdb")
+    group = parser.getgroup("mock_resources")
     group.addoption(
         "--foo",
         action="store",

@@ -26,7 +26,7 @@ def test_help_message(testdir):
     result = testdir.runpytest("--help")
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines(
-        ["dockerdb:", '*--foo=DEST_FOO*Set the value for the fixture "bar".']
+        ["mock_resources:", '*--foo=DEST_FOO*Set the value for the fixture "bar".']
     )
 
 
