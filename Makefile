@@ -1,15 +1,15 @@
 .PHONY: init set-py3 set-py2 install-deps lint sync-deps publish test clean version bump bump-minor
 
 init:
-	bin/pyenv-create-venv pytest-dockerdb
+	bin/pyenv-create-venv pytest-mock-resources
 
-	PYVERSION=2.7.14 bin/pyenv-create-venv pytest-dockerdb-py2
+	PYVERSION=2.7.14 bin/pyenv-create-venv pytest-mock-resources-py2
 
 set-py3:
-	echo pytest-dockerdb > .python-version
+	echo pytest-mock-resources > .python-version
 
 set-py2:
-	echo pytest-dockerdb-py2 > .python-version
+	echo pytest-mock-resources-py2 > .python-version
 
 install-deps:
 	pip install -e .[develop]

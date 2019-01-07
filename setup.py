@@ -31,12 +31,12 @@ SETUP_REQUIREMENTS = [
 ]
 
 setup(
-    name='pytest-dockerdb',
+    name='pytest-mock-resources',
     version='0.1.1',
-    url='https://github.com/schireson/schireson-pytest-dockerdb',
+    url='https://github.com/schireson/schireson-pytest-mock-resources',
     maintainer_email='omar@schireson.com',
     maintainer='Omar Khan',
-    description='Pytest plugin for easily instantiating reproduceable Dockerized DB instances for local and CI testing.',
+    description='Pytest plugin for easily instantiating reproduceable mock resources for local and CI testing.',
     license='Apache Software License 2.0',
 
     include_package_data=True,
@@ -53,7 +53,7 @@ setup(
     },
     entry_points={
         'pytest11': [
-            'dockerdb = pytest_dockerdb',
+            'mock_resources = pytest_mock_resources',
         ],
     },
 )
