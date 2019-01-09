@@ -1,4 +1,4 @@
-.PHONY: init set-py3 set-py2 install-deps lint sync-deps publish test clean version bump bump-minor
+.PHONY: init set-py3 set-py2 install-deps lint sync-deps build publish test clean version bump bump-minor
 
 init:
 	bin/pyenv-create-venv pytest-mock-resources
@@ -21,8 +21,11 @@ lint:
 sync-deps:
 	bin/sync-deps
 
+build:
+	python setup.py sdist bdist_wheel
+
 publish: build
-	lucha cicd deploy pypi
+	lucha cicd publish pypi
 
 test:
 	pytest
