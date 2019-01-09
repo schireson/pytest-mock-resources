@@ -51,8 +51,8 @@ jobs:
       - image: schireson/cicd-python
       - image: postgres:9.6.10-alpine
         environment:
-          POSTGRES_DB: dev
-          POSTGRES_USER: user
+          POSTGRES_DB: root
+          POSTGRES_USER: username
           POSTGRES_PASSWORD: password
     steps:
       - checkout
@@ -72,8 +72,8 @@ jobs:
       - image: circleci/python:2.7.14
       - image: postgres:9.6.10-alpine
         environment:
-          POSTGRES_DB: dev
-          POSTGRES_USER: user
+          POSTGRES_DB: root
+          POSTGRES_USER: username
           POSTGRES_PASSWORD: password
     steps:
       - checkout

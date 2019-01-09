@@ -12,7 +12,7 @@ set-py2:
 	echo pytest-mock-resources-py2 > .python-version
 
 install-deps:
-	pip install -e .[develop]
+	pip install -e .[postgres,develop]
 
 lint:
 	lucha lint

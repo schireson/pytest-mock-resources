@@ -1,0 +1,4 @@
+[tool.lucha]
+
+[tool.black]
+line_length = 100

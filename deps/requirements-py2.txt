@@ -9,18 +9,23 @@ attrs==18.2.0             # via pytest
 backports.ssl-match-hostname==3.5.0.1  # via docker
 certifi==2018.11.29       # via requests
 chardet==3.0.4            # via requests
+cookies==2.2.1            # via responses
 docker-pycreds==0.4.0     # via docker
 docker==3.6.0
-funcsigs==1.0.2           # via pytest
+funcsigs==1.0.2           # via mock, pytest
 idna==2.8                 # via requests
 ipaddress==1.0.22         # via docker
+mock==2.0.0               # via responses
 more-itertools==5.0.0     # via pytest
 pathlib2==2.3.3           # via pytest
+pbr==5.1.1                # via mock
 pluggy==0.8.0             # via pytest
 py==1.7.0                 # via pytest
 pytest==4.0.2
-requests==2.21.0          # via docker
+requests==2.21.0          # via docker, responses
+responses==0.10.5
 scandir==1.9.0            # via pathlib2
-six==1.12.0               # via docker, docker-pycreds, more-itertools, pathlib2, pytest, websocket-client
+six==1.12.0               # via docker, docker-pycreds, mock, more-itertools, pathlib2, pytest, responses, websocket-client
+sqlalchemy==1.2.15
 urllib3==1.24.1           # via requests
 websocket-client==0.54.0  # via docker

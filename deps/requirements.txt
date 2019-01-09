@@ -15,7 +15,9 @@ more-itertools==5.0.0     # via pytest
 pluggy==0.8.0             # via pytest
 py==1.7.0                 # via pytest
 pytest==4.0.2
-requests==2.21.0          # via docker
-six==1.12.0               # via docker, docker-pycreds, more-itertools, pytest, websocket-client
+requests==2.21.0          # via docker, responses
+responses==0.10.5
+six==1.12.0               # via docker, docker-pycreds, more-itertools, pytest, responses, websocket-client
+sqlalchemy==1.2.15
 urllib3==1.24.1           # via requests
 websocket-client==0.54.0  # via docker
