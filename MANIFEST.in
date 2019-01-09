@@ -1,0 +1,4 @@
+include README.md
+recursive-include deps *.in
+recursive-include deps *.txt
+recursive-include src *.md
