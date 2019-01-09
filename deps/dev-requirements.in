@@ -7,5 +7,4 @@ mock==2.0.0; python_version < '3.3'
 mypy==0.570; python_version > '2.7'
 pydocstyle==2.1.1
 pytest-cov==2.5.1
-responses>=0.8
 wheel==0.30.0

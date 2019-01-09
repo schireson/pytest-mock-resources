@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from setuptools import find_packages, setup
 import sys
+
+from setuptools import find_packages, setup
 
 if sys.version_info[0] == 3:
     dev_reqs = 'deps/dev-requirements.txt'
@@ -32,7 +33,7 @@ SETUP_REQUIREMENTS = [
 
 setup(
     name='pytest-mock-resources',
-    version='0.1.1',
+    version='0.1.3',
     url='https://github.com/schireson/schireson-pytest-mock-resources',
     maintainer_email='omar@schireson.com',
     maintainer='Omar Khan',
@@ -50,6 +51,7 @@ setup(
     test_suite='tests',
     extras_require={
         'develop': parse_requirements(dev_reqs),
+        'postgres': ["psycopg2"],
     },
     entry_points={
         'pytest11': [
