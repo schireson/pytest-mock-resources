@@ -12,7 +12,7 @@ bumpversion==0.5.3
 certifi==2018.11.29
 chardet==3.0.4
 configparser==3.5.0       # via flake8, pydocstyle
-cookies==2.2.1            # via responses
+cookies==2.2.1
 coverage==4.5
 docker-pycreds==0.4.0
 docker==3.6.0
@@ -29,7 +29,7 @@ mccabe==0.6.1             # via flake8
 mock==2.0.0 ; python_version < "3.3"
 more-itertools==5.0.0
 pathlib2==2.3.3
-pbr==5.1.1                # via mock, stevedore
+pbr==5.1.1
 pluggy==0.8.0
 py==1.7.0
 pycodestyle==2.3.1        # via flake8
@@ -44,6 +44,7 @@ scandir==1.9.0
 six==1.12.0
 smmap2==2.0.5             # via gitdb2
 snowballstemmer==1.2.1    # via pydocstyle
+sqlalchemy==1.2.15
 stevedore==1.30.0         # via bandit
 urllib3==1.24.1
 websocket-client==0.54.0
