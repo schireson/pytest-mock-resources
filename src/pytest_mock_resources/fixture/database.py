@@ -8,20 +8,14 @@ from sqlalchemy.orm import sessionmaker
 from pytest_mock_resources.container.postgres import config, get_sqlalchemy_engine
 
 
-class CreateAll(object):
-    def __init__(self, base_cls):
-        self.base_cls = base_cls
+@pytest.fixture(scope="session")
+def PG_HOST():
+    return config["host"]
 
-    def run(self, engine):
-        self._create_schemas(engine)
-        self.base_cls.metadata.create_all(engine)
 
-    def _create_schemas(self, engine):
-        schemas = [table.schema for table in self.base_cls.metadata.tables.values()]
-
-        for schema in schemas:
-            statement = "CREATE SCHEMA IF NOT EXISTS {}".format(schema)
-            engine.execute(statement)
+@pytest.fixture(scope="session")
+def PG_PORT():
+    return config["port"]
 
 
 class Rows(object):
@@ -29,17 +23,18 @@ class Rows(object):
         self.rows = rows
 
     def run(self, engine):
-        Session = sessionmaker(bind=engine)
-        session = Session()
+        rows = self._get_stateless_rows(self.rows)
 
-        rows = self._create_stateless_rows(self.rows)
-        session.add_all(rows)
+        metadatas = self._get_metadatas(rows)
 
-        session.commit()
-        session.close()
+        self._create_schemas(engine, metadatas)
+
+        self._create_tables(engine, metadatas)
+
+        self._create_rows(engine, rows)
 
     @staticmethod
-    def _create_stateless_rows(rows):
+    def _get_stateless_rows(rows):
         """Create rows that aren't associated with any other SQLAlchemy session.
         """
         stateless_rows = []
@@ -52,6 +47,34 @@ class Rows(object):
             stateless_rows.append(stateless_row)
         return stateless_rows
 
+    @staticmethod
+    def _get_metadatas(rows):
+        return {row.metadata for row in rows}
+
+    @staticmethod
+    def _create_schemas(engine, metadatas):
+        for metadata in metadatas:
+            schemas = [table.schema for table in metadata.tables.values()]
+
+            for schema in schemas:
+                statement = "CREATE SCHEMA IF NOT EXISTS {}".format(schema)
+                engine.execute(statement)
+
+    @staticmethod
+    def _create_tables(engine, metadatas):
+        for metadata in metadatas:
+            metadata.create_all(engine)
+
+    @staticmethod
+    def _create_rows(engine, rows):
+        Session = sessionmaker(bind=engine)
+        session = Session()
+
+        session.add_all(rows)
+
+        session.commit()
+        session.close()
+
 
 class Statements(object):
     def __init__(self, *statements):
@@ -62,23 +85,32 @@ class Statements(object):
             engine.execute(statement)
 
 
-def create_sqlite_fixture(ordered_actions=None, scope="function"):
+def create_sqlite_fixture(*ordered_actions, **kwargs):
+    scope = kwargs.pop("scope", "function")
+
+    if len(kwargs):
+        raise KeyError("Unsupported Arguments: {}".format(kwargs))
+
     @pytest.fixture(scope=scope)
     def _():
         engine = create_engine("sqlite://")
 
-        if ordered_actions:
-            for action in ordered_actions:
-                action.run(engine)
+        for action in ordered_actions:
+            action.run(engine)
 
         return engine
 
     return _
 
 
-def create_postgres_fixture(
-    database_name=None, ordered_actions=None, scope="function", default_suffix="pg"
-):
+def create_postgres_fixture(*ordered_actions, **kwargs):
+    database_name = kwargs.pop("database_name", None)
+    scope = kwargs.pop("scope", "function")
+    default_suffix = kwargs.pop("default_suffix", "pg")
+
+    if len(kwargs):
+        raise KeyError("Unsupported Arguments: {}".format(kwargs))
+
     @pytest.fixture(scope=scope)
     def _(_postgres_container):
         if database_name:
@@ -91,19 +123,25 @@ def create_postgres_fixture(
         _create_clean_database(database_name_)
         engine = get_sqlalchemy_engine(database_name_)
 
-        if ordered_actions:
-            for action in ordered_actions:
-                action.run(engine)
+        for action in ordered_actions:
+            action.run(engine)
 
         return engine
 
     return _
 
 
-def create_redshift_fixture(
-    database_name=None, ordered_actions=None, scope="function", default_suffix="redshift"
-):
-    return create_postgres_fixture(database_name, ordered_actions, scope, default_suffix)
+def create_redshift_fixture(*ordered_actions, **kwargs):
+    database_name = kwargs.pop("database_name", None)
+    scope = kwargs.pop("scope", "function")
+    default_suffix = kwargs.pop("default_suffix", "redshift")
+
+    if len(kwargs):
+        raise KeyError("Unsupported Arguments: {}".format(kwargs))
+
+    return create_postgres_fixture(
+        *ordered_actions, database_name=database_name, scope=scope, default_suffix=default_suffix
+    )
 
 
 def _create_test_based_database_name():
@@ -136,6 +174,9 @@ def _clean_database_name(name):
 
 
 def _create_clean_database(database_name):
+    # Database names that include upper case letters must be enclosed in double-quotes.
+    database_name = '"{}"'.format(database_name)
+
     root_engine = get_sqlalchemy_engine(config["root_database"])
     root_connection = root_engine.connect()
     root_connection.connection.connection.set_isolation_level(0)
