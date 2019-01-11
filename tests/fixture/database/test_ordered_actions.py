@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 
-from pytest_mock_resources import create_postgres_fixture, CreateAll, Rows, Statements
+from pytest_mock_resources import create_postgres_fixture, Rows, Statements
 
 Base = declarative_base()
 
@@ -15,8 +15,6 @@ class User(Base):
     name = Column(String, nullable=False)
 
 
-create_all = CreateAll(Base)
-
 rows = Rows(User(name="Harold"), User(name="Gump"))
 
 row_dependant_statements = Statements(
@@ -25,9 +23,7 @@ row_dependant_statements = Statements(
 
 additional_rows = Rows(User(name="Perrier"), User(name="Mug"))
 
-postgres_ordered_actions = create_postgres_fixture(
-    ordered_actions=[create_all, rows, row_dependant_statements, additional_rows]
-)
+postgres_ordered_actions = create_postgres_fixture(rows, row_dependant_statements, additional_rows)
 
 
 # Run the test 5 times to ensure fixture is stateless

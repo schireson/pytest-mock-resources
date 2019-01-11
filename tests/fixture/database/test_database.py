@@ -1,3 +1,5 @@
+from sqlalchemy import create_engine
+
 from pytest_mock_resources import create_postgres_fixture, create_redshift_fixture
 
 
@@ -18,9 +20,9 @@ def test_basic_postgres_and_redshift_fixture(postgres, redshift):
     redshift.execute("select 1")
 
 
-redshift_2 = create_redshift_fixture("redshift2")
-redshift_3 = create_redshift_fixture("redshift3")
-postgres_2 = create_postgres_fixture("postgres2")
+redshift_2 = create_redshift_fixture(database_name="redshift2")
+redshift_3 = create_redshift_fixture(database_name="redshift3")
+postgres_2 = create_postgres_fixture(database_name="postgres2")
 
 
 def test_multiple_postgres_and_redshift_fixture(
@@ -31,3 +33,21 @@ def test_multiple_postgres_and_redshift_fixture(
     redshift_2.execute("select 1")
     redshift_3.execute("select 1")
     redshift.execute("select 1")
+
+
+named_postgres = create_postgres_fixture(database_name="HAILmary123")
+
+
+def test_create_custom_connection(PG_PORT, PG_HOST, named_postgres):
+    engine = create_engine(
+        "postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=disable".format(
+            database="HAILmary123",
+            username="username",
+            password="password",
+            host=PG_HOST,
+            port=PG_PORT,
+        ),
+        isolation_level="AUTOCOMMIT",
+    )
+
+    engine.execute("select 1")

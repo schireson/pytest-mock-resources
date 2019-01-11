@@ -26,7 +26,7 @@ def get_psycopg2_connection(database_name):
 
 
 def get_sqlalchemy_engine(database_name):
-    return create_engine(
+    engine = create_engine(
         "postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=disable".format(
             database=database_name,
             username=config["username"],
@@ -36,6 +36,11 @@ def get_sqlalchemy_engine(database_name):
         ),
         isolation_level="AUTOCOMMIT",
     )
+
+    # Verify engine is connected
+    engine.connect()
+
+    return engine
 
 
 def check_postgres_fn():

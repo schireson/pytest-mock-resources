@@ -1,4 +1,4 @@
-.PHONY: init set-py3 set-py2 install-deps lint sync-deps build publish test clean version bump bump-minor
+.PHONY: init set-py3 set-py2 install-deps lint sync-deps build publish test clean version bump bump-minor up-postgres
 
 init:
 	bin/pyenv-create-venv pytest-mock-resources
@@ -43,3 +43,14 @@ bump:
 bump-minor:
 	# For a backwards incompatible change.
 	lucha version bump --minor
+
+# Use this command to create a detached postgres container.
+# This library's tests create and destroy a container during every run. this makes test-start-up slow.
+# Test runs will be faster as they will not have to orchestrate any container managament.
+up-postgres:
+	docker run -d \
+		-p 5532:5432 \
+		-e POSTGRES_DB=root \
+		-e POSTGRES_USER=username \
+		-e POSTGRES_PASSWORD=password \
+		postgres
