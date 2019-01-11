@@ -20,18 +20,19 @@ If you need to construct your own connection or client in any test, the followin
 
     username: "username"
     password: "password"
-    host: from pytest_mock_resources import HOST
-    port: "5532"
+    host: Use PG_HOST fixture
+    port: Use PG_PORT fixture
     database: database_name you passed into the create_*_fixture function
 
 ## Example
+
+### Basic Example
 
     # src/package/models.py:
 
     from sqlalchemy import Column, Integer
     from sqlalchemy.ext.declarative import declarative_base
 
-    # Define your SQLAlchemy Base and Models or import them from somewhere
     Base = declarative_base()
 
     class User(Base):
@@ -43,12 +44,8 @@ If you need to construct your own connection or client in any test, the followin
 
     # tests/conftest.py:
 
-    import pytest
-
-    from package.models import Base, User
-    from pytest_mock_resources import create_redshift_fixture, CreateAll, Rows
-
-    create_all = CreateAll(Base)
+    from package.models import User  # These models could be imported from ANYWHERE
+    from pytest_mock_resources import create_redshift_fixture, Rows
 
     rows = Rows(
         User(name="Harold"),
@@ -56,21 +53,92 @@ If you need to construct your own connection or client in any test, the followin
     )
 
     redshift = create_redshift_fixture(
-        database_name="redshift",
-        ordered_actions=[
-            create_all,
-            rows,
-        ],
+        rows,
     )
 
 
     # tests/test_something.py:
 
     def test_something_exists(redshift):
-        execute = redshift_ordered_actions.execute("SELECT * FROM user")
+        execute = redshift.execute("SELECT * FROM user")
 
         result = sorted([row[0] for row in execute])
         assert ["Catherine", "Harold"] == result
+
+### Statements Example
+
+    # tests/conftest.py:
+
+    from pytest_mock_resources import create_redshift_fixture, Statements
+
+    statements = Statements(
+        """
+        CREATE TABLE account(
+         user_id serial PRIMARY KEY,
+         username VARCHAR (50) UNIQUE NOT NULL,
+         password VARCHAR (50) NOT NULL
+        );
+        """,
+        """
+        INSERT INTO account VALUES (1, 'user1', 'password1')
+        """,
+    )
+
+    redshift = create_redshift_fixture(
+        statements,
+    )
+
+
+    # tests/test_something.py:
+
+    def test_something_exists(redshift):
+        execute = redshift.execute("SELECT password FROM account")
+
+        result = sorted([row[0] for row in execute])
+        assert ["password1"] == result
+
+### Custom Connection Example
+
+    # tests/conftest.py:
+
+    import pytest
+
+    from package.models import User
+    from pytest_mock_resources import create_redshift_fixture, Rows
+
+    rows = Rows(
+        User(name="Jolteon"),
+    )
+
+    redshift = create_redshift_fixture(
+        rows,
+        # NOTE: A Database Name must be provided in the case where you need to create your own connection object.
+        database_name="SOMETHING_MEMORABLE"
+    )
+
+
+    # tests/test_something.py:
+
+    from sqlalchemy import create_engine
+
+
+    def test_something_exists(PG_HOST, PG_PORT, redshift):
+        engine = create_engine(
+            "postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=disable".format(
+                database="SOMETHING_MEMORABLE",
+                user="username",
+                password="password",
+                host=PG_HOST,
+                port=PG_PORT,
+            ),
+            isolation_level="AUTOCOMMIT",
+        )
+
+        engine.execute = redshift_ordered_actions.execute("SELECT * FROM user")
+
+        result = sorted([row[0] for row in execute])
+        assert ["Jolteon"] == result
+
 
 ## Installing
 
@@ -96,7 +164,7 @@ then (inside the package's folder) run:
 
 ### Synchronizing your virtualenv with the requirements
 
-    make init
+    make install-deps
 
 ### Updating an existing dependency
 
