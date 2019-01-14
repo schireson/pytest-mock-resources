@@ -12,6 +12,10 @@ Currently available resources:
 * Mock Redshift
 * Mock SQLite
 
+## Installing
+
+    pip install --index-url https://artifactory.schireson.com/artifactory/api/pypi/pypi/simple "pytest-mock-resources[postgres]"
+
 ## Mock Redshift and Postgres
 
 ## Configuration
@@ -97,6 +101,36 @@ If you need to construct your own connection or client in any test, the followin
         result = sorted([row[0] for row in execute])
         assert ["password1"] == result
 
+### DDL Only Example
+
+There may be a case where you don't leverage SQLAlchemy's ORM layer but still define a database's DDL following the SQLAlchemy Expressions API. An example of this is the [vantage-redshift-schema](https://github.com/schireson/vantage-redshift-schema) package.
+
+For these cases, instantiate the desired fixture with the metadata as an argument.
+
+    # tests/conftest.py:
+
+    from pytest_mock_resources import create_redshift_fixture, Statements
+    from vantage_redshift_schema import meta
+    from vantage_redshift_schema.amrld import amrld_stacked_data
+
+    statements = Statements(
+        amrld_stacked_data.insert().values(network="ABCDE"),
+    )
+
+    redshift = create_redshift_fixture(
+        meta,
+        statements,
+    )
+
+
+    # tests/test_something.py:
+
+    def test_something_exists(redshift):
+        execute = redshift.execute("SELECT network FROM amrld.amrld_stacked_data")
+
+        result = sorted([row[0] for row in execute])
+        assert ["ABCDE"] == result
+
 ### Custom Connection Example
 
     # tests/conftest.py:
@@ -138,11 +172,6 @@ If you need to construct your own connection or client in any test, the followin
 
         result = sorted([row[0] for row in execute])
         assert ["Jolteon"] == result
-
-
-## Installing
-
-    pip install --index-url https://artifactory.schireson.com/artifactory/api/pypi/pypi/simple "pytest-mock-resources[postgres]"
 
 ## Contributing Pre-Requisites
 

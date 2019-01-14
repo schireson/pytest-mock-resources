@@ -1,6 +1,8 @@
+import pytest
 from sqlalchemy import create_engine
 
 from pytest_mock_resources import create_postgres_fixture, create_redshift_fixture
+from pytest_mock_resources.fixture.database import _run_actions
 
 
 def test_basic_sqlite_fixture(sqlite):
@@ -51,3 +53,12 @@ def test_create_custom_connection(PG_PORT, PG_HOST, named_postgres):
     )
 
     engine.execute("select 1")
+
+
+def test_bad_actions(postgres):
+    with pytest.raises(ValueError) as e:
+        _run_actions(postgres, ["random_string"])
+
+    assert "create_fixture function takes in sqlalchemy.MetaData or actions as inputs only." in str(
+        e
+    )
