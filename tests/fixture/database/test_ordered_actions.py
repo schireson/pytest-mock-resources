@@ -33,3 +33,13 @@ def test_ordered_actions(postgres_ordered_actions, run):
 
     result = sorted([row[0] for row in execute])
     assert ["Gump1", "Harold1"] == result
+
+
+postgres_metadata_only = create_postgres_fixture(Base.metadata)
+
+
+def test_metadata_only(postgres_metadata_only):
+    execute = postgres_metadata_only.execute("SELECT * FROM stuffs.user")
+
+    result = sorted([row[0] for row in execute])
+    assert [] == result
