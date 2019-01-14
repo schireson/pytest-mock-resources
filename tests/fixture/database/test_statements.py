@@ -6,7 +6,12 @@ postgres = create_postgres_fixture(statements)
 
 def test_statements(postgres):
     execute = postgres.execute(
-        "SELECT table_name FROM INFORMATION_SCHEMA.views WHERE table_name in ('cool_view', 'cool_view_2')"
+        """
+        SELECT table_name
+        FROM INFORMATION_SCHEMA.views
+        WHERE table_name in ('cool_view', 'cool_view_2')
+        ORDER BY table_name
+        """
     )
 
     result = [row[0] for row in execute]
