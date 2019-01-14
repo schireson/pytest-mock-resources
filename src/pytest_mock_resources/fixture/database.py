@@ -1,8 +1,10 @@
+import abc
 import os
 import time
 
 import pytest
-from sqlalchemy import create_engine
+import six
+from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
 
 from pytest_mock_resources.container.postgres import config, get_sqlalchemy_engine
@@ -18,7 +20,18 @@ def PG_PORT():
     return config["port"]
 
 
-class Rows(object):
+@six.add_metaclass(abc.ABCMeta)
+class AbstractAction(object):
+    @abc.abstractmethod
+    def run(self, engine):
+        """Run an action on a database via the passed-in engine.
+
+        Args:
+            engine (sqlalchemy.engine.Engine)
+        """
+
+
+class Rows(AbstractAction):
     def __init__(self, *rows):
         self.rows = rows
 
@@ -27,9 +40,7 @@ class Rows(object):
 
         metadatas = self._get_metadatas(rows)
 
-        self._create_schemas(engine, metadatas)
-
-        self._create_tables(engine, metadatas)
+        _create_ddl(engine, metadatas)
 
         self._create_rows(engine, rows)
 
@@ -52,20 +63,6 @@ class Rows(object):
         return {row.metadata for row in rows}
 
     @staticmethod
-    def _create_schemas(engine, metadatas):
-        for metadata in metadatas:
-            schemas = [table.schema for table in metadata.tables.values()]
-
-            for schema in schemas:
-                statement = "CREATE SCHEMA IF NOT EXISTS {}".format(schema)
-                engine.execute(statement)
-
-    @staticmethod
-    def _create_tables(engine, metadatas):
-        for metadata in metadatas:
-            metadata.create_all(engine)
-
-    @staticmethod
     def _create_rows(engine, rows):
         Session = sessionmaker(bind=engine)
         session = Session()
@@ -76,7 +73,7 @@ class Rows(object):
         session.close()
 
 
-class Statements(object):
+class Statements(AbstractAction):
     def __init__(self, *statements):
         self.statements = statements
 
@@ -95,8 +92,7 @@ def create_sqlite_fixture(*ordered_actions, **kwargs):
     def _():
         engine = create_engine("sqlite://")
 
-        for action in ordered_actions:
-            action.run(engine)
+        _run_actions(engine, ordered_actions)
 
         return engine
 
@@ -123,8 +119,7 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
         _create_clean_database(database_name_)
         engine = get_sqlalchemy_engine(database_name_)
 
-        for action in ordered_actions:
-            action.run(engine)
+        _run_actions(engine, ordered_actions)
 
         return engine
 
@@ -198,6 +193,37 @@ def _create_clean_database(database_name):
             database_name=database_name
         )
     )
+
+
+def _run_actions(engine, ordered_actions):
+    for action in ordered_actions:
+        if isinstance(action, MetaData):
+            _create_ddl(engine, [action])
+        elif isinstance(action, AbstractAction):
+            action.run(engine)
+        else:
+            raise ValueError(
+                "create_fixture function takes in sqlalchemy.MetaData or actions as inputs only."
+            )
+
+
+def _create_ddl(engine, metadatas):
+    _create_schemas(engine, metadatas)
+    _create_tables(engine, metadatas)
+
+
+def _create_schemas(engine, metadatas):
+    for metadata in metadatas:
+        schemas = [table.schema for table in metadata.tables.values()]
+
+        for schema in schemas:
+            statement = "CREATE SCHEMA IF NOT EXISTS {}".format(schema)
+            engine.execute(statement)
+
+
+def _create_tables(engine, metadatas):
+    for metadata in metadatas:
+        metadata.create_all(engine)
 
 
 sqlite = create_sqlite_fixture()
