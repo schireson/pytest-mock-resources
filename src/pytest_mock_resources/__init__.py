@@ -7,7 +7,4 @@ from pytest_mock_resources.fixture.database import (  # noqa
     create_redshift_fixture,
     create_sqlite_fixture,
     create_postgres_fixture,
-    postgres,
-    sqlite,
-    redshift,
 )
