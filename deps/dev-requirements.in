@@ -8,3 +8,6 @@ mypy==0.570; python_version > '2.7'
 pydocstyle==2.1.1
 pytest-cov==2.5.1
 wheel==0.30.0
+Sphinx
+recommonmark
+m2r

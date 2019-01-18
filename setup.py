@@ -33,7 +33,7 @@ SETUP_REQUIREMENTS = [
 
 setup(
     name='pytest-mock-resources',
-    version='0.1.8',
+    version='0.1.10',
     url='https://github.com/schireson/schireson-pytest-mock-resources',
     author_email='omar@schireson.com',
     author='Omar Khan',
