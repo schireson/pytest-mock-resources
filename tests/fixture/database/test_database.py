@@ -1,8 +1,16 @@
 import pytest
 from sqlalchemy import create_engine
 
-from pytest_mock_resources import create_postgres_fixture, create_redshift_fixture
+from pytest_mock_resources import (
+    create_postgres_fixture,
+    create_redshift_fixture,
+    create_sqlite_fixture,
+)
 from pytest_mock_resources.fixture.database import _run_actions
+
+sqlite = create_sqlite_fixture()
+postgres = create_postgres_fixture()
+redshift = create_redshift_fixture()
 
 
 def test_basic_sqlite_fixture(sqlite):

@@ -224,8 +224,3 @@ def _create_schemas(engine, metadatas):
 def _create_tables(engine, metadatas):
     for metadata in metadatas:
         metadata.create_all(engine)
-
-
-sqlite = create_sqlite_fixture()
-postgres = create_postgres_fixture()
-redshift = create_redshift_fixture()

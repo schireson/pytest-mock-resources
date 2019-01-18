@@ -33,10 +33,10 @@ SETUP_REQUIREMENTS = [
 
 setup(
     name='pytest-mock-resources',
-    version='0.1.7',
+    version='0.1.8',
     url='https://github.com/schireson/schireson-pytest-mock-resources',
-    maintainer_email='omar@schireson.com',
-    maintainer='Omar Khan',
+    author_email='omar@schireson.com',
+    author='Omar Khan',
     description='Pytest plugin for easily instantiating reproduceable mock resources for local and CI testing.',
     license='Apache Software License 2.0',
 
