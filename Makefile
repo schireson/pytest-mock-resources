@@ -50,7 +50,7 @@ bump-minor:
 up-postgres:
 	docker run -d \
 		-p 5532:5432 \
-		-e POSTGRES_DB=root \
-		-e POSTGRES_USER=username \
+		-e POSTGRES_DB=dev \
+		-e POSTGRES_USER=user \
 		-e POSTGRES_PASSWORD=password \
 		postgres

@@ -22,7 +22,7 @@ Currently available resources:
 
 If you need to construct your own connection or client in any test, the following config can be used:
 
-    username: "username"
+    username: "user"
     password: "password"
     host: Use PG_HOST fixture
     port: Use PG_PORT fixture
@@ -160,7 +160,7 @@ For these cases, instantiate the desired fixture with the metadata as an argumen
         engine = create_engine(
             "postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=disable".format(
                 database="SOMETHING_MEMORABLE",
-                user="username",
+                user="user",
                 password="password",
                 host=PG_HOST,
                 port=PG_PORT,

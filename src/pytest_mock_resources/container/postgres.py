@@ -6,11 +6,11 @@ from pytest_mock_resources.container import ContainerCheckFailed, get_container_
 
 # XXX: To become overwritable via pytest config.
 config = {
-    "username": "username",
+    "username": "user",
     "password": "password",
     "host": HOST,
     "port": 5432 if IN_CI else 5532,
-    "root_database": "root",
+    "root_database": "dev",
     "image": "postgres:9.6.10-alpine",
 }
 

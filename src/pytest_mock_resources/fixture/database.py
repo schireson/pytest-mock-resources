@@ -101,6 +101,13 @@ def create_sqlite_fixture(*ordered_actions, **kwargs):
 
 def create_postgres_fixture(*ordered_actions, **kwargs):
     database_name = kwargs.pop("database_name", None)
+
+    if database_name == config["root_database"]:
+        raise ValueError(
+            "{} cannot be used as this fixture's DB name, it is a package KEYWORD."
+            .format(config["root_database"])
+        )
+
     scope = kwargs.pop("scope", "function")
     default_suffix = kwargs.pop("default_suffix", "pg")
 
