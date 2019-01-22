@@ -29,7 +29,7 @@ author = 'Omar Khan'
 # The short X.Y version
 version = '0.1'
 # The full version, including alpha/beta/rc tags
-release = '0.1.11'
+release = '0.1.12'
 
 
 # -- General configuration ---------------------------------------------------
