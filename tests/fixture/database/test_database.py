@@ -52,7 +52,7 @@ def test_create_custom_connection(PG_PORT, PG_HOST, named_postgres):
     engine = create_engine(
         "postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=disable".format(
             database="HAILmary123",
-            username="username",
+            username="user",
             password="password",
             host=PG_HOST,
             port=PG_PORT,
