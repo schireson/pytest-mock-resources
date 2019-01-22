@@ -221,7 +221,11 @@ def _create_ddl(engine, metadatas):
 
 def _create_schemas(engine, metadatas):
     for metadata in metadatas:
-        schemas = [table.schema for table in metadata.tables.values()]
+        schemas = {
+            table.schema
+            for table in metadata.tables.values()
+            if table.schema
+        }
 
         for schema in schemas:
             statement = "CREATE SCHEMA IF NOT EXISTS {}".format(schema)
