@@ -50,74 +50,78 @@ Make sure to add the following section to ALL jobs that will be running tests wi
 
 ### Basic Example
 
-    # src/package/models.py:
+```python
+# src/package/models.py:
 
-    from sqlalchemy import Column, Integer
-    from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer
+from sqlalchemy.ext.declarative import declarative_base
 
-    Base = declarative_base()
+Base = declarative_base()
 
-    class User(Base):
-        __tablename__ = "user"
-        __table_args__ = {"schema": "stuffs"}
+class User(Base):
+    __tablename__ = "user"
+    __table_args__ = {"schema": "stuffs"}
 
-        id = Column(Integer, primary_key=True, autoincrement=True)
-
-
-    # tests/conftest.py:
-
-    from package.models import User  # These models could be imported from ANYWHERE
-    from pytest_mock_resources import create_redshift_fixture, Rows
-
-    rows = Rows(
-        User(name="Harold"),
-        User(name="Catherine"),
-    )
-
-    redshift = create_redshift_fixture(
-        rows,
-    )
+    id = Column(Integer, primary_key=True, autoincrement=True)
 
 
-    # tests/test_something.py:
+# tests/conftest.py:
 
-    def test_something_exists(redshift):
-        execute = redshift.execute("SELECT * FROM user")
+from package.models import User  # These models could be imported from ANYWHERE
+from pytest_mock_resources import create_redshift_fixture, Rows
 
-        result = sorted([row[0] for row in execute])
-        assert ["Catherine", "Harold"] == result
+rows = Rows(
+    User(name="Harold"),
+    User(name="Catherine"),
+)
+
+redshift = create_redshift_fixture(
+    rows,
+)
+
+
+# tests/test_something.py:
+
+def test_something_exists(redshift):
+    execute = redshift.execute("SELECT * FROM user")
+
+    result = sorted([row[0] for row in execute])
+    assert ["Catherine", "Harold"] == result
+```
 
 ### Statements Example
 
-    # tests/conftest.py:
+```python
+# tests/conftest.py:
 
-    from pytest_mock_resources import create_redshift_fixture, Statements
+from pytest_mock_resources import create_redshift_fixture, Statements
 
-    statements = Statements(
-        """
-        CREATE TABLE account(
-         user_id serial PRIMARY KEY,
-         username VARCHAR (50) UNIQUE NOT NULL,
-         password VARCHAR (50) NOT NULL
-        );
-        """,
-        """
-        INSERT INTO account VALUES (1, 'user1', 'password1')
-        """,
-    )
+statements = Statements(
+    """
+    CREATE TABLE account(
+      user_id serial PRIMARY KEY,
+      username VARCHAR (50) UNIQUE NOT NULL,
+      password VARCHAR (50) NOT NULL
+    );
+    """,
+    """
+    INSERT INTO account VALUES (1, 'user1', 'password1')
+    """,
+)
 
-    redshift = create_redshift_fixture(
-        statements,
-    )
+redshift = create_redshift_fixture(
+    statements,
+)
 
 
-    # tests/test_something.py:
+# tests/test_something.py:
 
-    def test_something_exists(redshift):
-        execute = redshift.execute("SELECT password FROM account")
+def test_something_exists(redshift):
+    execute = redshift.execute("SELECT password FROM account")
 
-        result = sorted([row[0] for row in execute])
-        assert ["password1"] == result
+    result = sorted([row[0] for row in execute])
+    assert ["password1"] == result
+```
 
 ### DDL Only Example
 
@@ -125,71 +129,75 @@ There may be a case where you don't leverage SQLAlchemy's ORM layer but still de
 
 For these cases, instantiate the desired fixture with the metadata as an argument.
 
-    # tests/conftest.py:
+```python
+# tests/conftest.py:
 
-    from pytest_mock_resources import create_redshift_fixture, Statements
-    from vantage_redshift_schema import meta
-    from vantage_redshift_schema.amrld import amrld_stacked_data
+from pytest_mock_resources import create_redshift_fixture, Statements
+from vantage_redshift_schema import meta
+from vantage_redshift_schema.amrld import amrld_stacked_data
 
-    statements = Statements(
-        amrld_stacked_data.insert().values(network="ABCDE"),
-    )
+statements = Statements(
+    amrld_stacked_data.insert().values(network="ABCDE"),
+)
 
-    redshift = create_redshift_fixture(
-        meta,
-        statements,
-    )
+redshift = create_redshift_fixture(
+    meta,
+    statements,
+)
 
 
-    # tests/test_something.py:
+# tests/test_something.py:
 
-    def test_something_exists(redshift):
-        execute = redshift.execute("SELECT network FROM amrld.amrld_stacked_data")
+def test_something_exists(redshift):
+    execute = redshift.execute("SELECT network FROM amrld.amrld_stacked_data")
 
-        result = sorted([row[0] for row in execute])
-        assert ["ABCDE"] == result
+    result = sorted([row[0] for row in execute])
+    assert ["ABCDE"] == result
+```
 
 ### Custom Connection Example
 
-    # tests/conftest.py:
+```python
+# tests/conftest.py:
 
-    import pytest
+import pytest
 
-    from package.models import User
-    from pytest_mock_resources import create_redshift_fixture, Rows
+from package.models import User
+from pytest_mock_resources import create_redshift_fixture, Rows
 
-    rows = Rows(
-        User(name="Jolteon"),
+rows = Rows(
+    User(name="Jolteon"),
+)
+
+redshift = create_redshift_fixture(
+    rows,
+    # NOTE: A Database Name must be provided in the case where you need to create your own connection object.
+    database_name="SOMETHING_MEMORABLE"
+)
+
+
+# tests/test_something.py:
+
+from sqlalchemy import create_engine
+
+
+def test_something_exists(PG_HOST, PG_PORT, redshift):
+    engine = create_engine(
+        "postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=disable".format(
+            database="SOMETHING_MEMORABLE",
+            user="user",
+            password="password",
+            host=PG_HOST,
+            port=PG_PORT,
+        ),
+        isolation_level="AUTOCOMMIT",
     )
 
-    redshift = create_redshift_fixture(
-        rows,
-        # NOTE: A Database Name must be provided in the case where you need to create your own connection object.
-        database_name="SOMETHING_MEMORABLE"
-    )
+    engine.execute = redshift_ordered_actions.execute("SELECT * FROM user")
 
-
-    # tests/test_something.py:
-
-    from sqlalchemy import create_engine
-
-
-    def test_something_exists(PG_HOST, PG_PORT, redshift):
-        engine = create_engine(
-            "postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=disable".format(
-                database="SOMETHING_MEMORABLE",
-                user="user",
-                password="password",
-                host=PG_HOST,
-                port=PG_PORT,
-            ),
-            isolation_level="AUTOCOMMIT",
-        )
-
-        engine.execute = redshift_ordered_actions.execute("SELECT * FROM user")
-
-        result = sorted([row[0] for row in execute])
-        assert ["Jolteon"] == result
+    result = sorted([row[0] for row in execute])
+    assert ["Jolteon"] == result
+```
 
 ## Contributing Pre-Requisites
 
