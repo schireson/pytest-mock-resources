@@ -28,6 +28,24 @@ If you need to construct your own connection or client in any test, the followin
     port: Use PG_PORT fixture
     database: database_name you passed into the create_*_fixture function
 
+### Running the tests in CircleCI
+
+Make sure to add the following section to ALL jobs that will be running tests with `redshift` or `postgres` fixtures or you will receive a `ContainerCheckFailed: Unable to connect to [...] Postgres test container` error.
+
+    jobs:
+      <YOUR JOB NAME>:
+          docker:
+          - image: <IMAGE>  // schireson/cicd-python... circleci/python:2.7.14... etc
+          - image: postgres:9.6.10-alpine
+              environment:
+              POSTGRES_DB: dev
+              POSTGRES_USER: user
+              POSTGRES_PASSWORD: password
+          steps:
+          - checkout
+          ...
+
+
 ## Example
 
 ### Basic Example
