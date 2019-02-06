@@ -126,6 +126,8 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
         _create_clean_database(database_name_)
         engine = get_sqlalchemy_engine(database_name_)
 
+        engine.database = database_name
+
         _run_actions(engine, ordered_actions)
 
         return engine

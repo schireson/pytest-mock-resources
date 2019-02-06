@@ -3,11 +3,9 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Schireson Pytest Mock Resources: A collection of convenient pytest plugins.
-===========================================================
-#schiresonip #ruby
-
 .. toctree::
    :maxdepth: 2
+   :caption: Contents:
 
-   readme_link.rst
+
+.. mdinclude:: ../README.md
