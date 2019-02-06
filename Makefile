@@ -1,4 +1,4 @@
-.PHONY: init set-py3 set-py2 install-deps lint sync-deps build publish test clean version bump bump-minor up-postgres
+.PHONY: init set-py3 set-py2 install-deps lint sync-deps build build-docs publish publish-docs test clean version bump bump-minor up-postgres
 
 init:
 	bin/pyenv-create-venv pytest-mock-resources
@@ -26,6 +26,12 @@ build:
 
 publish: build
 	lucha cicd publish pypi
+
+build-docs:
+	lucha build docs
+
+publish-docs: build-docs
+	lucha publish docs --latest
 
 test:
 	pytest
