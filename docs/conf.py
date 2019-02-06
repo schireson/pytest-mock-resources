@@ -29,7 +29,7 @@ author = 'Omar Khan'
 # The short X.Y version
 version = '0.1'
 # The full version, including alpha/beta/rc tags
-release = '0.1.17'
+release = '0.1.18'
 
 
 # -- General configuration ---------------------------------------------------
@@ -86,7 +86,31 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = 'classic'
+html_theme_options = {
+    "stickysidebar": True,
+    "externalrefs": True,
+    "codebgcolor": "rgb(242, 247, 255)",
+    "footerbgcolor": "rgb(33, 105, 165)",  # (CSS color): Background color for the footer line.
+    "headbgcolor": "rgb(238, 238, 238)",  # (CSS color): Background color for headings.
+    "headlinkcolor": "rgb(40, 40, 40)",  # (CSS color): Link color for headings.
+    "headtextcolor": "rgb(40, 40, 40)",  # (CSS color): Text color for headings.
+    "relbarbgcolor": "rgb(33, 105, 165)",  # (CSS color): Background color for the relation bar.
+    "sidebarbgcolor": "rgb(228, 228, 228)",  # (CSS color): Background color for the sidebar.
+    "sidebarbtncolor": "rgb(40, 40, 40)",  # (CSS color): Background color for the sidebar collapse button (used when collapsiblesidebar is True).
+    "sidebarlinkcolor": "rgb(40, 40, 40)",  # (CSS color): Link color for the sidebar.
+    "sidebartextcolor": "rgb(40, 40, 40)",  # (CSS color): Text color for the sidebar.
+    # "bgcolor": "",  # (CSS color): Body background color.
+    # "bodyfont": "",  # (CSS font-family): Font for normal text.
+    # "codetextcolor": "",  # (CSS color): Default text color for code blocks, if not set differently by the highlighting style.
+    # "footertextcolor": "",  # (CSS color): Text color for the footer line.
+    # "headfont": "",  # (CSS font-family): Font for headings.
+    # "linkcolor": "",  # (CSS color): Body link color.
+    # "relbarlinkcolor": "",  # (CSS color): Link color for the relation bar.
+    # "relbartextcolor": "",  # (CSS color): Text color for the relation bar.
+    # "textcolor": "",  # (CSS color): Body text color.
+    # "visitedlinkcolor": "",  # (CSS color): Body color for visited links.
+}
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
