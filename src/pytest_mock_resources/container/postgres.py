@@ -1,6 +1,5 @@
-import psycopg2
 import pytest
-from sqlalchemy import create_engine
+import sqlalchemy
 
 from pytest_mock_resources.container import ContainerCheckFailed, get_container_fn, HOST, IN_CI
 
@@ -15,18 +14,8 @@ config = {
 }
 
 
-def get_psycopg2_connection(database_name):
-    return psycopg2.connect(
-        dbname=database_name,
-        user=config["username"],
-        password=config["password"],
-        host=config["host"],
-        port=str(config["port"]),
-    )
-
-
 def get_sqlalchemy_engine(database_name):
-    engine = create_engine(
+    engine = sqlalchemy.create_engine(
         "postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=disable".format(
             database=database_name,
             username=config["username"],
@@ -45,8 +34,8 @@ def get_sqlalchemy_engine(database_name):
 
 def check_postgres_fn():
     try:
-        get_psycopg2_connection(config["root_database"])
-    except psycopg2.OperationalError:
+        get_sqlalchemy_engine(config["root_database"])
+    except sqlalchemy.exc.OperationalError:
         raise ContainerCheckFailed(
             "Unable to connect to a presumed Postgres test container via given config: {}".format(
                 config
