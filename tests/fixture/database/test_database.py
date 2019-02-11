@@ -6,7 +6,7 @@ from pytest_mock_resources import (
     create_redshift_fixture,
     create_sqlite_fixture,
 )
-from pytest_mock_resources.fixture.database import _run_actions
+from pytest_mock_resources.fixture.database.database import _run_actions
 
 sqlite = create_sqlite_fixture()
 postgres = create_postgres_fixture()
