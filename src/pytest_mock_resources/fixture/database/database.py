@@ -141,8 +141,14 @@ def create_redshift_fixture(*ordered_actions, **kwargs):
     if len(kwargs):
         raise KeyError("Unsupported Arguments: {}".format(kwargs))
 
+    from pytest_mock_resources.fixture.database.udf import REDSHIFT_UDFS
+
     return create_postgres_fixture(
-        *ordered_actions, database_name=database_name, scope=scope, default_suffix=default_suffix
+        REDSHIFT_UDFS,
+        *ordered_actions,
+        database_name=database_name,
+        scope=scope,
+        default_suffix=default_suffix
     )
 
 
