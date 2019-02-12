@@ -1,4 +1,5 @@
 bandit==1.4.0
+black==18.9b0; python_version > '2.7'
 bumpversion~=0.5
 coverage==4.5
 flake8==3.5.0

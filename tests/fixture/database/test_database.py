@@ -30,9 +30,9 @@ def test_basic_postgres_and_redshift_fixture(postgres, redshift):
     redshift.execute("select 1")
 
 
-redshift_2 = create_redshift_fixture(database_name="redshift2")
-redshift_3 = create_redshift_fixture(database_name="redshift3")
-postgres_2 = create_postgres_fixture(database_name="postgres2")
+redshift_2 = create_redshift_fixture()
+redshift_3 = create_redshift_fixture()
+postgres_2 = create_postgres_fixture()
 
 
 def test_multiple_postgres_and_redshift_fixture(
@@ -45,13 +45,13 @@ def test_multiple_postgres_and_redshift_fixture(
     redshift.execute("select 1")
 
 
-named_postgres = create_postgres_fixture(database_name="HAILmary123")
+postgres_3 = create_postgres_fixture()
 
 
-def test_create_custom_connection(PG_PORT, PG_HOST, named_postgres):
+def test_create_custom_connection(PG_PORT, PG_HOST, postgres_3):
     engine = create_engine(
         "postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=disable".format(
-            database="HAILmary123",
+            database=postgres_3.database,
             username="user",
             password="password",
             host=PG_HOST,

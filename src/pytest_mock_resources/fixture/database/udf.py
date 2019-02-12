@@ -5,76 +5,68 @@ from pytest_mock_resources.fixture.database import Statements
 
 @enum.unique
 class UdfLanguage(enum.Enum):
-    PLPGSQL = 'plpgsql'
-    PLPYTHON = 'plpythonu'
-    SQL = 'SQL'
+    PLPGSQL = "plpgsql"
+    PLPYTHON = "plpythonu"
+    SQL = "SQL"
 
 
-def create_udf(name, args, returns, body, language, schema='public'):
+def create_udf(name, args, returns, body, language, schema="public"):
     _template = """
     CREATE FUNCTION {schema}.{name} ({args}) RETURNS {returns} AS $${body}$$ LANGUAGE {language};
     """
 
     return _template.format(
-        schema=schema,
-        name=name,
-        args=args,
-        returns=returns,
-        body=body,
-        language=language,
+        schema=schema, name=name, args=args, returns=returns, body=body, language=language
     )
 
 
-dateadd_kwargs = dict(
-    body='SELECT d + (n::VARCHAR || i)::INTERVAL',
-    language=UdfLanguage.SQL.value,
-)
+dateadd_kwargs = dict(body="SELECT d + (n::VARCHAR || i)::INTERVAL", language=UdfLanguage.SQL.value)
 
 dateadd_date = create_udf(
-    name='DATEADD',
-    args='i VARCHAR, n INTEGER, d DATE',
-    returns='TIMESTAMP WITHOUT TIME ZONE',
+    name="DATEADD",
+    args="i VARCHAR, n INTEGER, d DATE",
+    returns="TIMESTAMP WITHOUT TIME ZONE",
     **dateadd_kwargs
 )
 
 dateadd_timestamp = create_udf(
-    name='DATEADD',
-    args='i VARCHAR, n INTEGER, d TIMESTAMP WITHOUT TIME ZONE',
-    returns='TIMESTAMP WITHOUT TIME ZONE',
+    name="DATEADD",
+    args="i VARCHAR, n INTEGER, d TIMESTAMP WITHOUT TIME ZONE",
+    returns="TIMESTAMP WITHOUT TIME ZONE",
     **dateadd_kwargs
 )
 
 dateadd_timestamptz = create_udf(
-    name='DATEADD',
-    args='i VARCHAR, n INTEGER, d TIMESTAMP WITH TIME ZONE',
-    returns='TIMESTAMP WITH TIME ZONE',
+    name="DATEADD",
+    args="i VARCHAR, n INTEGER, d TIMESTAMP WITH TIME ZONE",
+    returns="TIMESTAMP WITH TIME ZONE",
     **dateadd_kwargs
 )
 
 date_add_date = create_udf(
-    name='DATE_ADD',
-    args='i VARCHAR, n INTEGER, d DATE',
-    returns='TIMESTAMP WITHOUT TIME ZONE',
+    name="DATE_ADD",
+    args="i VARCHAR, n INTEGER, d DATE",
+    returns="TIMESTAMP WITHOUT TIME ZONE",
     **dateadd_kwargs
 )
 
 date_add_timestamp = create_udf(
-    name='DATE_ADD',
-    args='i VARCHAR, n INTEGER, d TIMESTAMP WITHOUT TIME ZONE',
-    returns='TIMESTAMP WITHOUT TIME ZONE',
+    name="DATE_ADD",
+    args="i VARCHAR, n INTEGER, d TIMESTAMP WITHOUT TIME ZONE",
+    returns="TIMESTAMP WITHOUT TIME ZONE",
     **dateadd_kwargs
 )
 
 date_add_timestamptz = create_udf(
-    name='DATE_ADD',
-    args='i VARCHAR, n INTEGER, d TIMESTAMP WITH TIME ZONE',
-    returns='TIMESTAMP WITH TIME ZONE',
+    name="DATE_ADD",
+    args="i VARCHAR, n INTEGER, d TIMESTAMP WITH TIME ZONE",
+    returns="TIMESTAMP WITH TIME ZONE",
     **dateadd_kwargs
 )
 
 
 datediff_kwargs = dict(
-    returns='BIGINT',
+    returns="BIGINT",
     # Credit: https://gist.github.com/JoshuaGross/18b9bb1db8021efc88884cbd8dc8fddb
     body="""
        DECLARE
@@ -145,24 +137,20 @@ datediff_kwargs = dict(
 
        END;
     """,
-    language=UdfLanguage.PLPGSQL.value
+    language=UdfLanguage.PLPGSQL.value,
 )
 
 datediff_date = create_udf(
-    name='DATEDIFF',
-    args='units VARCHAR, start_t DATE, end_t DATE',
-    **datediff_kwargs
+    name="DATEDIFF", args="units VARCHAR, start_t DATE, end_t DATE", **datediff_kwargs
 )
 
 datediff_timestamp = create_udf(
-    name='DATEDIFF',
-    args='units VARCHAR, start_t TIMESTAMP, end_t TIMESTAMP',
-    **datediff_kwargs
+    name="DATEDIFF", args="units VARCHAR, start_t TIMESTAMP, end_t TIMESTAMP", **datediff_kwargs
 )
 
 datediff_timestamptz = create_udf(
-    name='DATEDIFF',
-    args='units VARCHAR, start_t TIMESTAMP WITH TIME ZONE, end_t TIMESTAMP WITH TIME ZONE',
+    name="DATEDIFF",
+    args="units VARCHAR, start_t TIMESTAMP WITH TIME ZONE, end_t TIMESTAMP WITH TIME ZONE",
     **datediff_kwargs
 )
 
@@ -175,5 +163,5 @@ REDSHIFT_UDFS = Statements(
     date_add_timestamptz,
     datediff_date,
     datediff_timestamp,
-    datediff_timestamptz
+    datediff_timestamptz,
 )
