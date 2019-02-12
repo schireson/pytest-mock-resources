@@ -5,13 +5,16 @@
 #    pip-compile --output-file deps/dev-requirements.txt deps/dev-requirements.in deps/requirements.txt
 #
 alabaster==0.7.12         # via sphinx
+appdirs==1.4.3            # via black
 atomicwrites==1.2.1
 attrs==18.2.0
 babel==2.6.0              # via sphinx
 bandit==1.4.0
+black==18.9b0
 bumpversion==0.5.3
 certifi==2018.11.29
 chardet==3.0.4
+click==7.0                # via black
 commonmark==0.8.1         # via recommonmark
 coverage==4.5
 docker-pycreds==0.4.0
@@ -54,6 +57,7 @@ sphinx==1.8.3
 sphinxcontrib-websupport==1.1.0  # via sphinx
 sqlalchemy==1.2.15
 stevedore==1.30.0         # via bandit
+toml==0.10.0              # via black
 typed-ast==1.1.1          # via mypy
 urllib3==1.24.1
 websocket-client==0.54.0
