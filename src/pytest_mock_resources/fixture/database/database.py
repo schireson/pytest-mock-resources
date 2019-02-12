@@ -138,15 +138,17 @@ def _create_clean_database():
     # Create a unique database name
     root_connection.execute(
         """
-        CREATE TABLE IF NOT EXISTS database_name(
+        CREATE TABLE IF NOT EXISTS pytest_mock_resource_db(
             id SERIAL
         );
         """
     )
-    root_connection.execute("INSERT INTO database_name VALUES (DEFAULT)")
-    database_id_row = root_connection.execute("SELECT MAX(id) FROM database_name").fetchone()
+    root_connection.execute("INSERT INTO pytest_mock_resource_db VALUES (DEFAULT)")
+    database_id_row = root_connection.execute(
+        "SELECT MAX(id) FROM pytest_mock_resource_db"
+    ).fetchone()
 
-    database_name = "database_{}".format(database_id_row[0])
+    database_name = "pytest_mock_resource_db_{}".format(database_id_row[0])
     quoted_database_name = '"{}"'.format(database_name)
 
     root_connection.execute(
