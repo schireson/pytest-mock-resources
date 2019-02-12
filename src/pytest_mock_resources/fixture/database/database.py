@@ -1,10 +1,9 @@
 import abc
-import os
-import time
 
 import pytest
 import six
 from sqlalchemy import create_engine, MetaData
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 from pytest_mock_resources.container.postgres import config, get_sqlalchemy_engine
@@ -100,31 +99,15 @@ def create_sqlite_fixture(*ordered_actions, **kwargs):
 
 
 def create_postgres_fixture(*ordered_actions, **kwargs):
-    database_name = kwargs.pop("database_name", None)
-
-    if database_name == config["root_database"]:
-        raise ValueError(
-            "{} cannot be used as this fixture's DB name, it is a package KEYWORD."
-            .format(config["root_database"])
-        )
-
     scope = kwargs.pop("scope", "function")
-    default_suffix = kwargs.pop("default_suffix", "pg")
 
     if len(kwargs):
         raise KeyError("Unsupported Arguments: {}".format(kwargs))
 
     @pytest.fixture(scope=scope)
     def _(_postgres_container):
-        if database_name:
-            database_name_ = database_name
-        else:
-            test_name = _create_test_based_database_name()
-            database_name_ = _clean_database_name(test_name)
-            database_name_ = "{}_{}".format(database_name_, default_suffix)
-
-        _create_clean_database(database_name_)
-        engine = get_sqlalchemy_engine(database_name_)
+        database_name = _create_clean_database()
+        engine = get_sqlalchemy_engine(database_name)
 
         engine.database = database_name
 
@@ -136,84 +119,62 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
 
 
 def create_redshift_fixture(*ordered_actions, **kwargs):
-    database_name = kwargs.pop("database_name", None)
     scope = kwargs.pop("scope", "function")
-    default_suffix = kwargs.pop("default_suffix", "redshift")
 
     if len(kwargs):
         raise KeyError("Unsupported Arguments: {}".format(kwargs))
 
     from pytest_mock_resources.fixture.database.udf import REDSHIFT_UDFS
 
-    return create_postgres_fixture(
-        REDSHIFT_UDFS,
-        *ordered_actions,
-        database_name=database_name,
-        scope=scope,
-        default_suffix=default_suffix
-    )
+    return create_postgres_fixture(REDSHIFT_UDFS, *ordered_actions, scope=scope)
 
 
-def _create_test_based_database_name():
-    """Create a unique test-based database name.
-    """
-    # Grab the test name
-    qualified_test_name = os.environ.get("PYTEST_CURRENT_TEST").split(" ")[0]
-    test_name = qualified_test_name.split(":")[-1]
-
-    # Remove `test_` prefix
-    test_name = test_name[5:]
-
-    # Keep only a max of the last 50 letters
-    length = len(test_name)
-    max_length = min(length, 45)
-    test_name = test_name[-max_length:]
-
-    # Add the current unix time for more uniqueness
-    unix_time = int(time.time())
-
-    return "{}{}".format(test_name, unix_time)
-
-
-def _clean_database_name(name):
-    name = name.lower()
-    name = name.replace("[", "_")
-    name = name.replace("]", "_")
-
-    return name
-
-
-def _create_clean_database(database_name):
+def _create_clean_database():
     # Database names that include upper case letters must be enclosed in double-quotes.
-    database_name = '"{}"'.format(database_name)
-
     root_engine = get_sqlalchemy_engine(config["root_database"])
     root_connection = root_engine.connect()
     root_connection.connection.connection.set_isolation_level(0)
+
+    # Create a unique database name
+    root_connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS database_name(
+            id SERIAL
+        );
+        """
+    )
+    root_connection.execute("INSERT INTO database_name VALUES (DEFAULT)")
+    database_id_row = root_connection.execute("SELECT MAX(id) FROM database_name").fetchone()
+
+    database_name = "database_{}".format(database_id_row[0])
+    quoted_database_name = '"{}"'.format(database_name)
+
     root_connection.execute(
         """
         SELECT pg_terminate_backend(pg_stat_activity.pid)
         FROM pg_stat_activity
-        WHERE pg_stat_activity.datname = '{database_name}' AND pid <> pg_backend_pid()
+        WHERE pg_stat_activity.datname = '{}' AND pid <> pg_backend_pid()
         """.format(
-            database_name=database_name
+            quoted_database_name
         )
     )
+    root_connection.execute("DROP DATABASE IF EXISTS {}".format(quoted_database_name))
+    root_connection.execute("CREATE DATABASE {}".format(quoted_database_name))
     root_connection.execute(
-        "DROP DATABASE IF EXISTS {database_name}".format(database_name=database_name)
+        "GRANT ALL PRIVILEGES ON DATABASE {} TO CURRENT_USER".format(quoted_database_name)
     )
-    root_connection.execute("CREATE DATABASE {database_name}".format(database_name=database_name))
-    root_connection.execute(
-        "GRANT ALL PRIVILEGES ON DATABASE {database_name} TO CURRENT_USER".format(
-            database_name=database_name
-        )
-    )
+
+    return database_name
 
 
 def _run_actions(engine, ordered_actions):
+    BaseType = type(declarative_base())
+
     for action in ordered_actions:
         if isinstance(action, MetaData):
             _create_ddl(engine, [action])
+        elif isinstance(action, BaseType):
+            _create_ddl(engine, [action.metadata])
         elif isinstance(action, AbstractAction):
             action.run(engine)
         else:
@@ -229,11 +190,7 @@ def _create_ddl(engine, metadatas):
 
 def _create_schemas(engine, metadatas):
     for metadata in metadatas:
-        schemas = {
-            table.schema
-            for table in metadata.tables.values()
-            if table.schema
-        }
+        schemas = {table.schema for table in metadata.tables.values() if table.schema}
 
         for schema in schemas:
             statement = "CREATE SCHEMA IF NOT EXISTS {}".format(schema)
