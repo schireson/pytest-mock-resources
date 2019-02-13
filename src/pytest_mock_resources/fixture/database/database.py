@@ -22,7 +22,7 @@ def PG_PORT():
 @six.add_metaclass(abc.ABCMeta)
 class AbstractAction(object):
     @abc.abstractmethod
-    def run(self, engine):
+    def run(self, engine, tables):
         """Run an action on a database via the passed-in engine.
 
         Args:
@@ -34,12 +34,13 @@ class Rows(AbstractAction):
     def __init__(self, *rows):
         self.rows = rows
 
-    def run(self, engine):
+    def run(self, engine, tables):
         rows = self._get_stateless_rows(self.rows)
 
         metadatas = self._get_metadatas(rows)
 
-        _create_ddl(engine, metadatas)
+        for metadata in metadatas:
+            _create_ddl(engine, metadata, tables)
 
         self._create_rows(engine, rows)
 
@@ -76,13 +77,14 @@ class Statements(AbstractAction):
     def __init__(self, *statements):
         self.statements = statements
 
-    def run(self, engine):
+    def run(self, engine, tables):
         for statement in self.statements:
             engine.execute(statement)
 
 
 def create_sqlite_fixture(*ordered_actions, **kwargs):
     scope = kwargs.pop("scope", "function")
+    tables = kwargs.pop("tables", None)
 
     if len(kwargs):
         raise KeyError("Unsupported Arguments: {}".format(kwargs))
@@ -91,7 +93,7 @@ def create_sqlite_fixture(*ordered_actions, **kwargs):
     def _():
         engine = create_engine("sqlite://")
 
-        _run_actions(engine, ordered_actions)
+        _run_actions(engine, ordered_actions, tables=tables)
 
         return engine
 
@@ -100,6 +102,7 @@ def create_sqlite_fixture(*ordered_actions, **kwargs):
 
 def create_postgres_fixture(*ordered_actions, **kwargs):
     scope = kwargs.pop("scope", "function")
+    tables = kwargs.pop("tables", None)
 
     if len(kwargs):
         raise KeyError("Unsupported Arguments: {}".format(kwargs))
@@ -111,7 +114,7 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
 
         engine.database = database_name
 
-        _run_actions(engine, ordered_actions)
+        _run_actions(engine, ordered_actions, tables=tables)
 
         return engine
 
@@ -120,13 +123,14 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
 
 def create_redshift_fixture(*ordered_actions, **kwargs):
     scope = kwargs.pop("scope", "function")
+    tables = kwargs.pop("tables", None)
 
     if len(kwargs):
         raise KeyError("Unsupported Arguments: {}".format(kwargs))
 
     from pytest_mock_resources.fixture.database.udf import REDSHIFT_UDFS
 
-    return create_postgres_fixture(REDSHIFT_UDFS, *ordered_actions, scope=scope)
+    return create_postgres_fixture(REDSHIFT_UDFS, *ordered_actions, scope=scope, tables=tables)
 
 
 def _create_clean_database():
@@ -169,36 +173,48 @@ def _create_clean_database():
     return database_name
 
 
-def _run_actions(engine, ordered_actions):
+def _run_actions(engine, ordered_actions, tables=None):
     BaseType = type(declarative_base())
 
     for action in ordered_actions:
         if isinstance(action, MetaData):
-            _create_ddl(engine, [action])
+            _create_ddl(engine, action, tables)
         elif isinstance(action, BaseType):
-            _create_ddl(engine, [action.metadata])
+            _create_ddl(engine, action.metadata, tables)
         elif isinstance(action, AbstractAction):
-            action.run(engine)
+            action.run(engine, tables)
         else:
             raise ValueError(
                 "create_fixture function takes in sqlalchemy.MetaData or actions as inputs only."
             )
 
 
-def _create_ddl(engine, metadatas):
-    _create_schemas(engine, metadatas)
-    _create_tables(engine, metadatas)
+def _create_ddl(engine, metadata, tables):
+    _create_schemas(engine, metadata)
+    _create_tables(engine, metadata, tables)
 
 
-def _create_schemas(engine, metadatas):
-    for metadata in metadatas:
-        schemas = {table.schema for table in metadata.tables.values() if table.schema}
-
-        for schema in schemas:
-            statement = "CREATE SCHEMA IF NOT EXISTS {}".format(schema)
-            engine.execute(statement)
+def _create_schemas(engine, metadata):
+    all_schemas = {table.schema for table in metadata.tables.values() if table.schema}
+    for schema in all_schemas:
+        statement = "CREATE SCHEMA IF NOT EXISTS {}".format(schema)
+        engine.execute(statement)
 
 
-def _create_tables(engine, metadatas):
-    for metadata in metadatas:
+def _create_tables(engine, metadata, tables):
+    if not tables:
         metadata.create_all(engine)
+        return
+
+    # Make sure to include any implicit or explicit variations of tables in the `public` schema
+    additional_implicit_tables = {table[7:] for table in tables if table.startswith("public.")}
+    additional_explicit_tables = {
+        "public." + table for table in tables if len(table.split(".")) == 1
+    }
+
+    all_tables = set().union(tables, additional_implicit_tables, additional_explicit_tables)
+
+    relevant_table_classes = [
+        table for tablename, table in metadata.tables.items() if tablename in all_tables
+    ]
+    metadata.create_all(engine, tables=relevant_table_classes)
