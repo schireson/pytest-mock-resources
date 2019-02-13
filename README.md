@@ -373,6 +373,53 @@ def test_something_exists(redshift):
     assert ["ABCDE"] == result
 ```
 
+##### Dealing with Bloated Metadata
+
+By default, each DB fixture recreates the whole database from scratch prior to each test to ensure there are no side-effects from one test to another.
+
+Recreating DDL is fairly quick but if there are a large amount of tables to create, test setup-time can begin to suffer.
+
+An example of this is `vantage-redshift-schema` which has more than a 1000 tables. As a result, it takes ~5 seconds for each test to setup which is unacceptable. If you have 200 tests running linearly, you will be spending an additional ~17 minutes, waiting for tests to complete.
+
+To counteract this, you can provide an iterable of table names to your `create_*_fixture` call. This will tell the call to ONLY create the tables you have specified instead of creating all of them.
+
+This can be a great way to keep track of all the tables your code interacts with as well!
+
+An example:
+
+```python
+# tests/conftest.py:
+
+from pytest_mock_resources import create_redshift_fixture, Statements
+from vantage_redshift_schema import meta
+from vantage_redshift_schema.amrld import amrld_stacked_data
+
+statements = Statements(
+    amrld_stacked_data.insert().values(network="ABCDE"),
+)
+
+redshift = create_redshift_fixture(
+    meta,
+    statements,
+    # ONLY create this single table for this test.
+    tables=[
+        "amrld.amrld_stacked_data",
+    ]
+)
+```
+
+```python
+# tests/test_something.py:
+
+def test_something_exists(redshift):
+    execute = redshift.execute("SELECT network FROM amrld.amrld_stacked_data")
+
+    # Confirm that the amrld.amrld_stacked_data table exists and the row was inserted
+    result = sorted([row[0] for row in execute])
+    assert ["ABCDE"] == result
+```
+
+
 #### Rows Example
 
 If you are using SQLAlchemy to maintain your DDL, you have the capability to use the `Rows` class to conveniently pre-populate your db fixture with DDL and data in a single line.
