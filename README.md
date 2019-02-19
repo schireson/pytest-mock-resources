@@ -470,6 +470,57 @@ def test_something_exists(redshift):
     assert ["Catherine", "Harold"] == result
 ```
 
+#### Function as an Argument Example
+
+Uses can supply a function as an input argument to the fixtures. The function would take in a session argument and expect the user to add and execute things as they see fit. Using this, users can test complex relationships amongst tables.<br>
+In the following example, we define 2 classes, `User` and `Object`, with a one-to-many relationship.
+
+```python
+
+class User(Base):
+    __tablename__ = "user"
+    __table_args__ = {"schema": "stuffs"}
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, nullable=False)
+    objects = relationship("Object", back_populates="owner")
+
+class Object(Base):
+    __tablename__ = "object"
+    __table_args__ = {"schema": "stuffs"}
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, nullable=False)
+    belongs_to = Column(Integer, ForeignKey('stuffs.user.id'))
+    owner = relationship("User", back_populates="objects")
+```
+
+We also define a function that will be passed to a Postgres fixture as an argument. In the function we define a nested instantiation.
+
+```python
+
+def session_fn(session):
+    session.add(User(name='Fake Name', objects=[Object(name='Boots')]))
+
+postgres = create_postgres_fixture(Base, session_fn)
+
+```
+
+An Example Test to test the previously defined fixture. In the test we assert that the relationships previously defined are maintained in the mock database.
+
+```python
+
+def test_session_function(postgres):
+    execute = postgres.execute("SELECT * FROM stuffs.object")
+    owner_id = sorted([row[2] for row in execute])[0]
+
+    execute = postgres.execute("SELECT * FROM stuffs.user where id = {id}".format(id=owner_id))
+    result = [row[1] for row in execute]
+
+    assert result == ['Fake Name']
+
+```
+
 ## Need help?
 
 Contact Omar Khan via slack or omar@schireson.com.
