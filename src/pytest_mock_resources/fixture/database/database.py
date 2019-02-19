@@ -183,6 +183,8 @@ def _run_actions(engine, ordered_actions, tables=None):
             _create_ddl(engine, action.metadata, tables)
         elif isinstance(action, AbstractAction):
             action.run(engine, tables)
+        elif callable(action):
+            _execute_function(engine, action)
         else:
             raise ValueError(
                 "create_fixture function takes in sqlalchemy.MetaData or actions as inputs only."
@@ -218,3 +220,13 @@ def _create_tables(engine, metadata, tables):
         table for tablename, table in metadata.tables.items() if tablename in all_tables
     ]
     metadata.create_all(engine, tables=relevant_table_classes)
+
+
+def _execute_function(engine, fn):
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    fn(session)
+
+    session.commit()
+    session.close()
