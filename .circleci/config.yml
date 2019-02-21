@@ -42,6 +42,16 @@ publish: &publish
       sudo pip3 install twine
       lucha aws whitelist --profile artifactory -- make publish
 
+publish-docs: &publish-docs
+  run:
+    name: Publish docs to latest.
+    command: |
+      virtualenv .venv
+      . .venv/bin/activate
+
+      sudo pip install sphinx m2r
+      make cicd-publish-docs
+
 ###########
 # Workflows
 ###########
@@ -63,6 +73,7 @@ workflows:
               only:
                 - /^master$/
 
+      - publish-docs
 
 ###################
 # Job Definitions
@@ -117,3 +128,12 @@ jobs:
       - checkout
       - <<: *authenticate-aws
       - <<: *publish
+
+  publish-docs:
+    docker:
+      - image: schireson/cicd-python
+    steps:
+      - checkout
+      - <<: *authenticate-aws
+      - setup_remote_docker
+      - <<: *publish-docs

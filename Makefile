@@ -33,6 +33,10 @@ build-docs:
 publish-docs: build-docs
 	lucha publish docs --latest
 
+cicd-publish-docs: build-docs
+	lucha aws whitelist-s3-bucket-policy --bucket docs.schireson.com --use-docker-ip --profile docs \
+	-- lucha publish docs --package pytest_mock_resources --profile docs --latest
+
 test:
 	pytest
 

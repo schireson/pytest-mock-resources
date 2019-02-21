@@ -6,9 +6,6 @@
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/master/config
 
-from recommonmark.parser import CommonMarkParser
-
-
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -29,7 +26,7 @@ author = 'Omar Khan'
 # The short X.Y version
 version = '0.1'
 # The full version, including alpha/beta/rc tags
-release = '0.1.22'
+release = '0.1.23'
 
 
 # -- General configuration ---------------------------------------------------
