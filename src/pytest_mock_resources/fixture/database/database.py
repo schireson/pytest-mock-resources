@@ -7,6 +7,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 from pytest_mock_resources.container.postgres import config, get_sqlalchemy_engine
+from pytest_mock_resources.fixture.database.mock_s3_copy import (
+    substitute_execute_with_custom_execute,
+)
 
 
 @pytest.fixture(scope="session")
@@ -130,7 +133,19 @@ def create_redshift_fixture(*ordered_actions, **kwargs):
 
     from pytest_mock_resources.fixture.database.udf import REDSHIFT_UDFS
 
-    return create_postgres_fixture(REDSHIFT_UDFS, *ordered_actions, scope=scope, tables=tables)
+    ordered_actions = ordered_actions + (REDSHIFT_UDFS,)
+
+    @pytest.fixture(scope=scope)
+    def _(_postgres_container):
+        database_name = _create_clean_database()
+        engine = get_sqlalchemy_engine(database_name)
+
+        engine.database = database_name
+        _run_actions(engine, ordered_actions, tables=tables)
+
+        return substitute_execute_with_custom_execute(engine)
+
+    return _
 
 
 def _create_clean_database():
