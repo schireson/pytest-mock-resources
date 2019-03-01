@@ -521,6 +521,32 @@ def test_session_function(postgres):
 
 ```
 
+#### COPY Statements for Redshift Fixture Example:
+Users can run `COPY` statements locally using the redshift fixture.<br>
+Consider a table `items` with columns `(id, name, price)`and a `.csv` stored on an S3 bucket with the following url: `s3:\\mybucket\myfile.csv`. To copy data from the said file to the `items` table, the redshift fixture supports the following command locally:
+<br>
+```python
+# tests/test_something.py
+
+redshift = create_redshift_fixture()
+
+def test_copy_from_s3_file(redshift):
+    redshift.execute(
+        "CREATE TABLE Items (id INT, Name VARCHAR(16), Price CHAR(1));"
+    )
+    redshift.execute(
+        (
+            "COPY items (id, name, price) from `s3:\\mybucket\myfile.csv` "
+            "credentials 'aws_access_key_id=<AWS_ACCESS_KEY_ID>;"
+            "aws_secret_access_key=<AWS_SECRET_ACCESS_KEY>'"
+        )
+    )
+
+    execute = redshift.execute('SELECT * FROM items')
+
+    # Assert data in table equals data in .csv file.
+```
+
 ## Need help?
 
 Contact Omar Khan via slack or omar@schireson.com.
