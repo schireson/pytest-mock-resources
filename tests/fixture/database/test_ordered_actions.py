@@ -23,7 +23,7 @@ class Object(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
-    belongs_to = Column(Integer, ForeignKey('stuffs.user.id'))
+    belongs_to = Column(Integer, ForeignKey("stuffs.user.id"))
     owner = relationship("User", back_populates="objects")
 
 
@@ -37,7 +37,7 @@ additional_rows = Rows(User(name="Perrier"), User(name="Mug"))
 
 
 def session_function(session):
-    session.add(User(name='Fake Name', objects=[Object(name='Boots')]))
+    session.add(User(name="Fake Name", objects=[Object(name="Boots")]))
 
 
 postgres_ordered_actions = create_postgres_fixture(rows, row_dependant_statements, additional_rows)
@@ -62,7 +62,7 @@ def test_session_function(postgres_session_function, run):
         "SELECT * FROM stuffs.user where id = {id}".format(id=owner_id)
     )
     result = [row[1] for row in execute]
-    assert result == ['Fake Name']
+    assert result == ["Fake Name"]
 
 
 postgres_metadata_only = create_postgres_fixture(Base.metadata)
