@@ -38,6 +38,7 @@ py==1.7.0                 # via pytest
 pyaml==18.11.0            # via moto
 pycparser==2.19           # via cffi
 pycryptodome==3.7.3       # via python-jose
+pymongo==3.7.2
 pytest==4.0.2
 python-dateutil==2.8.0    # via botocore, moto, pandas
 python-jose==2.0.2        # via moto

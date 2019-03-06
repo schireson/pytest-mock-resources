@@ -547,6 +547,40 @@ def test_copy_from_s3_file(redshift):
     # Assert data in table equals data in .csv file.
 ```
 
+#### MongoDB Fixture Example:
+
+Users can test MongoDB commands/functions using the `create_mongo_fixture`. Consider the following example:<br>
+Let `customer` be a collection, and `insert_into_customer`, a functions that inserts data into this collection.
+
+```python
+# src/some_module.py
+
+def insert_into_customer(mongodb_connection):
+    collection = mongodb_connection['customer']
+    to_insert = {"name": "John", "address": "Highway 37"}
+    collection.insert_one(to_insert)
+
+```
+
+A user can test this as follows:
+
+```python
+# test/some_test.py
+
+from pytest_mock_resources import create_mongo_fixture
+from some_module import insert_into_customer
+
+mongo = create_mongo_fixture()
+
+def test_insert_into_customer(mongo):
+    insert_into_customer(mongo)
+    collection = mongo['customer']
+    returned = collection.find_one()
+    # This assumes that there as no previously stored data in the collection.
+    assert returned == {"name": "John", "address": "Highway 37"}
+
+```
+
 ## Need help?
 
 Contact Omar Khan via slack or omar@schireson.com.

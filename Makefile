@@ -63,4 +63,11 @@ up-postgres:
 		-e POSTGRES_DB=dev \
 		-e POSTGRES_USER=user \
 		-e POSTGRES_PASSWORD=password \
-		postgres
+		postgres:9.6.10-alpine
+
+up-mongo:
+	docker run -d \
+		-p 28017:27017 \
+		-e MONGO_INITDB_ROOT_USERNAME=user \
+		-e MONGO_INITDB_ROOT_PASSWORD=password \
+		mongo:3.6
