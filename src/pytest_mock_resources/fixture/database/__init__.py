@@ -7,3 +7,5 @@ from pytest_mock_resources.fixture.database.database import (  # noqa
     create_sqlite_fixture,
     create_postgres_fixture,
 )
+
+from pytest_mock_resources.fixture.database.mongo import create_mongo_fixture  # noqa

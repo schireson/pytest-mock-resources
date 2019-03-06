@@ -56,3 +56,4 @@ def get_container_fn(image, ports, environment, check_fn):
 
 
 from pytest_mock_resources.container.postgres import _postgres_container  # noqa
+from pytest_mock_resources.container.mongo import _mongo_container  # noqa

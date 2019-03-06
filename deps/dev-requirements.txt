@@ -61,6 +61,7 @@ pycryptodome==3.7.3
 pydocstyle==2.1.1
 pyflakes==1.6.0           # via flake8
 pygments==2.3.1           # via sphinx
+pymongo==3.7.2
 pyparsing==2.3.1          # via packaging
 pytest-cov==2.5.1
 pytest==4.0.2
