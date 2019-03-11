@@ -23,7 +23,7 @@ COPY_TEMPLATE = (
     "{COMMAND} test_s3_copy_into_redshift {COLUMNS} {FROM} '{LOCATION}' "
     "{CREDENTIALS} 'aws_access_key_id=AAAAAAAAAAAAAAAAAAAA;"
     "aws_secret_access_key=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'"
-    "{OPTIONAL_ARGS}"
+    "{OPTIONAL_ARGS};"
 )
 
 

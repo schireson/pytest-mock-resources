@@ -1,6 +1,6 @@
 # Editors
 .idea/
-.tags
+.tags*
 *.iml
 *.iws
 *.sublime-project
