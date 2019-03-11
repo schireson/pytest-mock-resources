@@ -523,7 +523,7 @@ def test_session_function(postgres):
 
 #### COPY Statements for Redshift Fixture Example:
 Users can run `COPY` statements locally using the redshift fixture.<br>
-Consider a table `items` with columns `(id, name, price)`and a `.csv` stored on an S3 bucket with the following url: `s3:\\mybucket\myfile.csv`. To copy data from the said file to the `items` table, the redshift fixture supports the following command locally:
+Consider a table `items` with columns `(id, name, price)`and a `.csv` stored on an S3 bucket with the following url: `s3://mybucket/myfile.csv`. To copy data from the said file to the `items` table, the redshift fixture supports the following command locally:
 <br>
 ```python
 # tests/test_something.py
@@ -536,7 +536,7 @@ def test_copy_from_s3_file(redshift):
     )
     redshift.execute(
         (
-            "COPY items (id, name, price) from `s3:\\mybucket\myfile.csv` "
+            "COPY items (id, name, price) from `s3://mybucket/myfile.csv` "
             "credentials 'aws_access_key_id=<AWS_ACCESS_KEY_ID>;"
             "aws_secret_access_key=<AWS_SECRET_ACCESS_KEY>'"
         )
@@ -545,6 +545,35 @@ def test_copy_from_s3_file(redshift):
     execute = redshift.execute('SELECT * FROM items')
 
     # Assert data in table equals data in .csv file.
+```
+
+#### UNLOAD Statements for Redshift Fixture Example:
+Users can run `UNLOAD` statements locally using the redshift fixture.<br>
+Consider a table `employees` with some data already present in it. To 'unload' this data in `.csv` format to the following S3 bucket: `s3://mybucket/myfile.csv`, the redshift fixture supports the following command locally<br>
+
+```python
+# tests/test_something.py
+import boto3
+from pytest_mock_resources import create_redshift_fixture
+
+redshift = create_redshift_fixture()
+
+def test_unload_to_s3_file(redshift):
+    redshift.execute(
+        (
+            "UNLOAD ('SELECT * from employees')"
+            "TO 's3://mybucket/myfile.csv'"
+            "AUTHORIZATION 'aws_access_key_id=<AWS_ACCESS_KEY_ID>;>"
+            "aws_secret_access_key=<AWS_SECRET_ACCESS_KEY>"
+        )
+    )
+
+    conn = boto3.client(
+        "s3", aws_access_key_id=<aws_access_key_id>, aws_secret_access_key=<aws_secret_access_key>
+    )
+    response = conn.get_object(Bucket=bucket, Key=key)
+    # Assert data in response equals data in table.
+
 ```
 
 #### MongoDB Fixture Example:
