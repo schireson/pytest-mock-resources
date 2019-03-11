@@ -5,21 +5,6 @@ from io import BytesIO
 import boto3
 import pandas
 from pandas.io.sql import SQLDatabase, SQLTable
-from sqlalchemy.sql.elements import TextClause
-
-
-def substitute_execute_with_custom_execute(redshift):
-    """Substitue the default execute method with a custom execute for copy command."""
-    default_execute = redshift.execute
-
-    def custom_execute(statement, *args, **kwargs):
-        if not isinstance(statement, TextClause) and _strip(statement).lower().startswith("copy"):
-            return execute_mock_s3_copy_command(statement, redshift)
-        else:
-            return default_execute(statement, *args, **kwargs)
-
-    redshift.execute = custom_execute
-    return redshift
 
 
 def execute_mock_s3_copy_command(statement, engine):
@@ -180,4 +165,4 @@ def _read_dataframe_csv(file, is_gzipped=False, columns=None):
 
 def _strip(input_string):
     """Strip trailing whitespace, single/double quotes."""
-    return input_string.strip().strip('"').strip("'")
+    return input_string.strip().rstrip(";").strip('"').strip("'")

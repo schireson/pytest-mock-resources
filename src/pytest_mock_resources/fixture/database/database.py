@@ -7,7 +7,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 from pytest_mock_resources.container.postgres import config, get_sqlalchemy_engine
-from pytest_mock_resources.fixture.database.mock_s3_copy import (
+from pytest_mock_resources.fixture.database.engine_modifications import (
     substitute_execute_with_custom_execute,
 )
 
