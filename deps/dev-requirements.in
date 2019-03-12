@@ -11,5 +11,6 @@ pymongo
 pytest-cov==2.5.1
 wheel==0.30.0
 Sphinx
+sqlparse
 recommonmark
 m2r

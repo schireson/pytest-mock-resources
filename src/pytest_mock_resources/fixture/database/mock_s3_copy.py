@@ -97,7 +97,6 @@ def _parse_s3_command(statement):
                             " No Support for additional credential formats, eg IAM roles, etc, yet."
                         ).format(statement=statement)
                     )
-
     return params
 
 
