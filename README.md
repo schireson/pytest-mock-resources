@@ -521,7 +521,7 @@ def test_session_function(postgres):
 
 ```
 
-#### COPY Statements for Redshift Fixture Example:
+#### COPY Statements for Redshift Fixture Example
 Users can run `COPY` statements locally using the redshift fixture.<br>
 Consider a table `items` with columns `(id, name, price)`and a `.csv` stored on an S3 bucket with the following url: `s3://mybucket/myfile.csv`. To copy data from the said file to the `items` table, the redshift fixture supports the following command locally:
 <br>
@@ -532,7 +532,7 @@ redshift = create_redshift_fixture()
 
 def test_copy_from_s3_file(redshift):
     redshift.execute(
-        "CREATE TABLE Items (id INT, Name VARCHAR(16), Price CHAR(1));"
+        "CREATE TABLE items (id INT, name VARCHAR(16), price CHAR(1));"
     )
     redshift.execute(
         (
@@ -609,6 +609,37 @@ def test_insert_into_customer(mongo):
     assert returned == {"name": "John", "address": "Highway 37"}
 
 ```
+
+
+#### Support for multiple SQL statements
+
+Users can combine multiple sql statements, including the aforementioned `COPY` and `UNLOAD` statements, into a single query. Consider the following example:
+
+```python
+# tests/some_test.py
+from moto import mock_s3
+from pytest_mock_resources import create_redshift_fixture
+
+redshift = create_redshift_fixture()
+
+
+@mock_s3
+def test_copy_from_s3_file(redshift):
+    execute = redshift.execute(
+        (
+            "CREATE TABLE items (id INT, name VARCHAR(16), price CHAR(1));"
+            "COPY items (id, name, price) from 's3://mybucket/myfile.csv' "
+            "credentials 'aws_access_key_id=<AWS_ACCESS_KEY_ID>;"
+            "aws_secret_access_key=<AWS_SECRET_ACCESS_KEY>';"
+            "SELECT * FROM items;"
+        )
+    )
+
+    # Assert data in table equals data in .csv file.
+
+```
+This combines all the individual sql statements of the COPY command example into a single statement.<br>
+**NOTE:** Notice each command was followed by a `;`. This is necessary and without it the statements will fail to execute.
 
 ## Need help?
 

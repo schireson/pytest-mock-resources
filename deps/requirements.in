@@ -6,3 +6,4 @@ pytest
 pymongo
 responses
 sqlalchemy
+sqlparse
