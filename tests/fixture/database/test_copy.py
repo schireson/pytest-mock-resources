@@ -252,3 +252,35 @@ def test_ignores_sqlalchmey_text_obj(redshift):
     # SQL command as a SQLAlchemy TextClause objetct is ignored and the default engine executes
     # the command.
     _fetch_values_from_table_and_assert(redshift)
+
+
+@moto.mock_s3
+def test_multiple_sql_statemts(redshift):
+    conn = boto3.resource(
+        "s3",
+        region_name="us-east-1",
+        aws_access_key_id="AAAAAAAAAAAAAAAAAAAA",
+        aws_secret_access_key="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    )
+    conn.create_bucket(Bucket="mybucket")
+    conn.Object("mybucket", "file.csv").put(Body=get_dataframe_csv(original_df).encode())
+
+    redshift.execute(
+        (
+            "CREATE TEMP TABLE test_s3_copy_into_redshift "
+            "(i INT, f FLOAT, c CHAR(1), v VARCHAR(16));"
+            "{COMMAND} test_s3_copy_into_redshift {COLUMNS} {FROM} '{LOCATION}' "
+            "{CREDENTIALS} 'aws_access_key_id=AAAAAAAAAAAAAAAAAAAA;"
+            "aws_secret_access_key=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'"
+            "{OPTIONAL_ARGS};".format(
+                COMMAND="COPY",
+                LOCATION="s3://mybucket/file.csv",
+                COLUMNS="(i, f, c, v)",
+                FROM="from",
+                CREDENTIALS="credentials",
+                OPTIONAL_ARGS="",
+            )
+        )
+    )
+
+    _fetch_values_from_table_and_assert(redshift)
