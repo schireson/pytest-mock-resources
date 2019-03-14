@@ -6,7 +6,7 @@ from pytest_mock_resources.fixture.database.mock_s3_unload import execute_mock_s
 
 
 def substitute_execute_with_custom_execute(redshift):
-    """Substitue the default execute method with a custom execute for copy and unload command."""
+    """Substitute the default execute method with a custom execute for copy and unload command."""
     default_execute = redshift.execute
 
     def custom_execute(statement, *args, **kwargs):
