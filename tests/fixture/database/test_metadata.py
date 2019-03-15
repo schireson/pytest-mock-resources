@@ -8,7 +8,7 @@ from pytest_mock_resources import create_postgres_fixture, Rows
 Base = declarative_base()
 
 
-class Quarter(Base):
+class Quarter(Base):  # type: ignore
     __tablename__ = "quarter"
     __table_args__ = {"schema": "public"}
 
@@ -17,7 +17,7 @@ class Quarter(Base):
     quarter = Column(SmallInteger, nullable=False)
 
 
-class Report(Base):
+class Report(Base):  # type: ignore
     __tablename__ = "report"
 
     id = Column(Integer, primary_key=True)
