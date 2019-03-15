@@ -29,7 +29,7 @@ def test_unload(redshift):
         )
     )
 
-    fetch_values_from_s3_and_assert(is_gzipped=False)
+    fetch_values_from_s3_and_assert(redshift, is_gzipped=False)
 
 
 @mock_s3
@@ -48,7 +48,7 @@ def test_unload_case_senesitivity(redshift):
         )
     )
 
-    fetch_values_from_s3_and_assert(is_gzipped=False)
+    fetch_values_from_s3_and_assert(redshift, is_gzipped=False)
 
 
 @mock_s3
@@ -67,7 +67,7 @@ def test_unload_gzipped(redshift):
         )
     )
 
-    fetch_values_from_s3_and_assert(file_name="myfile.csv.gz", is_gzipped=True)
+    fetch_values_from_s3_and_assert(redshift, file_name="myfile.csv.gz", is_gzipped=True)
 
 
 @mock_s3
@@ -91,7 +91,7 @@ def test_inverted_credentials_string(redshift):
         )
     )
 
-    fetch_values_from_s3_and_assert(is_gzipped=False)
+    fetch_values_from_s3_and_assert(redshift, is_gzipped=False)
 
 
 @mock_s3
@@ -110,7 +110,7 @@ def test_optional_keywords(redshift):
         )
     )
 
-    fetch_values_from_s3_and_assert(is_gzipped=False, sep=",")
+    fetch_values_from_s3_and_assert(redshift, is_gzipped=False, sep=",")
 
 
 @mock_s3
@@ -129,7 +129,7 @@ def test_random_spacing(redshift):
         )
     )
 
-    fetch_values_from_s3_and_assert(is_gzipped=False, sep=",")
+    fetch_values_from_s3_and_assert(redshift, is_gzipped=False, sep=",")
 
 
 @mock_s3
@@ -179,4 +179,4 @@ def test_multiple_sql_statemts(redshift):
         )
     )
 
-    fetch_values_from_s3_and_assert(is_gzipped=False)
+    fetch_values_from_s3_and_assert(redshift, is_gzipped=False)

@@ -8,5 +8,5 @@ from pytest_mock_resources.fixture.database import (  # noqa
     create_sqlite_fixture,
     create_postgres_fixture,
     create_mongo_fixture,
-    patch_create_engine,
 )
+from pytest_mock_resources.patch import patch_create_engine, patch_psycopg2_connect  # noqa
