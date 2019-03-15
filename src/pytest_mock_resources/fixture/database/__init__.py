@@ -1,4 +1,4 @@
-from pytest_mock_resources.fixture.database.database import (  # noqa
+from pytest_mock_resources.fixture.database.relational import (  # noqa
     PG_HOST,
     PG_PORT,
     Rows,
@@ -9,5 +9,3 @@ from pytest_mock_resources.fixture.database.database import (  # noqa
 )
 
 from pytest_mock_resources.fixture.database.mongo import create_mongo_fixture  # noqa
-
-from pytest_mock_resources.fixture.database.engine_modifications import patch_create_engine  # noqa

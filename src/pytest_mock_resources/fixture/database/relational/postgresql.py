@@ -2,14 +2,11 @@ import abc
 
 import pytest
 import six
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy import MetaData
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 from pytest_mock_resources.container.postgres import config, get_sqlalchemy_engine
-from pytest_mock_resources.fixture.database.engine_modifications import (
-    substitute_execute_with_custom_execute,
-)
 
 
 @pytest.fixture(scope="session")
@@ -85,24 +82,6 @@ class Statements(AbstractAction):
             engine.execute(statement)
 
 
-def create_sqlite_fixture(*ordered_actions, **kwargs):
-    scope = kwargs.pop("scope", "function")
-    tables = kwargs.pop("tables", None)
-
-    if len(kwargs):
-        raise KeyError("Unsupported Arguments: {}".format(kwargs))
-
-    @pytest.fixture(scope=scope)
-    def _():
-        engine = create_engine("sqlite://")
-
-        _run_actions(engine, ordered_actions, tables=tables)
-
-        return engine
-
-    return _
-
-
 def create_postgres_fixture(*ordered_actions, **kwargs):
     scope = kwargs.pop("scope", "function")
     tables = kwargs.pop("tables", None)
@@ -120,30 +99,6 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
         _run_actions(engine, ordered_actions, tables=tables)
 
         return engine
-
-    return _
-
-
-def create_redshift_fixture(*ordered_actions, **kwargs):
-    scope = kwargs.pop("scope", "function")
-    tables = kwargs.pop("tables", None)
-
-    if len(kwargs):
-        raise KeyError("Unsupported Arguments: {}".format(kwargs))
-
-    from pytest_mock_resources.fixture.database.udf import REDSHIFT_UDFS
-
-    ordered_actions = ordered_actions + (REDSHIFT_UDFS,)
-
-    @pytest.fixture(scope=scope)
-    def _(_postgres_container):
-        database_name = _create_clean_database()
-        engine = get_sqlalchemy_engine(database_name)
-
-        engine.database = database_name
-        _run_actions(engine, ordered_actions, tables=tables)
-
-        return substitute_execute_with_custom_execute(engine)
 
     return _
 
