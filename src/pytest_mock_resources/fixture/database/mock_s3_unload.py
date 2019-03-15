@@ -4,7 +4,7 @@ import tempfile
 import boto3
 import pandas
 
-from pytest_mock_resources.fixture.database.mock_s3_copy import _strip
+from pytest_mock_resources.fixture.database.mock_s3_copy import strip
 
 
 def execute_mock_s3_unload_command(statement, engine):
@@ -23,7 +23,7 @@ def execute_mock_s3_unload_command(statement, engine):
 
 def _parse_s3_command(statement):
     """Format and Parse 'UNLOAD' command."""
-    statement = _strip(statement)
+    statement = strip(statement)
     params = dict()
 
     # deleting 'unload'
@@ -64,7 +64,7 @@ def _parse_s3_command(statement):
                 "[GZIP] [DELIMITER [ AS ] 'delimiter-char']"
             ).format(statement=statement)
         )
-    params["s3_uri"] = _strip(tokens.pop(0))
+    params["s3_uri"] = strip(tokens.pop(0))
 
     # Fetching authorization
     for token in tokens:
@@ -105,7 +105,7 @@ def _parse_s3_command(statement):
     # Fetching GZIP Flag
     params["gzip"] = False
     for token in tokens:
-        if _strip(token.lower()) == "gzip":
+        if strip(token.lower()) == "gzip":
             params["gzip"] = True
 
     # Fetching delimiter
@@ -113,9 +113,9 @@ def _parse_s3_command(statement):
         if token.lower() == "delimiter":
             try:
                 if tokens[index + 1].lower() != "as":
-                    params["delimiter"] = _strip(tokens[index + 1])
+                    params["delimiter"] = strip(tokens[index + 1])
                 else:
-                    params["delimiter"] = _strip(tokens[index + 2])
+                    params["delimiter"] = strip(tokens[index + 2])
             except IndexError:
                 raise ValueError(
                     (

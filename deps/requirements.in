@@ -1,9 +1,10 @@
 boto3
+decorator
 docker>=2.5.1
 moto
 pandas
-pytest
 pymongo
+pytest
 responses
 sqlalchemy
 sqlparse
