@@ -2,12 +2,13 @@ import random
 
 import boto3
 import pandas
+import psycopg2
 from moto import mock_s3
 from pandas.util.testing import assert_frame_equal
 from sqlalchemy import create_engine
 
-from pytest_mock_resources.fixture.database.mock_s3_copy import read_dataframe_csv
-from pytest_mock_resources.fixture.database.mock_s3_unload import get_dataframe_csv
+from pytest_mock_resources.patch.redshift.mock_s3_copy import read_dataframe_csv
+from pytest_mock_resources.patch.redshift.mock_s3_unload import get_dataframe_csv
 
 original_df = pandas.DataFrame(
     data=[(3342, 32434.0, "a", "gfhsdgaf"), (3343, 0, "b", None), (0, 32434.0, None, "gfhsdgaf")],
@@ -31,18 +32,27 @@ UNLOAD_TEMPLATE = (
 )
 
 
-def fetch_values_from_table_and_assert(redshift):
-    execute = redshift.execute("SELECT * from test_s3_copy_into_redshift")
+def fetch_values_from_table_and_assert(engine):
+    execute = engine.execute("SELECT * from test_s3_copy_into_redshift")
     results = [row for row in execute]
-    redshift.execute("DROP TABLE test_s3_copy_into_redshift")
+    engine.execute("DROP TABLE test_s3_copy_into_redshift")
     assert len(results) == len(values_as_list)
     for index, val in enumerate(results):
         assert results[index] == tuple(values_as_list[index])
 
 
+def fetch_and_assert_psycopg2(cursor):
+    cursor.execute("SELECT * from test_s3_copy_into_redshift")
+    results = cursor.fetchall()
+    assert len(results) == len(values_as_list)
+    for index, val in enumerate(results):
+        assert results[index] == tuple(values_as_list[index])
+    cursor.execute("DROP TABLE test_s3_copy_into_redshift")
+
+
 def setup_table_and_bucket(redshift, file_name="file.csv"):
     redshift.execute(
-        "CREATE TEMP TABLE test_s3_copy_into_redshift (i INT, f FLOAT, c CHAR(1), v VARCHAR(16));"
+        "CREATE TABLE test_s3_copy_into_redshift (i INT, f FLOAT, c CHAR(1), v VARCHAR(16));"
     )
 
     conn = boto3.resource(
@@ -57,7 +67,7 @@ def setup_table_and_bucket(redshift, file_name="file.csv"):
 
 def setup_table_and_insert_data(engine):
     engine.execute(
-        "CREATE TEMP TABLE test_s3_unload_from_redshift (i INT, f FLOAT, c CHAR(1), v VARCHAR(16));"
+        "CREATE TABLE test_s3_unload_from_redshift (i INT, f FLOAT, c CHAR(1), v VARCHAR(16));"
     )
 
     engine.execute(
@@ -69,7 +79,7 @@ def setup_table_and_insert_data(engine):
     )
 
 
-def fetch_values_from_s3_and_assert(file_name="myfile.csv", is_gzipped=False, sep="|"):
+def fetch_values_from_s3_and_assert(engine, file_name="myfile.csv", is_gzipped=False, sep="|"):
     s3 = boto3.client(
         "s3",
         aws_access_key_id="AAAAAAAAAAAAAAAAAAAA",
@@ -78,6 +88,7 @@ def fetch_values_from_s3_and_assert(file_name="myfile.csv", is_gzipped=False, se
     response = s3.get_object(Bucket="mybucket", Key=file_name)
     dataframe = read_dataframe_csv(response["Body"].read(), is_gzipped=is_gzipped, sep=sep)
     assert_frame_equal(dataframe, original_df)
+    engine.execute("DROP TABLE test_s3_unload_from_redshift")
 
 
 def randomcase(s):
@@ -103,11 +114,52 @@ def copy_fn_to_test_create_engine_patch(redshift):
     fetch_values_from_table_and_assert(engine)
 
 
+@mock_s3
+def copy_fn_to_test_psycopg2_connect_patch(config):
+    conn = psycopg2.connect(**config)
+    conn.autocommit = True
+    cursor = conn.cursor()
+    setup_table_and_bucket(cursor)
+
+    cursor.execute(
+        COPY_TEMPLATE.format(
+            COMMAND="COPY",
+            LOCATION="s3://mybucket/file.csv",
+            COLUMNS="",
+            FROM="from",
+            CREDENTIALS="credentials",
+            OPTIONAL_ARGS="",
+        )
+    )
+
+    fetch_and_assert_psycopg2(cursor)
+
+
+@mock_s3
+def copy_fn_to_test_psycopg2_connect_patch_as_context_manager(config):
+    with psycopg2.connect(**config) as conn:
+        conn.autocommit = True
+        with conn.cursor() as cursor:
+            setup_table_and_bucket(cursor)
+
+            cursor.execute(
+                COPY_TEMPLATE.format(
+                    COMMAND="COPY",
+                    LOCATION="s3://mybucket/file.csv",
+                    COLUMNS="",
+                    FROM="from",
+                    CREDENTIALS="credentials",
+                    OPTIONAL_ARGS="",
+                )
+            )
+
+            fetch_and_assert_psycopg2(cursor)
+
+
 @mock_s3()
 def unload_fn_to_test_create_engine_patch(redshift):
     engine = create_engine(redshift.url)
     setup_table_and_insert_data(engine)
-
     engine.execute(
         UNLOAD_TEMPLATE.format(
             COMMAND="UNLOAD",
@@ -119,4 +171,46 @@ def unload_fn_to_test_create_engine_patch(redshift):
         )
     )
 
-    fetch_values_from_s3_and_assert(is_gzipped=False)
+    fetch_values_from_s3_and_assert(engine, is_gzipped=False)
+
+
+@mock_s3()
+def unload_fn_to_test_psycopg2_connect_patch(config):
+    conn = psycopg2.connect(**config)
+    conn.autocommit = True
+    cursor = conn.cursor()
+    setup_table_and_insert_data(cursor)
+
+    cursor.execute(
+        UNLOAD_TEMPLATE.format(
+            COMMAND="UNLOAD",
+            SELECT_STATEMENT="select * from test_s3_unload_from_redshift",
+            TO="TO",
+            LOCATION="s3://mybucket/myfile.csv",
+            AUTHORIZATION="AUTHORIZATION",
+            OPTIONAL_ARGS="",
+        )
+    )
+
+    fetch_values_from_s3_and_assert(cursor, is_gzipped=False)
+
+
+@mock_s3()
+def unload_fn_to_test_psycopg2_connect_patch_as_context_manager(config):
+    with psycopg2.connect(**config) as conn:
+        conn.autocommit = True
+        with conn.cursor() as cursor:
+            setup_table_and_insert_data(cursor)
+
+            cursor.execute(
+                UNLOAD_TEMPLATE.format(
+                    COMMAND="UNLOAD",
+                    SELECT_STATEMENT="select * from test_s3_unload_from_redshift",
+                    TO="TO",
+                    LOCATION="s3://mybucket/myfile.csv",
+                    AUTHORIZATION="AUTHORIZATION",
+                    OPTIONAL_ARGS="",
+                )
+            )
+
+            fetch_values_from_s3_and_assert(cursor, is_gzipped=False)

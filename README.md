@@ -691,6 +691,53 @@ def test_main(redshift, PG_HOST, PG_PORT):
 ```
 
 
+
+#### Patch for Psycopg2.connect()
+Consider the following module that uses `psycopg2.connect` method to create a cursor and then use that cursor to run a `COPY` command:
+
+```python
+# src/app.py
+import psycopg2
+
+
+def main(args):
+    with psycopg2.connect(args.config) as conn:
+        with conn.cursor() as cursor:
+            return run_major_thing(cursor)
+
+def run_major_thing(cursor):
+    cursor.execute(
+        """
+        COPY x.y FROM 's3://bucket/file.csv' credentials....
+        """
+    )
+```
+You can choose to test this module without using the `redshift fixture` provided with `pytest_mock_resources`. To do so, you will need to use `patch_psycopg2_connect` decorator. This allows the connection returned by `psycopg2.connect` to support a custom cursor that can support `COPY` and `UNLOAD` statements.
+
+```python
+#test/test_app
+
+from pytest_mock_resources import create_redshift_fixture, patch_create_engine, PG_HOST, PG_PORT
+
+redshift = create_redshift_fixture()
+PG_HOST = PG_HOST
+PG_PORT = PG_PORT
+
+from app import main
+
+@patch_psycopg2_connect('app.psycopg2.connect')
+def test_main(redshift, PG_HOST, PG_PORT):
+    config = {
+        'database': redshift.database,
+        'username': 'user',
+        'password': 'password',
+        'host': PG_HOST,
+        'port': PG_PORT,
+    }
+
+    assert main(config) == ....
+```
+
 ## Need help?
 
 Contact Omar Khan via slack or omar@schireson.com.

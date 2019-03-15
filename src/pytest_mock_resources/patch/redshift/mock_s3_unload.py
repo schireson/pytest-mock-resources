@@ -4,7 +4,7 @@ import tempfile
 import boto3
 import pandas
 
-from pytest_mock_resources.fixture.database.mock_s3_copy import strip
+from pytest_mock_resources.patch.redshift.mock_s3_copy import strip
 
 
 def execute_mock_s3_unload_command(statement, engine):
