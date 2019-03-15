@@ -23,7 +23,7 @@ def execute_mock_s3_copy_command(statement, engine):
 
 def _parse_s3_command(statement):
     """Format, Parse and call patched 'COPY' command."""
-    statement = _strip(statement)
+    statement = strip(statement)
     params = dict()
 
     # deleting copy
@@ -60,7 +60,7 @@ def _parse_s3_command(statement):
                 "aws_secret_access_key=<aws_secret_access_key>'"
             ).format(statement=statement)
         )
-    params["s3_uri"] = _strip(tokens.pop(0))
+    params["s3_uri"] = strip(tokens.pop(0))
 
     # Fetching credentials
     for token in tokens:
@@ -130,7 +130,7 @@ def _mock_s3_copy(
     is_gzipped = binascii.hexlify(response["Body"].read(2)) == b"1f8b"
 
     response = s3.get_object(Bucket=bucket, Key=key)
-    dataframe = _read_dataframe_csv(response["Body"].read(), is_gzipped, columns)
+    dataframe = read_dataframe_csv(response["Body"].read(), is_gzipped, columns)
 
     sql_database = SQLDatabase(engine=engine, schema=schema_name)
 
@@ -144,14 +144,14 @@ def _mock_s3_copy(
     sql_table.insert()
 
 
-def _read_dataframe_csv(file, is_gzipped=False, columns=None):
+def read_dataframe_csv(file, is_gzipped=False, columns=None, sep="|"):
     compression = "infer"
     if is_gzipped:
         compression = "gzip"
 
     return pandas.read_csv(
         BytesIO(file),
-        sep="|",
+        sep=sep,
         encoding="utf8",
         quoting=csv.QUOTE_NONE,
         doublequote=False,
@@ -162,6 +162,6 @@ def _read_dataframe_csv(file, is_gzipped=False, columns=None):
     )
 
 
-def _strip(input_string):
+def strip(input_string):
     """Strip trailing whitespace, single/double quotes."""
     return input_string.strip().rstrip(";").strip('"').strip("'")

@@ -11,14 +11,15 @@ aws-xray-sdk==0.95        # via moto
 backports.ssl-match-hostname==3.7.0.1  # via docker
 backports.tempfile==1.0   # via moto
 backports.weakref==1.0.post1  # via backports.tempfile
-boto3==1.9.115
+boto3==1.9.116
 boto==2.49.0              # via moto
-botocore==1.12.115        # via boto3, moto, s3transfer
+botocore==1.12.116        # via boto3, moto, s3transfer
 certifi==2019.3.9         # via requests
 cffi==1.12.2              # via cryptography
 chardet==3.0.4            # via requests
 cookies==2.2.1            # via responses
 cryptography==2.6.1       # via moto
+decorator==4.4.0
 docker-pycreds==0.4.0     # via docker
 docker==3.7.0
 docutils==0.14            # via botocore
@@ -53,7 +54,7 @@ python-jose==2.0.2        # via moto
 pytz==2018.9              # via moto, pandas
 pyyaml==5.1               # via pyaml
 requests==2.21.0          # via aws-xray-sdk, docker, moto, responses
-responses==0.10.5
+responses==0.10.6
 s3transfer==0.2.0         # via boto3
 scandir==1.10.0           # via pathlib2
 six==1.12.0               # via cryptography, docker, docker-pycreds, mock, more-itertools, moto, pathlib2, pytest, python-dateutil, python-jose, responses, websocket-client
@@ -61,6 +62,6 @@ sqlalchemy==1.3.1
 sqlparse==0.3.0
 urllib3==1.24.1           # via botocore, requests
 websocket-client==0.55.0  # via docker
-werkzeug==0.14.1          # via moto
+werkzeug==0.15.0          # via moto
 wrapt==1.11.1             # via aws-xray-sdk
 xmltodict==0.12.0         # via moto

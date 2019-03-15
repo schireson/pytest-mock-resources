@@ -641,6 +641,56 @@ def test_copy_from_s3_file(redshift):
 This combines all the individual sql statements of the COPY command example into a single statement.<br>
 **NOTE:** Notice each command was followed by a `;`. This is necessary and without it the statements will fail to execute.
 
+
+
+#### Patch for SQLAlchemy's create_engine()
+Consider the following module that uses SQLAlchemy's `create_engine` method to create a redshift engine and then use that engine to run a `COPY` command:
+
+```python
+# src/app.py
+from sqlalchemy import create_engine
+
+
+def main(args):
+    engine = get_redshift_engine(args.config)
+
+    return run_major_thing(engine)
+
+def get_redshift_engine(config):
+    return create_engine(**config)
+
+def run_major_thing(engine):
+    engine.execute(
+        """
+        COPY x.y FROM 's3://bucket/file.csv' credentials....
+        """
+    )
+```
+You can choose to test this module without using the `redshift fixture` provided with `pytest_mock_resources`. To do so, you will need to use `patch_create_engine` decorator. This allows an engine returned by a `create_engine()` method to support `COPY` and `UNLOAD` statements.
+
+```python
+#test/test_app
+
+from pytest_mock_resources import create_redshift_fixture, patch_create_engine
+
+redshift = create_redshift_fixture()
+
+from app import main
+
+@patch_create_engine('app.create_engine')
+def test_main(redshift, PG_HOST, PG_PORT):
+    config = {
+        'database': redshift.database,
+        'username': 'user',
+        'password': 'password',
+        'host': PG_HOST,
+        'port': PG_PORT,
+    }
+
+    assert main(config) == ....
+```
+
+
 ## Need help?
 
 Contact Omar Khan via slack or omar@schireson.com.
