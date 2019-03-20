@@ -1,5 +1,7 @@
 from pytest_mock_resources.container import HOST, _postgres_container, _mongo_container  # noqa
 from pytest_mock_resources.fixture.database import (  # noqa
+    MONGO_HOST,
+    MONGO_PORT,
     PG_HOST,
     PG_PORT,
     Rows,
