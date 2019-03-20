@@ -4,6 +4,16 @@ from pymongo import MongoClient
 from pytest_mock_resources.container.mongo import config
 
 
+@pytest.fixture(scope="session")
+def MONGO_HOST():
+    return config["host"]
+
+
+@pytest.fixture(scope="session")
+def MONGO_PORT():
+    return config["port"]
+
+
 def create_mongo_fixture(**kwargs):
     scope = kwargs.pop("scope", "function")
 
@@ -12,14 +22,12 @@ def create_mongo_fixture(**kwargs):
 
     @pytest.fixture(scope=scope)
     def _(_mongo_container):
-        engine = _create_clean_database_return_engine()
-
-        return engine
+        return _create_clean_database()
 
     return _
 
 
-def _create_clean_database_return_engine():
+def _create_clean_database():
     #  Connects to the "admin" database with root/example
     client = MongoClient(
         config["host"], config["port"], username=config["username"], password=config["password"]
@@ -28,10 +36,10 @@ def _create_clean_database_return_engine():
 
     # Create a collection called `pytestMockResourceDbs' in the admin tab if it hasnt already been
     # created.
-    dbs_collections = db["pytestMockResourcesDbs"]
+    db_collection = db["pytestMockResourcesDbs"]
 
     #  create a Document in the `pytestMockResourcesDbs` collection:
-    result = dbs_collections.insert_one({})
+    result = db_collection.insert_one({})
     db_id = str(result.inserted_id)
 
     #  Create a database where the name is equal to that ID:
@@ -44,4 +52,7 @@ def _create_clean_database_return_engine():
     limited_client = MongoClient("localhost", config["port"])
     db = limited_client[db_id]
     db.authenticate(db_id, config["password"])
+
+    db.config = {"username": db_id, "password": config["password"], "database": db_id}
+
     return db

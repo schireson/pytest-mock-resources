@@ -16,6 +16,10 @@ Currently available resources:
 
       from pytest_mock_resources import create_redshift_fixture
 
+* Mock Mongo
+
+      from pytest_mock_resources import create_mongo_fixture
+
 * Mock SQLite
 
       from pytest_mock_resources import create_sqlite_fixture
@@ -42,6 +46,8 @@ NOTE: The `[postgres]` suffix in the install command above is only necessary if 
 
 ### Running the tests in CircleCI
 
+#### Postgres and Redshift
+
 Add the following section to ALL jobs that will be running tests with `redshift` or `postgres` fixtures:
 
     jobs:
@@ -49,7 +55,7 @@ Add the following section to ALL jobs that will be running tests with `redshift`
           docker:
           - image: <IMAGE>  // schireson/cicd-python... circleci/python:2.7.14... etc
           - image: postgres:9.6.10-alpine
-              environment:
+            environment:
               POSTGRES_DB: dev
               POSTGRES_USER: user
               POSTGRES_PASSWORD: password
@@ -58,6 +64,25 @@ Add the following section to ALL jobs that will be running tests with `redshift`
           ...
 
 You will receive a `ContainerCheckFailed: Unable to connect to [...] Postgres test container` error in CI if the above is not added to you job config.
+
+#### Mongo
+
+Add the following section to ALL jobs that will be running tests with `mongo` fixtures:
+
+    jobs:
+      <YOUR JOB NAME>:
+          docker:
+          - image: <IMAGE>  // schireson/cicd-python... circleci/python:2.7.14... etc
+          - image: mongo:3.6
+            environment:
+              MONGO_INITDB_ROOT_USERNAME: user
+              MONGO_INITDB_ROOT_PASSWORD: password
+          steps:
+          - checkout
+          ...
+
+You will receive a `ContainerCheckFailed: Unable to connect to [...] Mongo test container` error in CI if the above is not added to you job config.
+
 
 ### Running tests locally
 
@@ -77,8 +102,17 @@ If you have any test with a dependency on a Postgres or Redshift fixture, pytest
 
 This process can take some seconds on initial test startup, you can avoid this startup cost by up-ing your own detached container for pytest to use:
 
+For Redshift and Postgres:
+
 ```bash
 $ docker run -d -p 5532:5432 -e POSTGRES_DB=dev -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password postgres:9.6.10-alpine
+711f5d5a86896bb4eb76813af4fb6616aee0eff817cdec6ebaf4daa0e9995441
+```
+
+For Mongo:
+
+```bash
+$ docker run -d -p 28017:27017 -e MONGO_INITDB_ROOT_USERNAME=user -e MONGO_INITDB_ROOT_PASSWORD=password mongo:3.6
 711f5d5a86896bb4eb76813af4fb6616aee0eff817cdec6ebaf4daa0e9995441
 ```
 
@@ -99,7 +133,7 @@ $ docker stop 711f5d5a8689  # where 711f5d5a8689 is the `CONTAINER ID` from `doc
 
 ## Database Fixtures
 
-### Introduction to Database Fixtures
+### Relational Database Fixtures
 
 This package gives you the capability to create as many mock SQLite, Postgres and Redshift instances with whatever preset data, functions or DDL you need.
 
@@ -343,7 +377,7 @@ Even if you don't plan on using SQLAlchemy models or the ORM layer throughout yo
 * If you are working on a project with pre-existing DDL, you can use the awesome [sqlacodegen](https://github.com/agronholm/sqlacodegen) to generate the models from your current DDL!
 * If you are working on a new project which requires a SQL Database layer, we HIGHLY recommend using SQLAlchemy in combination with [alembic](https://alembic.sqlalchemy.org/en/latest/) to create and maintain your DDL.
 
-##### Example using vantage-redshift-schema
+#### SQLAlchemy metadata example using vantage-redshift-schema
 
 ```python
 # tests/conftest.py:
@@ -419,7 +453,6 @@ def test_something_exists(redshift):
     assert ["ABCDE"] == result
 ```
 
-
 #### Rows Example
 
 If you are using SQLAlchemy to maintain your DDL, you have the capability to use the `Rows` class to conveniently pre-populate your db fixture with DDL and data in a single line.
@@ -472,18 +505,20 @@ def test_something_exists(redshift):
 
 #### Function as an Argument Example
 
-Uses can supply a function as an input argument to the fixtures. The function would take in a session argument and expect the user to add and execute things as they see fit. Using this, users can test complex relationships amongst tables.<br>
-In the following example, we define 2 classes, `User` and `Object`, with a one-to-many relationship.
+Uses can supply a function as an input argument to the fixtures as well:
 
 ```python
 
+# Create models with relationships
 class User(Base):
     __tablename__ = "user"
     __table_args__ = {"schema": "stuffs"}
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
+
     objects = relationship("Object", back_populates="owner")
+
 
 class Object(Base):
     __tablename__ = "object"
@@ -492,24 +527,20 @@ class Object(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
     belongs_to = Column(Integer, ForeignKey('stuffs.user.id'))
+
     owner = relationship("User", back_populates="objects")
-```
 
-We also define a function that will be passed to a Postgres fixture as an argument. In the function we define a nested instantiation.
 
-```python
-
+# Leverage model relationships in a seed data function
 def session_fn(session):
     session.add(User(name='Fake Name', objects=[Object(name='Boots')]))
 
+
+# Leverage seed data function to create seeded fixture
 postgres = create_postgres_fixture(Base, session_fn)
 
-```
 
-An Example Test to test the previously defined fixture. In the test we assert that the relationships previously defined are maintained in the mock database.
-
-```python
-
+# Leverage seeded fixture
 def test_session_function(postgres):
     execute = postgres.execute("SELECT * FROM stuffs.object")
     owner_id = sorted([row[2] for row in execute])[0]
@@ -521,130 +552,11 @@ def test_session_function(postgres):
 
 ```
 
-#### COPY Statements for Redshift Fixture Example
-Users can run `COPY` statements locally using the redshift fixture.<br>
-Consider a table `items` with columns `(id, name, price)`and a `.csv` stored on an S3 bucket with the following url: `s3://mybucket/myfile.csv`. To copy data from the said file to the `items` table, the redshift fixture supports the following command locally:
-<br>
-```python
-# tests/test_something.py
+#### Support Redshift COPY and UNLOAD in SQLAlchemy Engines
 
-redshift = create_redshift_fixture()
+**Redshift COPY and UNLOAD statements are SUPPORTED OUT OF THE BOX in the redshift engine that is yielded from each redshift fixture.**
 
-def test_copy_from_s3_file(redshift):
-    redshift.execute(
-        "CREATE TABLE items (id INT, name VARCHAR(16), price CHAR(1));"
-    )
-    redshift.execute(
-        (
-            "COPY items (id, name, price) from `s3://mybucket/myfile.csv` "
-            "credentials 'aws_access_key_id=<AWS_ACCESS_KEY_ID>;"
-            "aws_secret_access_key=<AWS_SECRET_ACCESS_KEY>'"
-        )
-    )
-
-    execute = redshift.execute('SELECT * FROM items')
-
-    # Assert data in table equals data in .csv file.
-```
-
-#### UNLOAD Statements for Redshift Fixture Example:
-Users can run `UNLOAD` statements locally using the redshift fixture.<br>
-Consider a table `employees` with some data already present in it. To 'unload' this data in `.csv` format to the following S3 bucket: `s3://mybucket/myfile.csv`, the redshift fixture supports the following command locally<br>
-
-```python
-# tests/test_something.py
-import boto3
-from pytest_mock_resources import create_redshift_fixture
-
-redshift = create_redshift_fixture()
-
-def test_unload_to_s3_file(redshift):
-    redshift.execute(
-        (
-            "UNLOAD ('SELECT * from employees')"
-            "TO 's3://mybucket/myfile.csv'"
-            "AUTHORIZATION 'aws_access_key_id=<AWS_ACCESS_KEY_ID>;>"
-            "aws_secret_access_key=<AWS_SECRET_ACCESS_KEY>"
-        )
-    )
-
-    conn = boto3.client(
-        "s3", aws_access_key_id=<aws_access_key_id>, aws_secret_access_key=<aws_secret_access_key>
-    )
-    response = conn.get_object(Bucket=bucket, Key=key)
-    # Assert data in response equals data in table.
-
-```
-
-#### MongoDB Fixture Example:
-
-Users can test MongoDB commands/functions using the `create_mongo_fixture`. Consider the following example:<br>
-Let `customer` be a collection, and `insert_into_customer`, a functions that inserts data into this collection.
-
-```python
-# src/some_module.py
-
-def insert_into_customer(mongodb_connection):
-    collection = mongodb_connection['customer']
-    to_insert = {"name": "John", "address": "Highway 37"}
-    collection.insert_one(to_insert)
-
-```
-
-A user can test this as follows:
-
-```python
-# test/some_test.py
-
-from pytest_mock_resources import create_mongo_fixture
-from some_module import insert_into_customer
-
-mongo = create_mongo_fixture()
-
-def test_insert_into_customer(mongo):
-    insert_into_customer(mongo)
-    collection = mongo['customer']
-    returned = collection.find_one()
-    # This assumes that there as no previously stored data in the collection.
-    assert returned == {"name": "John", "address": "Highway 37"}
-
-```
-
-
-#### Support for multiple SQL statements
-
-Users can combine multiple sql statements, including the aforementioned `COPY` and `UNLOAD` statements, into a single query. Consider the following example:
-
-```python
-# tests/some_test.py
-from moto import mock_s3
-from pytest_mock_resources import create_redshift_fixture
-
-redshift = create_redshift_fixture()
-
-
-@mock_s3
-def test_copy_from_s3_file(redshift):
-    execute = redshift.execute(
-        (
-            "CREATE TABLE items (id INT, name VARCHAR(16), price CHAR(1));"
-            "COPY items (id, name, price) from 's3://mybucket/myfile.csv' "
-            "credentials 'aws_access_key_id=<AWS_ACCESS_KEY_ID>;"
-            "aws_secret_access_key=<AWS_SECRET_ACCESS_KEY>';"
-            "SELECT * FROM items;"
-        )
-    )
-
-    # Assert data in table equals data in .csv file.
-
-```
-This combines all the individual sql statements of the COPY command example into a single statement.<br>
-**NOTE:** Notice each command was followed by a `;`. This is necessary and without it the statements will fail to execute.
-
-
-
-#### Patch for SQLAlchemy's create_engine()
-Consider the following module that uses SQLAlchemy's `create_engine` method to create a redshift engine and then use that engine to run a `COPY` command:
+Consider the following module that creates a redshift engine and then uses said engine to run a `COPY` command:
 
 ```python
 # src/app.py
@@ -666,7 +578,10 @@ def run_major_thing(engine):
         """
     )
 ```
-You can choose to test this module without using the `redshift fixture` provided with `pytest_mock_resources`. To do so, you will need to use `patch_create_engine` decorator. This allows an engine returned by a `create_engine()` method to support `COPY` and `UNLOAD` statements.
+
+To test this WHOLE module, INCLUDING the engine creation, you will need to use `patch_create_engine` decorator.
+
+This allows an engine returned by the `create_engine()` function to support `COPY` and `UNLOAD` statements.
 
 ```python
 #test/test_app
@@ -692,8 +607,11 @@ def test_main(redshift, PG_HOST, PG_PORT):
 
 
 
-#### Patch for Psycopg2.connect()
-Consider the following module that uses `psycopg2.connect` method to create a cursor and then use that cursor to run a `COPY` command:
+#### Support Redshift's COPY and UNLOAD in Psycopg2 Connections
+
+**Redshift COPY and UNLOAD statements are SUPPORTED OUT OF THE BOX on the redshift engine that is yielded from each redshift fixture.**
+
+Consider the following module that uses the `psycopg2.connect` function to create a connection and then uses a cursor to run a `COPY` command:
 
 ```python
 # src/app.py
@@ -712,7 +630,10 @@ def run_major_thing(cursor):
         """
     )
 ```
-You can choose to test this module without using the `redshift fixture` provided with `pytest_mock_resources`. To do so, you will need to use `patch_psycopg2_connect` decorator. This allows the connection returned by `psycopg2.connect` to support a custom cursor that can support `COPY` and `UNLOAD` statements.
+
+To test this, you will need to use `patch_psycopg2_connect` decorator.
+
+This allows the cursors stemming from a `psycopg2` connection to support `COPY` and `UNLOAD` statements.
 
 ```python
 #test/test_app
@@ -737,6 +658,80 @@ def test_main(redshift, PG_HOST, PG_PORT):
 
     assert main(config) == ....
 ```
+
+### MongoDB Fixture
+
+Users can test MongoDB dependant code using the `create_mongo_fixture`.
+
+Consider the following example:
+
+```python
+# src/some_module.py
+
+def insert_into_customer(mongodb_connection):
+    collection = mongodb_connection['customer']
+    to_insert = {"name": "John", "address": "Highway 37"}
+    collection.insert_one(to_insert)
+
+```
+
+A user can test this as follows:
+
+```python
+# test/some_test.py
+
+from pytest_mock_resources import create_mongo_fixture
+from some_module import insert_into_customer
+
+mongo = create_mongo_fixture()
+
+def test_insert_into_customer(mongo):
+    insert_into_customer(mongo)
+
+    collection = mongo['customer']
+    returned = collection.find_one()
+
+    assert returned == {"name": "John", "address": "Highway 37"}
+
+```
+
+#### Custom Connections
+
+Custom connections can also be generated via the fixture's yielded attributes/MONGO_* fixtures:
+
+```python
+# test/some_test.py
+
+from pymongo import MongoClient
+
+from pytest_mock_resources import create_mongo_fixture
+
+mongo = create_mongo_fixture()
+
+
+def test_create_custom_connection(mongo, MONGO_HOST, MONGO_PORT):
+    client = MongoClient(
+        MONGO_HOST,
+        MONGO_PORT,
+        username=mongo.config["username"],
+        password=mongo.config["password"],
+        authSource=mongo.config["database"],
+    )
+    db = client[mongo.config["database"]]
+
+    collection = db["customers"]
+    to_insert = [
+        {"name": "John"},
+        {"name": "Viola"},
+    ]
+    collection.insert_many(to_insert)
+
+    result = collection.find().sort("name")
+    returned = [row for row in result]
+
+    assert returned == to_insert
+```
+
 
 ## Need help?
 

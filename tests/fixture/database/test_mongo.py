@@ -1,3 +1,5 @@
+from pymongo import MongoClient
+
 from pytest_mock_resources import create_mongo_fixture
 
 mongo = create_mongo_fixture()
@@ -41,8 +43,8 @@ def test_insert_all(mongo):
         {"name": "Viola", "address": "Sideway 1633"},
     ]
     collection.insert_many(to_insert)
-    cursor = collection.find().sort("name")
-    returned = [row for row in cursor]
+    result = collection.find().sort("name")
+    returned = [row for row in result]
     assert returned == sorted(to_insert, key=lambda x: x["name"])
 
 
@@ -55,8 +57,8 @@ def test_query(mongo):
     collection.insert_many(to_insert)
 
     query = {"address": "Highway 37"}
-    cursor = collection.find(query).sort("name")
-    returned = [row for row in cursor]
+    result = collection.find(query).sort("name")
+    returned = [row for row in result]
     assert returned == sorted(to_insert, key=lambda x: x["name"])
 
 
@@ -70,8 +72,8 @@ def test_delete_one(mongo):
 
     query = {"name": {"$regex": "^J"}}
     collection.delete_one(query)
-    cursor = collection.find().sort("name")
-    returned = [row for row in cursor]
+    result = collection.find().sort("name")
+    returned = [row for row in result]
 
     assert returned == sorted(to_insert[1:], key=lambda x: x["name"])
 
@@ -87,7 +89,54 @@ def test_delete_all(mongo):
     query = {"address": "Highway 37"}
     collection.delete_many(query)
 
-    cursor = collection.find()
-    returned = [row for row in cursor]
+    result = collection.find()
+    returned = [row for row in result]
 
     assert returned == []
+
+
+mongo_1 = create_mongo_fixture()
+mongo_2 = create_mongo_fixture()
+mongo_3 = create_mongo_fixture()
+
+
+def test_multiple_mongos(mongo_1, mongo_2, mongo_3):
+    def validate_isolation(db_client):
+        collection = db_client["customers"]
+        to_insert = [
+            {"name": "John", "address": "Highway 37"},
+            {"name": "Viola", "address": "Highway 37"},
+        ]
+        collection.insert_many(to_insert)
+
+        result = collection.find().sort("name")
+        returned = [row for row in result]
+
+        assert returned == to_insert
+
+    validate_isolation(mongo_1)
+    validate_isolation(mongo_2)
+    validate_isolation(mongo_3)
+
+
+def test_create_custom_connection(mongo, MONGO_HOST, MONGO_PORT):
+    client = MongoClient(
+        MONGO_HOST,
+        MONGO_PORT,
+        username=mongo.config["username"],
+        password=mongo.config["password"],
+        authSource=mongo.config["database"],
+    )
+    db = client[mongo.config["database"]]
+
+    collection = db["customers"]
+    to_insert = [
+        {"name": "John", "address": "Highway 37"},
+        {"name": "Viola", "address": "Highway 37"},
+    ]
+    collection.insert_many(to_insert)
+
+    result = collection.find().sort("name")
+    returned = [row for row in result]
+
+    assert returned == to_insert

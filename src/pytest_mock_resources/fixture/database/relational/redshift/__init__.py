@@ -17,7 +17,7 @@ def create_redshift_fixture(*ordered_actions, **kwargs):
     if len(kwargs):
         raise KeyError("Unsupported Arguments: {}".format(kwargs))
 
-    from pytest_mock_resources.fixture.database.relational.redshift_udf import REDSHIFT_UDFS
+    from pytest_mock_resources.fixture.database.relational.redshift.udf import REDSHIFT_UDFS
 
     ordered_actions = ordered_actions + (REDSHIFT_UDFS,)
 
