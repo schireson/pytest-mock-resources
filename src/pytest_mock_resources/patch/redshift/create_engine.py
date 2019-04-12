@@ -7,9 +7,12 @@ import sqlparse
 from decorator import decorator
 from sqlalchemy import create_engine
 from sqlalchemy.sql.elements import TextClause
+from sqlalchemy.sql.expression import Insert, Select, Update
 
 from pytest_mock_resources.patch.redshift.mock_s3_copy import execute_mock_s3_copy_command, strip
 from pytest_mock_resources.patch.redshift.mock_s3_unload import execute_mock_s3_unload_command
+
+SQLALCHEMY_BASES = (Select, Insert, Update, TextClause)
 
 
 def substitute_execute_with_custom_execute(engine):
@@ -17,9 +20,13 @@ def substitute_execute_with_custom_execute(engine):
     default_execute = engine.execute
 
     def custom_execute(statement, *args, **kwargs):
-        if not isinstance(statement, TextClause) and strip(statement).lower().startswith("copy"):
+        if not isinstance(statement, SQLALCHEMY_BASES) and strip(statement).lower().startswith(
+            "copy"
+        ):
             return execute_mock_s3_copy_command(statement, engine)
-        if not isinstance(statement, TextClause) and strip(statement).lower().startswith("unload"):
+        if not isinstance(statement, SQLALCHEMY_BASES) and strip(statement).lower().startswith(
+            "unload"
+        ):
             return execute_mock_s3_unload_command(statement, engine)
         return default_execute(statement, *args, **kwargs)
 
@@ -46,7 +53,7 @@ def parse_multiple_statements(statement):
     statements_list = []
 
     # Ignore SQLAlchemy Text Objects.
-    if isinstance(statement, TextClause):
+    if isinstance(statement, SQLALCHEMY_BASES):
         statements_list.append(statement)
         return statements_list
 
