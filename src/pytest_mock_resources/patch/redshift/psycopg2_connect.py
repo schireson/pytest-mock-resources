@@ -22,7 +22,7 @@ class CustomCursor(extensions.cursor):
     def execute(self, sql, args=None):
         dsn_params = self.connection.get_dsn_parameters()
         engine = create_engine(
-            "postgresql://{user}:{password}@{hostname}:{port}/{dbname}".format(
+            "postgresql+psycopg2://{user}:{password}@{hostname}:{port}/{dbname}".format(
                 user=dsn_params["user"],
                 password=config["password"],
                 hostname=dsn_params["host"],

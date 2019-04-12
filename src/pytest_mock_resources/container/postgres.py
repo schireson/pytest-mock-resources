@@ -15,8 +15,9 @@ config = {
 
 
 def get_sqlalchemy_engine(database_name):
+    string = "postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}?sslmode=disable"
     engine = sqlalchemy.create_engine(
-        "postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=disable".format(
+        string.format(
             database=database_name,
             username=config["username"],
             password=config["password"],
