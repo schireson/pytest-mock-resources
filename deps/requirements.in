@@ -3,7 +3,6 @@ decorator
 docker>=2.5.1
 moto
 pandas
-pymongo
 pytest
 responses
 sqlalchemy
