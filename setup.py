@@ -33,7 +33,7 @@ SETUP_REQUIREMENTS = [
 
 setup(
     name='pytest-mock-resources',
-    version='0.1.33',
+    version='0.1.34',
     url='https://github.com/schireson/schireson-pytest-mock-resources',
     author_email='omar@schireson.com',
     author='Omar Khan',
@@ -52,6 +52,7 @@ setup(
     extras_require={
         'develop': parse_requirements(dev_reqs),
         'postgres': ["psycopg2"],
+        'mongo': ["pymongo"],
     },
     entry_points={
         'pytest11': [

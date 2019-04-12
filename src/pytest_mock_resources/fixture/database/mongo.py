@@ -1,5 +1,4 @@
 import pytest
-from pymongo import MongoClient
 
 from pytest_mock_resources.container.mongo import config
 
@@ -28,6 +27,8 @@ def create_mongo_fixture(**kwargs):
 
 
 def _create_clean_database():
+    from pymongo import MongoClient
+
     #  Connects to the "admin" database with root/example
     client = MongoClient(
         config["host"], config["port"], username=config["username"], password=config["password"]

@@ -1,6 +1,4 @@
 import pytest
-from pymongo import MongoClient
-from pymongo.errors import ConnectionFailure
 
 from pytest_mock_resources.container import ContainerCheckFailed, get_container_fn, HOST, IN_CI
 
@@ -16,6 +14,8 @@ config = {
 
 
 def get_pymongo_engine(database_name):
+    from pymongo import MongoClient
+
     client = MongoClient(
         config["host"], config["port"], username=config["username"], password=config["password"]
     )
@@ -29,6 +29,8 @@ def get_pymongo_engine(database_name):
 
 
 def check_mongo_fn():
+    from pymongo.errors import ConnectionFailure
+
     try:
         get_pymongo_engine(config["root_database"])
     except ConnectionFailure:
