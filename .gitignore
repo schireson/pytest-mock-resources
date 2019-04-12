@@ -30,6 +30,7 @@ eggs/
 .mypy_cache/
 dist/
 build/
+pip-wheel-metadata/
 
 # Testing
 .coverage
