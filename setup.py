@@ -31,7 +31,7 @@ SETUP_REQUIREMENTS = ["pytest-runner"]
 
 setup(
     name="pytest-mock-resources",
-    version="0.1.35",
+    version="0.1.36",
     url="https://github.com/schireson/schireson-pytest-mock-resources",
     author_email="omar@schireson.com",
     author="Omar Khan",
@@ -50,5 +50,8 @@ setup(
         "postgres": ["psycopg2"],
         "mongo": ["pymongo"],
     },
-    entry_points={"pytest11": ["mock_resources = pytest_mock_resources"]},
+    entry_points={
+        "pytest11": ["mock_resources = pytest_mock_resources"],
+        'console_scripts': ["pmr = pytest_mock_resources.cli:main"],
+    },
 )
