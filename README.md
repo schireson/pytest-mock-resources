@@ -105,14 +105,14 @@ This process can take some seconds on initial test startup, you can avoid this s
 For Redshift and Postgres:
 
 ```bash
-$ docker run -d -p 5532:5432 -e POSTGRES_DB=dev -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password postgres:9.6.10-alpine
+$ pmr postgres
 711f5d5a86896bb4eb76813af4fb6616aee0eff817cdec6ebaf4daa0e9995441
 ```
 
 For Mongo:
 
 ```bash
-$ docker run -d -p 28017:27017 -e MONGO_INITDB_ROOT_USERNAME=user -e MONGO_INITDB_ROOT_PASSWORD=password mongo:3.6
+$ pmr mongo
 711f5d5a86896bb4eb76813af4fb6616aee0eff817cdec6ebaf4daa0e9995441
 ```
 
