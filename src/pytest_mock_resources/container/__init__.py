@@ -42,7 +42,7 @@ def get_container_fn(image, ports, environment, check_fn):
             except ContainerCheckFailed:
                 client = docker.from_env(version="auto")
                 container = client.containers.run(
-                    image, ports=ports, environment=environment, detach=True
+                    image, ports=ports, environment=environment, detach=True, remove=True
                 )
                 retriable_check_fn(20)
 
