@@ -11,7 +11,7 @@ HOST = "host.docker.internal"
 try:
     socket.gethostbyname(HOST)
 except socket.gaierror:
-    HOST = "localhost"
+    HOST = os.environ.get("PYTEST_MOCK_RESOURCES_HOST", "localhost")
 
 
 class ContainerCheckFailed(Exception):
