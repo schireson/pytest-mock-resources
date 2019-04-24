@@ -1,9 +1,9 @@
+import os
+import socket
 import time
 
 import docker
 import responses
-import os
-import socket
 
 IN_CI = os.getenv("CI") == "true"  # type: bool
 
@@ -55,5 +55,5 @@ def get_container_fn(image, ports, environment, check_fn):
     return wrapped
 
 
-from pytest_mock_resources.container.postgres import _postgres_container  # noqa
-from pytest_mock_resources.container.mongo import _mongo_container  # noqa
+from pytest_mock_resources.container.mongo import _mongo_container  # noqa, isort:skip
+from pytest_mock_resources.container.postgres import _postgres_container  # noqa, isort:skip
