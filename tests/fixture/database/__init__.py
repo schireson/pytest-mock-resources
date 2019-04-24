@@ -54,6 +54,7 @@ def setup_table_and_bucket(redshift, file_name="file.csv"):
     redshift.execute(
         "CREATE TABLE test_s3_copy_into_redshift (i INT, f FLOAT, c CHAR(1), v VARCHAR(16));"
     )
+    redshift.execute("COMMIT;")
 
     conn = boto3.resource(
         "s3",
@@ -69,6 +70,7 @@ def setup_table_and_insert_data(engine):
     engine.execute(
         "CREATE TABLE test_s3_unload_from_redshift (i INT, f FLOAT, c CHAR(1), v VARCHAR(16));"
     )
+    engine.execute("COMMIT;")
 
     engine.execute(
         (
@@ -117,7 +119,6 @@ def copy_fn_to_test_create_engine_patch(redshift):
 @mock_s3
 def copy_fn_to_test_psycopg2_connect_patch(config):
     conn = psycopg2.connect(**config)
-    conn.autocommit = True
     cursor = conn.cursor()
     setup_table_and_bucket(cursor)
 
@@ -138,7 +139,6 @@ def copy_fn_to_test_psycopg2_connect_patch(config):
 @mock_s3
 def copy_fn_to_test_psycopg2_connect_patch_as_context_manager(config):
     with psycopg2.connect(**config) as conn:
-        conn.autocommit = True
         with conn.cursor() as cursor:
             setup_table_and_bucket(cursor)
 
@@ -177,7 +177,6 @@ def unload_fn_to_test_create_engine_patch(redshift):
 @mock_s3()
 def unload_fn_to_test_psycopg2_connect_patch(config):
     conn = psycopg2.connect(**config)
-    conn.autocommit = True
     cursor = conn.cursor()
     setup_table_and_insert_data(cursor)
 
@@ -198,7 +197,6 @@ def unload_fn_to_test_psycopg2_connect_patch(config):
 @mock_s3()
 def unload_fn_to_test_psycopg2_connect_patch_as_context_manager(config):
     with psycopg2.connect(**config) as conn:
-        conn.autocommit = True
         with conn.cursor() as cursor:
             setup_table_and_insert_data(cursor)
 

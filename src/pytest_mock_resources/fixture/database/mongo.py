@@ -1,5 +1,6 @@
 import pytest
 
+from pytest_mock_resources.container import HOST
 from pytest_mock_resources.container.mongo import config
 
 
@@ -50,7 +51,7 @@ def _create_clean_database():
     create_db.command("createUser", db_id, pwd=config["password"], roles=["dbOwner"])
 
     #  pass back an authenticated db connection
-    limited_client = MongoClient("localhost", config["port"])
+    limited_client = MongoClient(HOST, config["port"])
     db = limited_client[db_id]
     db.authenticate(db_id, config["password"])
 
