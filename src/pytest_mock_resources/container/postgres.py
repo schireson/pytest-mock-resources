@@ -23,8 +23,7 @@ def get_sqlalchemy_engine(database_name):
             password=config["password"],
             host=config["host"],
             port=config["port"],
-        ),
-        isolation_level="AUTOCOMMIT",
+        )
     )
 
     # Verify engine is connected
