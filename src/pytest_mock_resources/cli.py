@@ -29,15 +29,7 @@ class FixtureBase(enum.Enum):
             "POSTGRES_PASSWORD=password",
             "postgres:9.6.10-alpine",
         ]
-        mongo_command = [
-            "docker",
-            "run",
-            "-d",
-            "--rm",
-            "-p",
-            "28017:27017",
-            "mongo:3.6",
-        ]
+        mongo_command = ["docker", "run", "-d", "--rm", "-p", "28017:27017", "mongo:3.6"]
         fixture_base_command_map = {
             FixtureBase.MONGO: mongo_command,
             FixtureBase.POSTGRES: postgres_command,
