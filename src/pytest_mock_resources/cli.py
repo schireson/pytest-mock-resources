@@ -36,10 +36,6 @@ class FixtureBase(enum.Enum):
             "--rm",
             "-p",
             "28017:27017",
-            "-e",
-            "MONGO_INITDB_ROOT_USERNAME=user",
-            "-e",
-            "MONGO_INITDB_ROOT_PASSWORD=password",
             "mongo:3.6",
         ]
         fixture_base_command_map = {
