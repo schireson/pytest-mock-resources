@@ -73,10 +73,7 @@ Add the following section to ALL jobs that will be running tests with `mongo` fi
       <YOUR JOB NAME>:
           docker:
           - image: <IMAGE>  // schireson/cicd-python... circleci/python:2.7.14... etc
-          - image: mongo:3.6
-            environment:
-              MONGO_INITDB_ROOT_USERNAME: user
-              MONGO_INITDB_ROOT_PASSWORD: password
+          - image: circleci/mongo:3.6.12
           steps:
           - checkout
           ...

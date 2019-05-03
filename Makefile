@@ -53,21 +53,3 @@ bump:
 bump-minor:
 	# For a backwards incompatible change.
 	lucha version bump --minor
-
-# Use this command to create a detached postgres container.
-# This library's tests create and destroy a container during every run. this makes test-start-up slow.
-# Test runs will be faster as they will not have to orchestrate any container managament.
-up-postgres:
-	docker run -d \
-		-p 5532:5432 \
-		-e POSTGRES_DB=dev \
-		-e POSTGRES_USER=user \
-		-e POSTGRES_PASSWORD=password \
-		postgres:9.6.10-alpine
-
-up-mongo:
-	docker run -d \
-		-p 28017:27017 \
-		-e MONGO_INITDB_ROOT_USERNAME=user \
-		-e MONGO_INITDB_ROOT_PASSWORD=password \
-		mongo:3.6
