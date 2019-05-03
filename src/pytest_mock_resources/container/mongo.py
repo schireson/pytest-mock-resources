@@ -4,8 +4,6 @@ from pytest_mock_resources.container import ContainerCheckFailed, get_container_
 
 # XXX: To become overwritable via pytest config.
 config = {
-    "username": "user",
-    "password": "password",
     "host": HOST,
     "port": 27017 if IN_CI else 28017,
     "root_database": "dev-mongo",
@@ -13,26 +11,21 @@ config = {
 }
 
 
-def get_pymongo_engine(database_name):
+def get_pymongo_client():
     from pymongo import MongoClient
 
-    client = MongoClient(
-        config["host"], config["port"], username=config["username"], password=config["password"]
-    )
-    engine = client[database_name]
+    uri = "mongodb://{}:{}".format(config["host"], config["port"])
 
-    # Check if connection exists
-    # Throws ConnectionFailure on failure
-    engine.command("ismaster")
-
-    return engine
+    return MongoClient(uri)
 
 
 def check_mongo_fn():
     from pymongo.errors import ConnectionFailure
 
     try:
-        get_pymongo_engine(config["root_database"])
+        client = get_pymongo_client()
+        db = client[config["root_database"]]
+        db.command("ismaster")
     except ConnectionFailure:
         raise ContainerCheckFailed(
             "Unable to connect to a presumed MongoDB test container via given config: {}".format(
@@ -42,13 +35,5 @@ def check_mongo_fn():
 
 
 _mongo_container = pytest.fixture("session")(
-    get_container_fn(
-        config["image"],
-        {27017: config["port"]},
-        {
-            "MONGO_INITDB_ROOT_USERNAME": config["username"],
-            "MONGO_INITDB_ROOT_PASSWORD": config["password"],
-        },
-        check_mongo_fn,
-    )
+    get_container_fn(config["image"], {27017: config["port"]}, {}, check_mongo_fn)
 )

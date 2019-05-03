@@ -86,10 +86,7 @@ jobs:
           POSTGRES_DB: dev
           POSTGRES_USER: user
           POSTGRES_PASSWORD: password
-      - image: mongo:3.6
-        environment:
-          MONGO_INITDB_ROOT_USERNAME: user
-          MONGO_INITDB_ROOT_PASSWORD: password
+      - image: circleci/mongo:3.6.12
     steps:
       - checkout
       - restore_cache:
@@ -111,10 +108,7 @@ jobs:
           POSTGRES_DB: dev
           POSTGRES_USER: user
           POSTGRES_PASSWORD: password
-      - image: mongo:3.6
-        environment:
-          MONGO_INITDB_ROOT_USERNAME: user
-          MONGO_INITDB_ROOT_PASSWORD: password
+      - image: circleci/mongo:3.6.12
     steps:
       - checkout
       - restore_cache:
