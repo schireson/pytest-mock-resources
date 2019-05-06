@@ -74,6 +74,7 @@ Add the following section to ALL jobs that will be running tests with `mongo` fi
           docker:
           - image: <IMAGE>  // schireson/cicd-python... circleci/python:2.7.14... etc
           - image: circleci/mongo:3.6.12
+            command: "mongod --journal"
           steps:
           - checkout
           ...

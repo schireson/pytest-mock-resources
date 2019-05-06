@@ -109,6 +109,7 @@ jobs:
           POSTGRES_USER: user
           POSTGRES_PASSWORD: password
       - image: circleci/mongo:3.6.12
+        command: "mongod --journal"
     steps:
       - checkout
       - restore_cache:
