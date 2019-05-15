@@ -38,7 +38,7 @@ cicd-publish-docs: build-docs
 	-- lucha publish docs --package pytest_mock_resources --profile docs --latest
 
 test:
-	pytest
+	pytest -n 4
 
 clean:
 	lucha env clean

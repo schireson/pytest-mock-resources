@@ -104,40 +104,17 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
 
 
 def _create_clean_database():
-    # Database names that include upper case letters must be enclosed in double-quotes.
-    root_engine = get_sqlalchemy_engine(config["root_database"])
-    root_connection = root_engine.connect()
-    root_connection.connection.connection.set_isolation_level(0)
+    root_engine = get_sqlalchemy_engine(config["root_database"], isolation_level="AUTOCOMMIT")
 
-    # Create a unique database name
-    root_connection.execute(
-        """
-        CREATE TABLE IF NOT EXISTS pytest_mock_resource_db(
-            id SERIAL
-        );
-        """
+    result = root_engine.execute(
+        "INSERT INTO pytest_mock_resource_db VALUES (DEFAULT) RETURNING id"
     )
-    root_connection.execute("INSERT INTO pytest_mock_resource_db VALUES (DEFAULT)")
-    database_id_row = root_connection.execute(
-        "SELECT MAX(id) FROM pytest_mock_resource_db"
-    ).fetchone()
+    id_ = tuple(result)[0][0]
+    database_name = "pytest_mock_resource_db_{}".format(id_)
 
-    database_name = "pytest_mock_resource_db_{}".format(database_id_row[0])
-    quoted_database_name = '"{}"'.format(database_name)
-
-    root_connection.execute(
-        """
-        SELECT pg_terminate_backend(pg_stat_activity.pid)
-        FROM pg_stat_activity
-        WHERE pg_stat_activity.datname = '{}' AND pid <> pg_backend_pid()
-        """.format(
-            quoted_database_name
-        )
-    )
-    root_connection.execute("DROP DATABASE IF EXISTS {}".format(quoted_database_name))
-    root_connection.execute("CREATE DATABASE {}".format(quoted_database_name))
-    root_connection.execute(
-        "GRANT ALL PRIVILEGES ON DATABASE {} TO CURRENT_USER".format(quoted_database_name)
+    root_engine.execute('CREATE DATABASE "{}"'.format(database_name))
+    root_engine.execute(
+        'GRANT ALL PRIVILEGES ON DATABASE "{}" TO CURRENT_USER'.format(database_name)
     )
 
     return database_name
