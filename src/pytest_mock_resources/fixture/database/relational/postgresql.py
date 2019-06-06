@@ -2,6 +2,7 @@ import abc
 
 import pytest
 import six
+import sqlalchemy
 from sqlalchemy import MetaData
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -105,6 +106,22 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
 
 def _create_clean_database():
     root_engine = get_sqlalchemy_engine(config["root_database"], isolation_level="AUTOCOMMIT")
+
+    try:
+        root_engine.execute(
+            """
+            CREATE TABLE IF NOT EXISTS pytest_mock_resource_db(
+                id serial
+            );
+            """
+        )
+    except sqlalchemy.exc.IntegrityError:
+        # A race condition may occur during table creation if:
+        #  - another process has already created the table
+        #  - the current process begins creating the table
+        #  - the other process commits the table creation
+        #  - the current process tries to commit the table creation
+        pass
 
     result = root_engine.execute(
         "INSERT INTO pytest_mock_resource_db VALUES (DEFAULT) RETURNING id"
