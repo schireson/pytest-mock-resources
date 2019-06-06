@@ -115,7 +115,7 @@ def _create_clean_database():
             );
             """
         )
-    except sqlalchemy.exc.IntegrityError:
+    except (sqlalchemy.exc.IntegrityError, sqlalchemy.exc.ProgrammingError):
         # A race condition may occur during table creation if:
         #  - another process has already created the table
         #  - the current process begins creating the table
