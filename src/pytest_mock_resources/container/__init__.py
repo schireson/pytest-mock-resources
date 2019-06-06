@@ -19,7 +19,7 @@ class ContainerCheckFailed(Exception):
     """
 
 
-def get_container_fn(image, ports, environment, check_fn, post_bootup_fn=None):
+def get_container_fn(name, image, ports, environment, check_fn):
     def wrapped():
         # XXX: moto library may over-mock responses. SEE: https://github.com/spulec/moto/issues/1026
         responses.add_passthru("http+docker")
@@ -30,9 +30,9 @@ def get_container_fn(image, ports, environment, check_fn, post_bootup_fn=None):
                 try:
                     check_fn()
                     return
-                except Exception as e:
+                except Exception:
                     if not retries:
-                        raise e
+                        raise
                     time.sleep(1)
 
         try:
@@ -46,14 +46,15 @@ def get_container_fn(image, ports, environment, check_fn, post_bootup_fn=None):
                 )
                 retriable_check_fn(20)
 
-            if post_bootup_fn:
-                post_bootup_fn()
-
             yield
+        except Exception:
+            raise
 
         finally:
             if container:
                 container.kill()
+
+    wrapped.__name__ = name
 
     return wrapped
 
