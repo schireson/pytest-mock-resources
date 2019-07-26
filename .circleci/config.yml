@@ -90,12 +90,12 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: dep-{{ checksum "deps/dev-requirements.txt" }}-{{ checksum "deps/requirements.txt" }}
+          key: dep-{{ checksum "deps/dev-requirements.txt" }}-{{ checksum "deps/requirements.txt" }}2
       - <<: *install-dependencies
       - save_cache:
           paths:
             - .venv
-          key: dep-{{ checksum "deps/dev-requirements.txt" }}-{{ checksum "deps/requirements.txt" }}
+          key: dep-{{ checksum "deps/dev-requirements.txt" }}-{{ checksum "deps/requirements.txt" }}2
       - <<: *lint
       - setup_remote_docker
       - <<: *test
@@ -113,12 +113,12 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: dep-{{ checksum "deps/dev-requirements-py2.txt" }}-{{ checksum "deps/requirements-py2.txt" }}
+          key: dep-{{ checksum "deps/dev-requirements-py2.txt" }}-{{ checksum "deps/requirements-py2.txt" }}2
       - <<: *install-dependencies
       - save_cache:
           paths:
             - .venv
-          key: dep-{{ checksum "deps/dev-requirements-py2.txt" }}-{{ checksum "deps/requirements-py2.txt" }}
+          key: dep-{{ checksum "deps/dev-requirements-py2.txt" }}-{{ checksum "deps/requirements-py2.txt" }}s
       - setup_remote_docker
       - <<: *test
 

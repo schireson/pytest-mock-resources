@@ -1,21 +1,44 @@
+from __future__ import unicode_literals
+
 import random
 
 import boto3
-import pandas
 import psycopg2
 from moto import mock_s3
-from pandas.util.testing import assert_frame_equal
 from sqlalchemy import create_engine
 
-from pytest_mock_resources.patch.redshift.mock_s3_copy import read_dataframe_csv
-from pytest_mock_resources.patch.redshift.mock_s3_unload import get_dataframe_csv
+from pytest_mock_resources.patch.redshift.mock_s3_copy import read_data_csv
+from pytest_mock_resources.patch.redshift.mock_s3_unload import get_data_csv
 
-original_df = pandas.DataFrame(
-    data=[(3342, 32434.0, "a", "gfhsdgaf"), (3343, 0, "b", None), (0, 32434.0, None, "gfhsdgaf")],
-    columns=["i", "f", "c", "v"],
-)
+original_data = [
+    {"i": 3342, "f": 32434.0, "c": "a", "v": "gfhsdgaf"},
+    {"i": 3343, "f": 0.0, "c": "b", "v": None},
+    {"i": 0, "f": 32434.0, "c": None, "v": "gfhsdgaf"},
+]
 
-values_as_list = original_df.get_values().tolist()
+
+class ResultProxy:
+    def __init__(self, data):
+        self.data = data
+
+    def keys(self):
+        return self.data[0].keys()
+
+    def __iter__(self):
+        return iter(self.data)
+
+
+def empty_as_string(row):
+    return {
+        key: value if value is not None else "" if key != "c" else " " for key, value in row.items()
+    }
+
+
+def data_as_csv(data):
+    if isinstance(data, dict):
+        return {key: str(value) if value is not None else "" for key, value in data.items()}
+    return [data_as_csv(row) for row in data]
+
 
 COPY_TEMPLATE = (
     "{COMMAND} test_s3_copy_into_redshift {COLUMNS} {FROM} '{LOCATION}' "
@@ -36,17 +59,18 @@ def fetch_values_from_table_and_assert(engine):
     execute = engine.execute("SELECT * from test_s3_copy_into_redshift")
     results = [row for row in execute]
     engine.execute("DROP TABLE test_s3_copy_into_redshift")
-    assert len(results) == len(values_as_list)
+    assert len(results) == len(original_data)
     for index, val in enumerate(results):
-        assert results[index] == tuple(values_as_list[index])
+        assert empty_as_string(results[index]) == empty_as_string(original_data[index])
 
 
 def fetch_and_assert_psycopg2(cursor):
     cursor.execute("SELECT * from test_s3_copy_into_redshift")
     results = cursor.fetchall()
-    assert len(results) == len(values_as_list)
+    assert len(results) == len(original_data)
     for index, val in enumerate(results):
-        assert results[index] == tuple(values_as_list[index])
+        og_data = empty_as_string(original_data[index])
+        assert results[index] == tuple([og_data[k] for k in ["i", "f", "c", "v"]])
     cursor.execute("DROP TABLE test_s3_copy_into_redshift")
 
 
@@ -63,7 +87,7 @@ def setup_table_and_bucket(redshift, file_name="file.csv"):
         aws_secret_access_key="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
     )
     conn.create_bucket(Bucket="mybucket")
-    conn.Object("mybucket", file_name).put(Body=get_dataframe_csv(original_df).encode())
+    conn.Object("mybucket", file_name).put(Body=get_data_csv(ResultProxy(original_data)))
 
 
 def setup_table_and_insert_data(engine):
@@ -81,15 +105,17 @@ def setup_table_and_insert_data(engine):
     )
 
 
-def fetch_values_from_s3_and_assert(engine, file_name="myfile.csv", is_gzipped=False, sep="|"):
+def fetch_values_from_s3_and_assert(
+    engine, file_name="myfile.csv", is_gzipped=False, delimiter="|"
+):
     s3 = boto3.client(
         "s3",
         aws_access_key_id="AAAAAAAAAAAAAAAAAAAA",
         aws_secret_access_key="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
     )
     response = s3.get_object(Bucket="mybucket", Key=file_name)
-    dataframe = read_dataframe_csv(response["Body"].read(), is_gzipped=is_gzipped, sep=sep)
-    assert_frame_equal(dataframe, original_df)
+    data = read_data_csv(response["Body"].read(), is_gzipped=is_gzipped, delimiter=delimiter)
+    assert data == data_as_csv(original_data)
     engine.execute("DROP TABLE test_s3_unload_from_redshift")
 
 
