@@ -1,8 +1,9 @@
 import csv
-import tempfile
+import gzip
+import io
+import sys
 
 import boto3
-import pandas
 
 from pytest_mock_resources.patch.redshift.mock_s3_copy import strip
 
@@ -145,47 +146,50 @@ def _mock_s3_unload(
     path_to_file = s3_uri[5 : len(s3_uri)]
     bucket, key = path_to_file.split("/", 1)
 
-    dataframe = pandas.read_sql(sql=select_statement, con=engine)
+    result = engine.execute(select_statement)
+    buffer = get_data_csv(result, is_gzipped=is_gzipped, delimiter=delimiter)
 
-    # If some sort of compressions is specified then the dataframe needs to be saved as a file.
-    # Savaing the dataframe as a `File-Like Object` has no effect of compression.
-    # So if `gzip` compression is specifed, then, we save a temporary file.
-    with tempfile.NamedTemporaryFile(suffix=".gz") as tf:
-        buffer = tf.name if is_gzipped else None
-
-        # Convert the dataframe to csv.
-        content = get_dataframe_csv(
-            dataframe, is_gzipped=is_gzipped, sep=delimiter, path_or_buf=buffer
-        )
-
-        if buffer:
-            # Open the temporary file.
-            content = tf.read()
-        else:
-            content = content.encode()
-
-        # Push the data to the S3 Bucket.
-        conn = boto3.resource(
-            "s3", aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key
-        )
-        conn.create_bucket(Bucket=bucket)
-        obj = conn.Object(bucket, key)
-        obj.put(Body=content)
-
-
-def get_dataframe_csv(dataframe, is_gzipped=False, sep="|", **additional_to_csv_options):
-    compression = "infer"
-    if is_gzipped:
-        compression = "gzip"
-    content = dataframe.to_csv(
-        sep=sep,
-        index=False,
-        na_rep="",
-        encoding="utf8",
-        quoting=csv.QUOTE_NONE,
-        doublequote=False,
-        escapechar="\\",
-        compression=compression,
-        **additional_to_csv_options
+    # Push the data to the S3 Bucket.
+    conn = boto3.resource(
+        "s3", aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key
     )
-    return content
+    conn.create_bucket(Bucket=bucket)
+    obj = conn.Object(bucket, key)
+    obj.put(Body=buffer)
+
+
+def get_data_csv(rows, is_gzipped=False, delimiter="|", **additional_to_csv_options):
+    result = io.BytesIO()
+    buffer = result
+    if is_gzipped:
+        buffer = gzip.GzipFile(fileobj=buffer, mode="wb")
+
+    # FUCK you python 2. This is ridiculous!
+    wrapper = buffer
+    if sys.version_info.major >= 3:
+        wrapper = io.TextIOWrapper(buffer)
+    else:
+        delimiter = delimiter.encode("utf-8")
+
+    writer = csv.DictWriter(
+        wrapper,
+        fieldnames=rows.keys(),
+        delimiter=delimiter,
+        quoting=csv.QUOTE_MINIMAL,
+        quotechar='"',
+        lineterminator="\n",
+        skipinitialspace=True,
+        doublequote=True,
+    )
+    writer.writeheader()
+    for row in rows:
+        writer.writerow(dict(row.items()))
+
+    if sys.version_info.major >= 3:
+        wrapper.detach()
+
+    if is_gzipped:
+        buffer.close()
+
+    result.seek(0)
+    return result

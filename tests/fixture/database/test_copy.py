@@ -1,4 +1,5 @@
-import os
+from __future__ import unicode_literals
+
 import time
 
 import boto3
@@ -9,9 +10,10 @@ from pytest_mock_resources import create_redshift_fixture
 from tests.fixture.database import (
     COPY_TEMPLATE,
     fetch_values_from_table_and_assert,
-    get_dataframe_csv,
-    original_df,
+    get_data_csv,
+    original_data,
     randomcase,
+    ResultProxy,
     setup_table_and_bucket,
 )
 
@@ -33,7 +35,7 @@ def test_s3_copy_into_redshift(redshift):
         )
     )
 
-    # Assert the values fetched for the database are the same as the values in the dataframe.
+    # Assert the values fetched for the database are the same as the values in the data.
     fetch_values_from_table_and_assert(redshift)
 
 
@@ -73,9 +75,9 @@ def test_s3_copy_from_gzip(redshift):
         time_in_mills=int(round(time.time() * 1000))
     )
 
-    get_dataframe_csv(original_df, is_gzipped=True, path_or_buf=temp_file_name)
+    file = get_data_csv(ResultProxy(original_data), is_gzipped=True, path_or_buf=temp_file_name)
 
-    conn.Object("mybucket", "file.csv.gz").put(Body=open(temp_file_name, "rb"))
+    conn.Object("mybucket", "file.csv.gz").put(Body=file)
     redshift.execute(
         COPY_TEMPLATE.format(
             COMMAND="COPY",
@@ -86,8 +88,6 @@ def test_s3_copy_from_gzip(redshift):
             OPTIONAL_ARGS="",
         )
     )
-
-    os.remove(temp_file_name)
 
     # Assert support for gzipped files.
     fetch_values_from_table_and_assert(redshift)
@@ -201,7 +201,7 @@ def test_multiple_sql_statemts(redshift):
         aws_secret_access_key="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
     )
     conn.create_bucket(Bucket="mybucket")
-    conn.Object("mybucket", "file.csv").put(Body=get_dataframe_csv(original_df).encode())
+    conn.Object("mybucket", "file.csv").put(Body=get_data_csv(ResultProxy(original_data)))
 
     redshift.execute(
         (
