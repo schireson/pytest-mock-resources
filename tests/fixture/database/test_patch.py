@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from pytest_mock_resources import (
     create_redshift_fixture,
     patch_create_engine,

@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import sqlalchemy
 from moto import mock_s3
 from sqlalchemy.sql import text
@@ -110,7 +112,7 @@ def test_optional_keywords(redshift):
         )
     )
 
-    fetch_values_from_s3_and_assert(redshift, is_gzipped=False, sep=",")
+    fetch_values_from_s3_and_assert(redshift, is_gzipped=False, delimiter=",")
 
 
 @mock_s3
@@ -129,7 +131,7 @@ def test_random_spacing(redshift):
         )
     )
 
-    fetch_values_from_s3_and_assert(redshift, is_gzipped=False, sep=",")
+    fetch_values_from_s3_and_assert(redshift, is_gzipped=False, delimiter=",")
 
 
 @mock_s3

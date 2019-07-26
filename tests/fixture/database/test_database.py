@@ -68,5 +68,5 @@ def test_bad_actions(postgres):
         _run_actions(postgres, ["random_string"])
 
     assert "create_fixture function takes in sqlalchemy.MetaData or actions as inputs only." in str(
-        e
+        e.value
     )

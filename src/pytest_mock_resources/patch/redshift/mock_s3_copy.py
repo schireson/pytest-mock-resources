@@ -1,10 +1,11 @@
 import binascii
 import csv
-from io import BytesIO
+import gzip
+import io
+import sys
 
 import boto3
-import pandas
-from pandas.io.sql import SQLDatabase, SQLTable
+from sqlalchemy import MetaData, Table
 
 
 def execute_mock_s3_copy_command(statement, engine):
@@ -130,36 +131,35 @@ def _mock_s3_copy(
     is_gzipped = binascii.hexlify(response["Body"].read(2)) == b"1f8b"
 
     response = s3.get_object(Bucket=bucket, Key=key)
-    dataframe = read_dataframe_csv(response["Body"].read(), is_gzipped, columns)
+    data = read_data_csv(response["Body"].read(), is_gzipped, columns)
 
-    sql_database = SQLDatabase(engine=engine, schema=schema_name)
-
-    sql_table = SQLTable(
-        name=table_name,
-        pandas_sql_engine=sql_database,
-        frame=dataframe,
-        schema=schema_name,
-        index=False,
-    )
-    sql_table.insert()
+    meta = MetaData()
+    table = Table(table_name, meta, autoload=True, schema=schema_name, autoload_with=engine)
+    engine.execute(table.insert(data))
 
 
-def read_dataframe_csv(file, is_gzipped=False, columns=None, sep="|"):
-    compression = "infer"
+def read_data_csv(file, is_gzipped=False, columns=None, delimiter="|"):
+    buffer = io.BytesIO(file)
     if is_gzipped:
-        compression = "gzip"
+        buffer = gzip.GzipFile(fileobj=buffer, mode="rb")
 
-    return pandas.read_csv(
-        BytesIO(file),
-        sep=sep,
-        encoding="utf8",
-        quoting=csv.QUOTE_NONE,
-        doublequote=False,
-        escapechar="\\",
-        low_memory=False,
-        compression=compression,
-        usecols=columns,
+    # FUCK you python 2. This is ridiculous!
+    wrapper = buffer
+    if sys.version_info.major >= 3:
+        wrapper = io.TextIOWrapper(buffer)
+    else:
+        delimiter = delimiter.encode("utf-8")
+
+    reader = csv.DictReader(
+        wrapper,
+        delimiter=delimiter,
+        quoting=csv.QUOTE_MINIMAL,
+        quotechar='"',
+        lineterminator="\n",
+        skipinitialspace=True,
+        doublequote=True,
     )
+    return [dict(row) for row in reader]
 
 
 def strip(input_string):

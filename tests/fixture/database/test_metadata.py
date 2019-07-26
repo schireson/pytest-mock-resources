@@ -32,7 +32,7 @@ def test_create_specific_tables_only_implicit_public(postgres_1):
     with pytest.raises(sqlalchemy.exc.ProgrammingError) as e:
         postgres_1.execute("SELECT * FROM quarter")
 
-    assert 'relation "quarter" does not exist' in str(e)
+    assert 'relation "quarter" does not exist' in str(e.value)
 
     execute = postgres_1.execute(
         """
@@ -50,7 +50,7 @@ def test_create_specific_tables_only_explicit_public(postgres_2):
     with pytest.raises(sqlalchemy.exc.ProgrammingError) as e:
         postgres_2.execute("SELECT * FROM quarter")
 
-    assert 'relation "quarter" does not exist' in str(e)
+    assert 'relation "quarter" does not exist' in str(e.value)
 
     execute = postgres_2.execute(
         """

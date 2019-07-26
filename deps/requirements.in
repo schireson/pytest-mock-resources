@@ -2,7 +2,6 @@ boto3
 decorator
 docker>=2.5.1
 moto
-pandas
 pytest
 responses
 sqlalchemy
