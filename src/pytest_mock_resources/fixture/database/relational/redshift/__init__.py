@@ -1,8 +1,8 @@
 import pytest
 
+from pytest_mock_resources.fixture.database.relational.generic import manage_engine
 from pytest_mock_resources.fixture.database.relational.postgresql import (
     _create_clean_database,
-    _run_actions,
     get_sqlalchemy_engine,
 )
 from pytest_mock_resources.patch.redshift.create_engine import (
@@ -27,8 +27,9 @@ def create_redshift_fixture(*ordered_actions, **kwargs):
         engine = get_sqlalchemy_engine(database_name)
 
         engine.database = database_name
-        _run_actions(engine, ordered_actions, tables=tables)
 
-        return substitute_execute_with_custom_execute(engine)
+        engine = substitute_execute_with_custom_execute(engine)
+        for engine in manage_engine(engine, ordered_actions, tables=tables):
+            yield engine
 
     return _

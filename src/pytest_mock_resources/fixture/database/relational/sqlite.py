@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy import create_engine
 
-from pytest_mock_resources.fixture.database.relational.postgresql import _run_actions
+from pytest_mock_resources.fixture.database.relational.generic import manage_engine
 
 
 def create_sqlite_fixture(*ordered_actions, **kwargs):
@@ -14,9 +14,7 @@ def create_sqlite_fixture(*ordered_actions, **kwargs):
     @pytest.fixture(scope=scope)
     def _():
         engine = create_engine("sqlite://")
-
-        _run_actions(engine, ordered_actions, tables=tables)
-
-        return engine
+        for engine in manage_engine(engine, ordered_actions, tables=tables):
+            yield engine
 
     return _
