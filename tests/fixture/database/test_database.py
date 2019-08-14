@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 
 from pytest_mock_resources import (
     create_postgres_fixture,
+    create_presto_fixture,
     create_redshift_fixture,
     create_sqlite_fixture,
 )
@@ -11,6 +12,7 @@ from pytest_mock_resources.fixture.database.relational.generic import _run_actio
 sqlite = create_sqlite_fixture()
 postgres = create_postgres_fixture()
 redshift = create_redshift_fixture()
+presto = create_presto_fixture()
 
 
 def test_basic_sqlite_fixture(sqlite):
@@ -19,6 +21,10 @@ def test_basic_sqlite_fixture(sqlite):
 
 def test_basic_postgres_fixture(postgres):
     postgres.execute("select 1")
+
+
+def test_basic_presto_fixture(presto):
+    presto.execute("select 1")
 
 
 def test_basic_redshift_fixture(redshift):

@@ -2,6 +2,7 @@ from pytest_mock_resources.container import _mongo_container, _postgres_containe
 from pytest_mock_resources.fixture.database import (  # noqa
     create_mongo_fixture,
     create_postgres_fixture,
+    create_presto_fixture,
     create_redshift_fixture,
     create_sqlite_fixture,
     MONGO_HOST,
