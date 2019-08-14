@@ -4,6 +4,10 @@ from pytest_mock_resources.fixture.database.relational.postgresql import (  # no
     PG_HOST,
     PG_PORT,
 )
+    Rows,
+    Statements,
+)
+from pytest_mock_resources.fixture.database.relational.presto import create_presto_fixture  # noqa
 from pytest_mock_resources.fixture.database.relational.redshift import (  # noqa
     create_redshift_fixture,
 )
