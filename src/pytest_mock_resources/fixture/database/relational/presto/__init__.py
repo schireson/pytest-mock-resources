@@ -1,8 +1,8 @@
 import pytest
 
+from pytest_mock_resources.fixture.database.relational.generic import _run_actions
 from pytest_mock_resources.fixture.database.relational.postgresql import (
     _create_clean_database,
-    _run_actions,
     get_sqlalchemy_engine,
 )
 

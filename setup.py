@@ -31,7 +31,7 @@ SETUP_REQUIREMENTS = ["pytest-runner"]
 
 setup(
     name="pytest-mock-resources",
-    version="0.1.48",
+    version="0.1.49",
     url="https://github.com/schireson/schireson-pytest-mock-resources",
     author_email="omar@schireson.com",
     author="Omar Khan",
