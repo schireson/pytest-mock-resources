@@ -49,6 +49,7 @@ setup(
         "develop": parse_requirements(dev_reqs),
         "postgres": ["psycopg2"],
         "mongo": ["pymongo"],
+        "presto": ["pyhive", "presto-python-connector",]
     },
     entry_points={
         "pytest11": ["mock_resources = pytest_mock_resources"],
