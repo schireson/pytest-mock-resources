@@ -1,9 +1,9 @@
 import boto3
 
-from pytest_mock_resources.fixture.metastore.glue import mock_glue  # noqa
+from pytest_mock_resources.fixture.metastore.glue import data_catalog  # noqa
 
 
-def test_glue(mock_glue):  # noqa
+def test_glue(data_catalog):  # noqa
     table_input = {
         "Name": "bar",
         "Owner": "schireson",

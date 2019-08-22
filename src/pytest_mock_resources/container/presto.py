@@ -1,6 +1,10 @@
+import os
+import subprocess  # nosec
+import time
+
 import pytest
 
-from pytest_mock_resources.container import ContainerCheckFailed, get_container_fn, HOST, IN_CI
+from pytest_mock_resources.container import ContainerCheckFailed, HOST, IN_CI
 
 # XXX: To become overwritable via pytest config.
 config = {
@@ -12,6 +16,19 @@ config = {
 }
 
 
+@pytest.fixture(scope="session")
+def _presto_container():
+    os.chdir("docker-hive")
+
+    try:
+        subprocess.run(["docker-compose", "up", "-d"])  # nosec
+        time.sleep(30)
+        yield
+        subprocess.run(["docker-compose", "down"])  # nosec
+    finally:
+        os.chdir(os.pardir)
+
+
 def get_presto_connection():
     import prestodb
 
@@ -20,7 +37,7 @@ def get_presto_connection():
     )
 
 
-def check_presto_fn():
+def check_presto_fn(_presto_container):
     from requests.exceptions import ConnectionError
 
     try:
@@ -35,10 +52,3 @@ def check_presto_fn():
                 config
             )
         )
-
-
-_presto_container = pytest.fixture("session")(
-    get_container_fn(
-        "_presto_container", config["image"], {8080: config["port"]}, {}, check_presto_fn
-    )
-)

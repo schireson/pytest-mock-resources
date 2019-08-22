@@ -3,6 +3,7 @@ decorator
 docker>=2.5.1
 moto[server]
 pytest
+pyhive[hive]
 responses
 sqlalchemy
 sqlparse
