@@ -21,14 +21,6 @@ def create_presto_fixture(**kwargs):
 
     @pytest.fixture(scope=scope)
     def _(_presto_container):
-        return _create_clean_database()
+        return get_presto_connection()
 
     return _
-
-
-def _create_clean_database():
-    connection = get_presto_connection()
-
-    # TODO
-
-    return connection
