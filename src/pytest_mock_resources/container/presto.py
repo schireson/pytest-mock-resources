@@ -15,7 +15,9 @@ config = {
 def get_presto_connection():
     import prestodb
 
-    return prestodb.dbapi.Connection(host=config["host"], port=config["port"], user=config["user"], catalog=config["catalog"])
+    return prestodb.dbapi.Connection(
+        host=config["host"], port=config["port"], user=config["user"], catalog=config["catalog"]
+    )
 
 
 def check_presto_fn():

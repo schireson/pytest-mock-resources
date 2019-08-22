@@ -1,6 +1,5 @@
 import pytest
 
-from pytest_mock_resources.container import HOST
 from pytest_mock_resources.container.presto import config, get_presto_connection
 
 
@@ -28,8 +27,6 @@ def create_presto_fixture(**kwargs):
 
 
 def _create_clean_database():
-    import prestodb
-    
     connection = get_presto_connection()
 
     # TODO

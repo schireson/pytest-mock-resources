@@ -35,7 +35,7 @@ class FixtureBase(enum.Enum):
         fixture_base_command_map = {
             FixtureBase.MONGO: mongo_command,
             FixtureBase.POSTGRES: postgres_command,
-            FixtureBase.PRESTO: presto_command
+            FixtureBase.PRESTO: presto_command,
         }
 
         return fixture_base_command_map[self]
