@@ -4,6 +4,7 @@ import time
 
 import pytest
 
+import pytest_mock_resources
 from pytest_mock_resources.container import ContainerCheckFailed, HOST, IN_CI
 
 # XXX: To become overwritable via pytest config.
@@ -18,14 +19,17 @@ config = {
 
 @pytest.fixture(scope="session")
 def _presto_container():
-    os.chdir("docker-hive")
+    module_dir = os.path.dirname(pytest_mock_resources.__file__)
+    os.chdir(os.path.join(module_dir, os.pardir, os.pardir, "docker-hive"))
 
     try:
-        subprocess.run(["docker-compose", "up", "-d"])  # nosec
+        subprocess.run(["docker-compose", "up", "-d", "-V"])  # nosec
         print("Sleeping...")
-        time.sleep(90)
+        time.sleep(60)
         yield
-        subprocess.run(["docker-compose", "down"])  # nosec
+        module_dir = os.path.dirname(pytest_mock_resources.__file__)
+        os.chdir(os.path.join(module_dir, os.pardir, os.pardir, "docker-hive"))
+        subprocess.run(["docker-compose", "down", "-v"])  # nosec
     finally:
         os.chdir(os.pardir)
 
