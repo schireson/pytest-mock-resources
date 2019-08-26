@@ -1,72 +1,57 @@
 from typing import Any
 
-import pytest
-from pyhive import hive
-from sqlalchemy import Column, create_engine, INT, schema, String
-from sqlalchemy.ext.compiler import compiles
+from sqlalchemy import Column, INT, String
 from sqlalchemy.ext.declarative import declarative_base
 
-from pytest_mock_resources import create_presto_fixture
-
-presto = create_presto_fixture()
+from pytest_mock_resources import create_hive_fixture, create_presto_fixture
+from pytest_mock_resources.fixture.database.presto import (
+    create_hive_fixture_raw,
+    create_presto_fixture_raw,
+)
 
 Base: Any = declarative_base()
 
 
 class Table(Base):
     __tablename__ = "test_sqla"
-    __table_args__ = {"schema": "default"}
+    __table_args__ = {"schema": "sqla"}
 
     foo = Column(INT, primary_key=True)
     bar = Column(String)
 
 
-@compiles(schema.PrimaryKeyConstraint)
-def visit_primary_key_constraint(self, constraint):
-    return ""
+hive = create_hive_fixture(Base, scope="session")
+hive_raw = create_hive_fixture_raw(scope="session")
+presto = create_presto_fixture(scope="session")
+presto_raw = create_presto_fixture_raw(scope="session")
 
 
-@compiles(schema.CreateColumn)
-def compile(element, compiler, **kw):
-    column = element.element
-
-    text = "%s %s" % (column.name, compiler.type_compiler.process(column.type))
-
-    return text
-
-
-def test_presto_fixture(presto):
-    cursor = presto.cursor()
+def test_presto_fixture(presto_raw):
+    cursor = presto_raw.cursor()
     cursor.execute("SELECT 1")
 
     assert cursor.fetchone()[0] == 1
 
 
-def test_presto_show_session(presto):
-    cursor = presto.cursor()
+def test_presto_show_session(presto_raw):
+    cursor = presto_raw.cursor()
     cursor.execute("SHOW SESSION")
 
 
-@pytest.mark.skip
-def test_presto_create_table(presto):
-    cursor = hive.connect("localhost").cursor()
-    cursor.execute("CREATE TABLE test (foo INT, bar STRING)")
-    cursor.execute("LOAD DATA LOCAL INPATH '/tmp/inputs/test.csv' OVERWRITE INTO TABLE test")
+def test_presto_hive_raw_fixtures(hive_raw, presto_raw):
+    cursor = hive_raw.cursor()
+    cursor.execute("CREATE TABLE test_raw (foo INT, bar STRING)")
+    cursor.execute("LOAD DATA LOCAL INPATH '/tmp/inputs/test.csv' OVERWRITE INTO TABLE test_raw")
 
-    cursor = presto.cursor()
-    cursor.execute("SELECT COUNT(*) FROM default.test")
+    cursor = presto_raw.cursor()
+    cursor.execute("SELECT COUNT(*) FROM default.test_raw")
     assert cursor.fetchone()[0] == 3
 
 
-@pytest.mark.skip
-def test_presto_create_table_sqlalchemy(presto):
-    # frequently run into this error here, but eventually it goes away
-    # maybe this is because the hive server is not yet ready?
-    # thrift.transport.TTransport.TTransportException: TSocket read 0 bytes
-    engine = create_engine("hive://localhost:10000/default")
-    Base.metadata.create_all(engine)
+def test_presto_hive_fixtures(hive, presto):
+    hive.execute(
+        "LOAD DATA LOCAL INPATH '/tmp/inputs/test.csv' OVERWRITE INTO TABLE sqla.test_sqla"
+    )
 
-    engine.execute("LOAD DATA LOCAL INPATH '/tmp/inputs/test.csv' OVERWRITE INTO TABLE test_sqla")
-
-    result_proxy = engine.execute("SELECT COUNT(*) FROM test_sqla")
+    result_proxy = presto.execute("SELECT COUNT(*) FROM sqla.test_sqla")
     assert list(result_proxy)[0][0] == 3
