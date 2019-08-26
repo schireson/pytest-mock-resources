@@ -5,6 +5,7 @@ from pytest_mock_resources.container import (  # noqa
     HOST,
 )
 from pytest_mock_resources.fixture.database import (  # noqa
+    create_hive_fixture,
     create_mongo_fixture,
     create_postgres_fixture,
     create_presto_fixture,

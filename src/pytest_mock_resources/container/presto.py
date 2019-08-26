@@ -11,7 +11,7 @@ config = {
     "host": HOST,
     "port": 8080 if IN_CI else 8080,
     "user": "presto",
-    "catalog": "hive",
+    "catalog": "default",
     "image": "starburstdata/presto",
 }
 
@@ -22,7 +22,8 @@ def _presto_container():
 
     try:
         subprocess.run(["docker-compose", "up", "-d"])  # nosec
-        time.sleep(30)
+        print("Sleeping...")
+        time.sleep(90)
         yield
         subprocess.run(["docker-compose", "down"])  # nosec
     finally:

@@ -4,6 +4,7 @@ from pytest_mock_resources.fixture.database.mongo import (  # noqa
     MONGO_PORT,
 )
 from pytest_mock_resources.fixture.database.presto import (  # noqa
+    create_hive_fixture,
     create_presto_fixture,
     PRESTO_HOST,
     PRESTO_PORT,

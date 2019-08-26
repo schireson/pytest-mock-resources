@@ -47,6 +47,8 @@ services:
     image: shawnzhu/prestodb:latest
     ports:
       - "8080:8080"
+    volumes:
+      - ./conf/default.properties:/home/presto/etc/catalog/default.properties
 
 volumes:
   namenode:
