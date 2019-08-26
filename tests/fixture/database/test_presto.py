@@ -20,6 +20,14 @@ class Table(Base):
     bar = Column(String)
 
 
+class MultiValueInsertTable(Base):
+    __tablename__ = "test_multivalue_insert"
+    __table_args__ = {"schema": "sqla"}
+
+    foo = Column(INT, primary_key=True)
+    bar = Column(String)
+
+
 hive = create_hive_fixture(Base, scope="session")
 hive_raw = create_hive_fixture_raw(scope="session")
 presto = create_presto_fixture(scope="session")
@@ -54,4 +62,13 @@ def test_presto_hive_fixtures(hive, presto):
     )
 
     result_proxy = presto.execute("SELECT COUNT(*) FROM sqla.test_sqla")
+    assert list(result_proxy)[0][0] == 3
+
+
+def test_presto_supports_multivalues_insert(hive, presto):
+    presto.execute(
+        MultiValueInsertTable.__table__.insert().values([(4, "qux"), (5, "quux"), (6, "quuz")])
+    )
+
+    result_proxy = presto.execute("SELECT COUNT(*) FROM sqla.test_multivalue_insert")
     assert list(result_proxy)[0][0] == 3

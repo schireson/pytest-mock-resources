@@ -4,13 +4,31 @@ from time import sleep
 import pytest
 import six
 from pyhive import hive
+from pyhive.sqlalchemy_presto import PrestoDialect
 from sqlalchemy import create_engine, MetaData, schema
+from sqlalchemy.dialects import registry
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.types import DATE
 from thrift.transport.TTransport import TTransportException
 
 from pytest_mock_resources.container.presto import config, get_presto_connection
 from pytest_mock_resources.fixture.database.relational.generic import _execute_function
+
+
+class CustomPrestoDialect(PrestoDialect):
+    name = "custom_presto"
+    supports_multivalues_insert = True
+
+
+registry.register(
+    "custom_presto", "pytest_mock_resources.fixture.database.presto", "CustomPrestoDialect"
+)
+
+
+@compiles(DATE, b"hive")
+def compile_date_hive(type_, compiler, **kw):
+    return "DATE"
 
 
 @compiles(schema.PrimaryKeyConstraint, b"hive")
@@ -110,7 +128,7 @@ def create_presto_fixture(*ordered_actions, **kwargs):
 
     @pytest.fixture(scope=scope)
     def _(_presto_container):
-        return create_engine("presto://localhost:8080/default")
+        return create_engine("custom_presto://localhost:8080/default")
 
     return _
 
