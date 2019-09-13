@@ -26,10 +26,16 @@ def get_sqlalchemy_engine(database_name, isolation_level=None):
         port=config["port"],
     )
 
+    options = {}
     if isolation_level:
-        engine = sqlalchemy.create_engine(DB_URI, isolation_level=isolation_level)
-    else:
-        engine = sqlalchemy.create_engine(DB_URI)
+        options["isolation_level"] = isolation_level
+
+    try:
+        engine = sqlalchemy.create_engine(DB_URI, **options)
+    except ModuleNotFoundError:
+        from pytest_mock_resources.compat import ImportAdaptor
+
+        ImportAdaptor("postgres").fail()
 
     # Verify engine is connected
     engine.connect()

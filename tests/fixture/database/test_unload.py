@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import pytest
 import sqlalchemy
 from moto import mock_s3
 from sqlalchemy.sql import text
@@ -16,6 +17,7 @@ redshift = create_redshift_fixture()
 
 
 @mock_s3
+@pytest.mark.redshift
 def test_unload(redshift):
     """Test if a file is created with the appropriate data."""
     setup_table_and_insert_data(redshift)
@@ -35,6 +37,7 @@ def test_unload(redshift):
 
 
 @mock_s3
+@pytest.mark.redshift
 def test_unload_case_senesitivity(redshift):
     """Test case sensitivity for UNLOAD command."""
     setup_table_and_insert_data(redshift)
@@ -54,6 +57,7 @@ def test_unload_case_senesitivity(redshift):
 
 
 @mock_s3
+@pytest.mark.redshift
 def test_unload_gzipped(redshift):
     """Test gzip support."""
     setup_table_and_insert_data(redshift)
@@ -73,6 +77,7 @@ def test_unload_gzipped(redshift):
 
 
 @mock_s3
+@pytest.mark.redshift
 def test_inverted_credentials_string(redshift):
     """Test parsing with an inverted credentials string."""
     setup_table_and_insert_data(redshift)
@@ -97,6 +102,7 @@ def test_inverted_credentials_string(redshift):
 
 
 @mock_s3
+@pytest.mark.redshift
 def test_optional_keywords(redshift):
     """Test command with optimal keyword arguments."""
     setup_table_and_insert_data(redshift)
@@ -116,6 +122,7 @@ def test_optional_keywords(redshift):
 
 
 @mock_s3
+@pytest.mark.redshift
 def test_random_spacing(redshift):
     """Test command with random spaces."""
     setup_table_and_insert_data(redshift)
@@ -135,6 +142,7 @@ def test_random_spacing(redshift):
 
 
 @mock_s3
+@pytest.mark.redshift
 def test_ignores_sqlalchmey_text_obj(redshift):
     """Test command ignores SQLAlchemy Text Objects and raises error."""
     setup_table_and_insert_data(redshift)
@@ -159,6 +167,7 @@ def test_ignores_sqlalchmey_text_obj(redshift):
 
 
 @mock_s3
+@pytest.mark.redshift
 def test_multiple_sql_statemts(redshift):
     redshift.execute(
         (
