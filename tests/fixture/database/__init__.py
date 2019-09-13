@@ -3,10 +3,10 @@ from __future__ import unicode_literals
 import random
 
 import boto3
-import psycopg2
 from moto import mock_s3
 from sqlalchemy import create_engine
 
+from pytest_mock_resources.compat import psycopg2
 from pytest_mock_resources.patch.redshift.mock_s3_copy import read_data_csv
 from pytest_mock_resources.patch.redshift.mock_s3_unload import get_data_csv
 

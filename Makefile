@@ -14,6 +14,9 @@ set-py2:
 install-deps:
 	pip install -e .[mongo,postgres,develop] --no-use-pep517
 
+install-deps-without-extras:
+	pip install -e .[develop] --no-use-pep517
+
 lint:
 	lucha lint
 	lucha version diffcheck
@@ -39,6 +42,9 @@ cicd-publish-docs: build-docs
 
 test:
 	pytest -n 4
+
+test-without-extras:
+	pytest -n 4 -m 'not postgres and not redshift and not mongo'
 
 clean:
 	lucha env clean

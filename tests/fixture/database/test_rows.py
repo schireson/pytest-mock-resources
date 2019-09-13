@@ -1,3 +1,4 @@
+import pytest
 from sqlalchemy import Column, Integer, SmallInteger
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -25,6 +26,7 @@ rows = Rows(
 postgres = create_postgres_fixture(rows)
 
 
+@pytest.mark.postgres
 def test_rows(postgres):
     execute = postgres.execute(
         """
@@ -49,6 +51,7 @@ rows = Rows(Quarter(id=1, year=2012, quarter=1), Quarter(id=2, year=2012, quarte
 base_2_postgres = create_postgres_fixture(rows)
 
 
+@pytest.mark.postgres
 def test_2_bases(base_2_postgres):
     execute = base_2_postgres.execute(
         """

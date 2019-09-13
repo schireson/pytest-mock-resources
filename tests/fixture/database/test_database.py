@@ -17,14 +17,18 @@ def test_basic_sqlite_fixture(sqlite):
     sqlite.execute("select 1")
 
 
+@pytest.mark.postgres
 def test_basic_postgres_fixture(postgres):
     postgres.execute("select 1")
 
 
+@pytest.mark.redshift
 def test_basic_redshift_fixture(redshift):
     redshift.execute("select 1")
 
 
+@pytest.mark.postgres
+@pytest.mark.redshift
 def test_basic_postgres_and_redshift_fixture(postgres, redshift):
     postgres.execute("select 1")
     redshift.execute("select 1")
@@ -35,6 +39,8 @@ redshift_3 = create_redshift_fixture()
 postgres_2 = create_postgres_fixture()
 
 
+@pytest.mark.postgres
+@pytest.mark.redshift
 def test_multiple_postgres_and_redshift_fixture(
     postgres_2, postgres, redshift_2, redshift_3, redshift
 ):
@@ -48,6 +54,7 @@ def test_multiple_postgres_and_redshift_fixture(
 postgres_3 = create_postgres_fixture()
 
 
+@pytest.mark.postgres
 def test_create_custom_connection(PG_PORT, PG_HOST, postgres_3):
     engine = create_engine(
         "postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=disable".format(
@@ -63,6 +70,7 @@ def test_create_custom_connection(PG_PORT, PG_HOST, postgres_3):
     engine.execute("select 1")
 
 
+@pytest.mark.postgres
 def test_bad_actions(postgres):
     with pytest.raises(ValueError) as e:
         _run_actions(postgres, ["random_string"])
