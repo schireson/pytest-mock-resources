@@ -28,6 +28,7 @@ rows = Rows(Report(id=3))
 postgres_1 = create_postgres_fixture(Base, rows, tables=["report"])
 
 
+@pytest.mark.postgres
 def test_create_specific_tables_only_implicit_public(postgres_1):
     with pytest.raises(sqlalchemy.exc.ProgrammingError) as e:
         postgres_1.execute("SELECT * FROM quarter")
@@ -46,6 +47,7 @@ def test_create_specific_tables_only_implicit_public(postgres_1):
 postgres_2 = create_postgres_fixture(Base, rows, tables=["public.report"])
 
 
+@pytest.mark.postgres
 def test_create_specific_tables_only_explicit_public(postgres_2):
     with pytest.raises(sqlalchemy.exc.ProgrammingError) as e:
         postgres_2.execute("SELECT * FROM quarter")
@@ -64,6 +66,7 @@ def test_create_specific_tables_only_explicit_public(postgres_2):
 postgres_3 = create_postgres_fixture(Base, rows, tables=["public.report", "quarter"])
 
 
+@pytest.mark.postgres
 def test_create_specific_tables(postgres_3):
     execute = postgres_3.execute(
         """

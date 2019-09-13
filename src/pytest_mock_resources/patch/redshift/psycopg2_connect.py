@@ -1,13 +1,8 @@
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch  # type: ignore
-
 from decorator import decorator
-from psycopg2 import connect, extensions
 from sqlalchemy import create_engine
 from sqlalchemy.sql.elements import TextClause
 
+from pytest_mock_resources.compat import mock, psycopg2
 from pytest_mock_resources.container.postgres import config
 from pytest_mock_resources.patch.redshift.create_engine import (
     execute_mock_s3_copy_command,
@@ -16,7 +11,7 @@ from pytest_mock_resources.patch.redshift.create_engine import (
 from pytest_mock_resources.patch.redshift.mock_s3_copy import strip
 
 
-class CustomCursor(extensions.cursor):
+class CustomCursor(psycopg2.extensions.cursor):
     """A custom cursor class to define a custom execute method."""
 
     def execute(self, sql, args=None):
@@ -34,20 +29,35 @@ class CustomCursor(extensions.cursor):
             return execute_mock_s3_copy_command(sql, engine)
         if not isinstance(sql, TextClause) and strip(sql).lower().startswith("unload"):
             return execute_mock_s3_unload_command(sql, engine)
-        return extensions.cursor.execute(self, sql, args)
+        return super(CustomCursor, self).execute(sql, args)
 
 
 @decorator
 def patch_psycopg2_connect(func, path=None, *args, **kwargs):
-    """Patch any occourances of `psycopg2.connect` with mock_psycopg2_connect function."""
+    """Patch any occourances of `psycopg2.connect` with mock_psycopg2_connect function.
+
+    The `path` should be the path to the `psycopg2` module you want to patch.
+    """
     if path is None:
         raise ValueError("Path cannot be None")
 
-    with patch(path, new=mock_psycopg2_connect):
+    class MockPsycoPg2:
+        """Avoid an infinite circular mock scenario.
+
+        Mocks the whole of psycopg2, so as to not accidentally infinitely mock the mocked `connect`.
+        """
+
+        def __getattr(self, name):
+            return getattr(psycopg2, name)
+
+        def connect(self, *args, **kwargs):
+            return mock_psycopg2_connect(*args, **kwargs)
+
+    with mock.patch(path, new=MockPsycoPg2()):
         return func(*args, **kwargs)
 
 
 def mock_psycopg2_connect(*args, **kwargs):
     """Substitute the default cursor with a custom cursor."""
-    conn = connect(cursor_factory=CustomCursor, *args, **kwargs)
+    conn = psycopg2.connect(*args, cursor_factory=CustomCursor, **kwargs)
     return conn

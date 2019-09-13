@@ -9,6 +9,7 @@ from pytest_mock_resources import create_redshift_fixture
 redshift = create_redshift_fixture()
 
 
+@pytest.mark.redshift
 class TestUdf:
     @pytest.mark.parametrize(
         "interval_str,num,date_or_datetime,expected",

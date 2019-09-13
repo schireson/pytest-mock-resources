@@ -12,6 +12,17 @@ install-dependencies: &install-dependencies
 
       make install-deps
 
+install-dependencies-without-extras: &install-dependencies-without-extras
+  run:
+    name: Install Dependencies without extras
+    command: |
+      # pip installing virtualenv in Python 3 will be a no-op
+      pip install virtualenv
+      virtualenv .venv
+      . .venv/bin/activate
+
+      make install-deps-without-extras
+
 lint: &lint
   run:
     name: Run Linters
@@ -52,27 +63,6 @@ publish-docs: &publish-docs
       sudo pip install sphinx m2r
       make cicd-publish-docs
 
-###########
-# Workflows
-###########
-version: 2
-workflows:
-  version: 2
-
-  build_all:
-    jobs:
-      - build
-      - build-py2
-
-      - publish:
-          requires:
-            - build
-            - build-py2
-          filters:
-            branches:
-              only:
-                - /^master$/
-
 ###################
 # Job Definitions
 ###################
@@ -90,15 +80,34 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: dep-{{ checksum "deps/dev-requirements.txt" }}-{{ checksum "deps/requirements.txt" }}2
+          key: dep3-{{ checksum "deps/dev-requirements.txt" }}-{{ checksum "deps/requirements.txt" }}2
       - <<: *install-dependencies
       - save_cache:
           paths:
             - .venv
-          key: dep-{{ checksum "deps/dev-requirements.txt" }}-{{ checksum "deps/requirements.txt" }}2
+          key: dep3-{{ checksum "deps/dev-requirements.txt" }}-{{ checksum "deps/requirements.txt" }}2
       - <<: *lint
       - setup_remote_docker
       - <<: *test
+
+  build-without-extras:
+    docker:
+      - image: schireson/cicd-python
+    steps:
+      - checkout
+      - restore_cache:
+          key: no-extras-dep-{{ checksum "deps/dev-requirements.txt" }}-{{ checksum "deps/requirements.txt" }}2
+      - <<: *install-dependencies-without-extras
+      - save_cache:
+          paths:
+            - .venv
+          key: no-extras-dep-{{ checksum "deps/dev-requirements.txt" }}-{{ checksum "deps/requirements.txt" }}2
+      - setup_remote_docker
+      - run:
+          name: Run Tests
+          command: |
+            . .venv/bin/activate
+            make test-without-extras
 
   build-py2:
     docker:
@@ -113,12 +122,12 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: dep-{{ checksum "deps/dev-requirements-py2.txt" }}-{{ checksum "deps/requirements-py2.txt" }}2
+          key: dep2-{{ checksum "deps/dev-requirements-py2.txt" }}-{{ checksum "deps/requirements-py2.txt" }}2
       - <<: *install-dependencies
       - save_cache:
           paths:
             - .venv
-          key: dep-{{ checksum "deps/dev-requirements-py2.txt" }}-{{ checksum "deps/requirements-py2.txt" }}s
+          key: dep2-{{ checksum "deps/dev-requirements-py2.txt" }}-{{ checksum "deps/requirements-py2.txt" }}s
       - setup_remote_docker
       - <<: *test
 
@@ -130,3 +139,26 @@ jobs:
       - <<: *authenticate-aws
       - <<: *publish
       - <<: *publish-docs
+
+###########
+# Workflows
+###########
+version: 2
+workflows:
+  version: 2
+
+  build_all:
+    jobs:
+      - build
+      - build-py2
+      - build-without-extras
+
+      - publish:
+          requires:
+            - build
+            - build-py2
+            - build-without-extras
+          filters:
+            branches:
+              only:
+                - /^master$/

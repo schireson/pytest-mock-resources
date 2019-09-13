@@ -1,14 +1,10 @@
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch  # type: ignore
-
 import sqlparse
 from decorator import decorator
 from sqlalchemy import create_engine
 from sqlalchemy.sql.elements import TextClause
 from sqlalchemy.sql.expression import Insert, Select, Update
 
+from pytest_mock_resources.compat import mock
 from pytest_mock_resources.patch.redshift.mock_s3_copy import execute_mock_s3_copy_command, strip
 from pytest_mock_resources.patch.redshift.mock_s3_unload import execute_mock_s3_unload_command
 
@@ -80,7 +76,7 @@ def patch_create_engine(func, path=None, *args, **kwargs):
     if path is None:
         raise ValueError("Path cannot be None")
 
-    with patch(path, new=mock_create_engine):
+    with mock.patch(path, new=mock_create_engine):
         return func(*args, **kwargs)
 
 
