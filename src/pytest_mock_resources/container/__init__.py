@@ -1,9 +1,12 @@
 import os
 import socket
+import subprocess  # nosec
 import time
 
 import docker
 import responses
+
+from pytest_mock_resources import logger
 
 IN_CI = os.getenv("CI") == "true"  # type: bool
 
@@ -53,6 +56,46 @@ def get_container_fn(name, image, ports, environment, check_fn):
         finally:
             if container:
                 container.kill()
+
+    wrapped.__name__ = name
+
+    return wrapped
+
+
+def get_compose_fn(name, compose_dir, check_fn):
+    def wrapped():
+        # XXX: moto library may over-mock responses. SEE: https://github.com/spulec/moto/issues/1026
+        responses.add_passthru("http+docker")
+
+        def retriable_check_fn(retries):
+            while retries:
+                retries -= 1
+                try:
+                    check_fn()
+                    logger.info(f"{name} is up and running")
+                    return
+                except Exception:
+                    logger.info(f"{name} is still starting up")
+                    if not retries:
+                        raise
+                    time.sleep(1)
+
+        try:
+            logger.info(f"Starting up {name}")
+            subprocess.run(["docker-compose", "-f", compose_dir, "up", "-d", "-V"])  # nosec
+            start_time = time.time()
+
+            logger.info(f"Checking to see if {name} is up and running")
+            retriable_check_fn(60)
+
+            end_time = time.time()
+            elapsed_seconds = end_time - start_time
+            logger.info(f"{name} became ready in {elapsed_seconds} seconds.")
+            yield
+        except Exception:
+            raise
+        finally:
+            subprocess.run(["docker-compose", "-f", compose_dir, "down", "-v"])  # nosec
 
     wrapped.__name__ = name
 

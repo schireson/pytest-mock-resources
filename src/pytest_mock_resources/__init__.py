@@ -1,3 +1,9 @@
+import logging
+
+logger = logging.getLogger("pmr")
+logger.setLevel(logging.INFO)
+
+
 from pytest_mock_resources.container import (  # noqa
     _mongo_container,
     _postgres_container,
