@@ -1,18 +1,19 @@
 import abc
-from time import sleep
 
 import pytest
 import six
-from pyhive import hive
 from pyhive.sqlalchemy_presto import PrestoDialect
 from sqlalchemy import create_engine, MetaData, schema
 from sqlalchemy.dialects import registry
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.types import DATE
-from thrift.transport.TTransport import TTransportException
 
-from pytest_mock_resources.container.presto import config, get_presto_connection
+from pytest_mock_resources.container.presto import (
+    config,
+    get_hive_connection,
+    get_presto_connection,
+)
 from pytest_mock_resources.fixture.database.relational.generic import _execute_function
 
 
@@ -74,12 +75,7 @@ def create_hive_fixture_raw(**kwargs):
 
     @pytest.fixture(scope=scope)
     def _(_presto_container):
-        try:
-            return hive.connect("localhost", database="default")
-        except TTransportException:
-            print("Sleeping more...")
-            sleep(90)
-            return hive.connect("localhost", database="default")
+        return get_hive_connection()
 
     return _
 
@@ -108,12 +104,7 @@ def create_hive_fixture(*ordered_actions, **kwargs):
     def _(_presto_container):
         engine = create_engine("hive://localhost:10000/default")
 
-        try:
-            _run_actions(engine, ordered_actions, tables=tables)
-        except TTransportException:
-            print("Sleeping more...")
-            sleep(90)
-            _run_actions(engine, ordered_actions, tables=tables)
+        _run_actions(engine, ordered_actions, tables=tables)
 
         return engine
 

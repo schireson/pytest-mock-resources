@@ -1,11 +1,11 @@
 import os
-import subprocess  # nosec
-import time
 
 import pytest
+from pyhive import hive
+from thrift.transport.TTransport import TTransportException
 
 import pytest_mock_resources
-from pytest_mock_resources.container import ContainerCheckFailed, HOST, IN_CI
+from pytest_mock_resources.container import ContainerCheckFailed, get_compose_fn, HOST, IN_CI
 
 # XXX: To become overwritable via pytest config.
 config = {
@@ -16,22 +16,10 @@ config = {
     "image": "starburstdata/presto",
 }
 
-
-@pytest.fixture(scope="session")
-def _presto_container():
-    module_dir = os.path.dirname(pytest_mock_resources.__file__)
-    os.chdir(os.path.join(module_dir, os.pardir, os.pardir, "docker-hive"))
-
-    try:
-        subprocess.run(["docker-compose", "up", "-d", "-V"])  # nosec
-        print("Sleeping...")
-        time.sleep(60)
-        yield
-        module_dir = os.path.dirname(pytest_mock_resources.__file__)
-        os.chdir(os.path.join(module_dir, os.pardir, os.pardir, "docker-hive"))
-        subprocess.run(["docker-compose", "down", "-v"])  # nosec
-    finally:
-        os.chdir(os.pardir)
+module_dir = os.path.dirname(pytest_mock_resources.__file__)
+docker_compose_dir = os.path.join(
+    module_dir, os.pardir, os.pardir, "docker-hive", "docker-compose.yml"
+)
 
 
 def get_presto_connection():
@@ -42,7 +30,11 @@ def get_presto_connection():
     )
 
 
-def check_presto_fn(_presto_container):
+def get_hive_connection():
+    return hive.connect("localhost", database="default")
+
+
+def check_presto_fn():
     from requests.exceptions import ConnectionError
 
     try:
@@ -57,3 +49,17 @@ def check_presto_fn(_presto_container):
                 config
             )
         )
+
+    try:
+        get_hive_connection()
+    except TTransportException:
+        raise ContainerCheckFailed(
+            "Unable to connect to a presumed Presto test container via given config: {}".format(
+                config
+            )
+        )
+
+
+_presto_container = pytest.fixture("session")(
+    get_compose_fn("_presto_container", docker_compose_dir, check_presto_fn)
+)
