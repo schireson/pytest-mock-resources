@@ -22,6 +22,11 @@ try:
 except ImportError:
     import mock  # type: ignore # noqa
 
+try:
+    import functools
+except ImportError:
+    import functools32 as functools  # type: ignore # noqa
+
 
 try:
     import psycopg2

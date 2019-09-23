@@ -22,6 +22,7 @@ docker-pycreds==0.4.0     # via docker
 docker==3.7.2
 docutils==0.14            # via botocore
 ecdsa==0.13.2             # via python-jose
+functools32==3.2.3.post2 ; python_version <= "2.7"
 future==0.17.1            # via aws-xray-sdk, python-jose
 idna==2.8                 # via moto, requests
 importlib-metadata==0.18  # via pluggy

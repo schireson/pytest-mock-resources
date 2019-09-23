@@ -34,6 +34,7 @@ docutils==0.14
 ecdsa==0.13.2
 execnet==1.6.1            # via pytest-xdist
 flake8==3.5.0
+functools32==3.2.3.post2 ; python_version <= "2.7"
 future==0.17.1
 gitdb2==2.0.5             # via gitpython
 gitpython==2.1.11         # via bandit
