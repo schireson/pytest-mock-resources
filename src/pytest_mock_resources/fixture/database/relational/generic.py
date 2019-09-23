@@ -77,10 +77,8 @@ def _run_actions(engine, ordered_actions, tables=None):
 
     for action in ordered_actions:
         if isinstance(action, MetaData):
-            print("metadata", action)
             _create_ddl(engine, action, tables)
         elif isinstance(action, BaseType):
-            print("basetype", action)
             _create_ddl(engine, action.metadata, tables)
         elif isinstance(action, AbstractAction):
             action.run(engine, tables)
@@ -107,7 +105,7 @@ def _create_ddl(engine, metadata, tables):
 
 @functools.lru_cache()
 def _create_schemas(engine, metadata):
-    all_schemas = {table.schema for table in metadata.tables.values() if table.schema}
+    all_schemas = {table.schema for table in metadata.tables.values() if table.schema} - {"public"}
 
     for schema in all_schemas:
         statement = CreateSchema(schema, quote=True)
