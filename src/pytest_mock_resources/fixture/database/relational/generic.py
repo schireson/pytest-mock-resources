@@ -4,6 +4,9 @@ import six
 from sqlalchemy import MetaData
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql.ddl import CreateSchema
+
+from pytest_mock_resources.compat import functools
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -74,8 +77,10 @@ def _run_actions(engine, ordered_actions, tables=None):
 
     for action in ordered_actions:
         if isinstance(action, MetaData):
+            print("metadata", action)
             _create_ddl(engine, action, tables)
         elif isinstance(action, BaseType):
+            print("basetype", action)
             _create_ddl(engine, action.metadata, tables)
         elif isinstance(action, AbstractAction):
             action.run(engine, tables)
@@ -100,10 +105,12 @@ def _create_ddl(engine, metadata, tables):
     _create_tables(engine, metadata, tables)
 
 
+@functools.lru_cache()
 def _create_schemas(engine, metadata):
     all_schemas = {table.schema for table in metadata.tables.values() if table.schema}
+
     for schema in all_schemas:
-        statement = "CREATE SCHEMA IF NOT EXISTS {}".format(schema)
+        statement = CreateSchema(schema, quote=True)
         engine.execute(statement)
 
 
