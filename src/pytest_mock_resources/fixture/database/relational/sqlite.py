@@ -1,5 +1,6 @@
 import pytest
 from sqlalchemy import create_engine
+from sqlalchemy.dialects import registry
 from sqlalchemy.dialects.sqlite.base import SQLiteDDLCompiler
 from sqlalchemy.dialects.sqlite.pysqlite import SQLiteDialect_pysqlite
 
@@ -34,8 +35,6 @@ def create_sqlite_fixture(*ordered_actions, **kwargs):
 
     if len(kwargs):
         raise KeyError("Unsupported Arguments: {}".format(kwargs))
-
-    from sqlalchemy.dialects import registry
 
     registry.register("sqlite.pmrsqlite", __name__, "PMRSQLiteDialect")
 

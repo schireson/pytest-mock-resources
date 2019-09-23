@@ -23,9 +23,9 @@ except ImportError:
     import mock  # type: ignore # noqa
 
 try:
-    import functools
+    import functools32 as functools
 except ImportError:
-    import functools32 as functools  # type: ignore # noqa
+    import functools  # type: ignore # noqa
 
 
 try:

@@ -54,8 +54,8 @@ version:
 
 bump:
 	# For an arbitrary or additive change.
-	lucha version bump
+	lucha version bump --minor
 
 bump-minor:
-	# For a backwards incompatible change.
-	lucha version bump --minor
+	# For bugfixes.
+	lucha version bump
