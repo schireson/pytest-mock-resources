@@ -1,8 +1,26 @@
+"""Adapt SQLite to act more in line with typical postgresql usage.
+
+SQLite is a desireable test database target because it introduces much less latency across
+tests, is parallelizable, and has a lower minimum fixed test-startup cost.
+
+Unfortunately, SQLite and postgresql do not behave identically in all cases. However, in
+many (typically CRUD) API type database designs, there is no need for postgresql-specific
+features, and SQLite can act as an appropriate stand in.
+
+Where possible though, this module changes the default SQLite behavior to more closely
+mimic postgresql, so as to increase the number of places where SQLite can frictionlessly
+stand in for postgresql.
+"""
+import json
+
 import pytest
 from sqlalchemy import create_engine, event
 from sqlalchemy.dialects import registry
-from sqlalchemy.dialects.sqlite.base import SQLiteDDLCompiler
+from sqlalchemy.dialects.postgresql import JSON, JSONB
+from sqlalchemy.dialects.sqlite.base import SQLiteDDLCompiler, SQLiteTypeCompiler
 from sqlalchemy.dialects.sqlite.pysqlite import SQLiteDialect_pysqlite
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.sql import sqltypes
 
 from pytest_mock_resources.fixture.database.relational.generic import manage_engine
 
@@ -23,10 +41,31 @@ class PMRSQLiteDDLCompiler(SQLiteDDLCompiler):
         return "DETACH DATABASE " + schema
 
 
+class PMRSQLiteTypeCompiler(SQLiteTypeCompiler):
+    """Add features sqlite doesn't support by default.
+
+    Adds:
+     * Handling of postgres column types: JSON, JSONB
+    """
+
+    @compiles(JSON, "pmrsqlite")
+    @compiles(JSONB, "pmrsqlite")
+    @compiles(sqltypes.JSON, "pmrsqlite")
+    def compile_json(type_, compiler, **kwargs):
+        return "BLOB"
+
+
 class PMRSQLiteDialect(SQLiteDialect_pysqlite):
+    """Define the dialect that collects all postgres-like adapations.
+    """
+
     name = "pmrsqlite"
 
     ddl_compiler = PMRSQLiteDDLCompiler
+    type_compiler = PMRSQLiteTypeCompiler
+
+    def _json_serializer(self, value):
+        return json.dumps(value, sort_keys=True)
 
 
 def enable_foreign_key_checks(dbapi_connection, connection_record):
