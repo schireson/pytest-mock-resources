@@ -1,5 +1,5 @@
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.dialects import registry
 from sqlalchemy.dialects.sqlite.base import SQLiteDDLCompiler
 from sqlalchemy.dialects.sqlite.pysqlite import SQLiteDialect_pysqlite
@@ -29,6 +29,18 @@ class PMRSQLiteDialect(SQLiteDialect_pysqlite):
     ddl_compiler = PMRSQLiteDDLCompiler
 
 
+def enable_foreign_key_checks(dbapi_connection, connection_record):
+    """Enable foreign key constraint checks.
+
+    SQLite supports FOREIGN KEY syntax when emitting CREATE statements for tables,
+    however by default these constraints have no effect on the operation of the table.
+    https://docs.sqlalchemy.org/en/latest/dialects/sqlite.html#foreign-key-support
+    """
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
+
+
 def create_sqlite_fixture(*ordered_actions, **kwargs):
     scope = kwargs.pop("scope", "function")
     tables = kwargs.pop("tables", None)
@@ -40,8 +52,14 @@ def create_sqlite_fixture(*ordered_actions, **kwargs):
 
     @pytest.fixture(scope=scope)
     def _():
-        engine = create_engine("sqlite+pmrsqlite://")
-        for engine in manage_engine(engine, ordered_actions, tables=tables):
+        raw_engine = create_engine("sqlite+pmrsqlite://")
+
+        # This *must* happen before the connection occurs (implicitly in `manage_engine`).
+        event.listen(raw_engine, "connect", enable_foreign_key_checks)
+
+        for engine in manage_engine(raw_engine, ordered_actions, tables=tables):
             yield engine
+
+        event.remove(raw_engine, "connect", enable_foreign_key_checks)
 
     return _
