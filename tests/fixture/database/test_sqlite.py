@@ -1,7 +1,8 @@
 import pytest
 import sqlalchemy
-from sqlalchemy import Column, ForeignKey, Integer, Unicode
+from sqlalchemy import Column, ForeignKey, Integer, Numeric, Unicode
 from sqlalchemy.dialects.postgresql import JSON, JSONB
+from sqlalchemy.exc import SAWarning
 from sqlalchemy.ext.declarative import declarative_base
 
 from pytest_mock_resources import create_postgres_fixture, create_sqlite_fixture, Rows
@@ -86,3 +87,29 @@ def test_jsonb_column_pg(pg):
     pg.execute(column_types_table.insert().values(id=1, jsonb={"foo": "bar"}))
     result = pg.execute(sqlalchemy.select([column_types_table.c.jsonb])).scalar()
     assert result == {"foo": "bar"}
+
+
+NumericBase = declarative_base()
+
+
+class NumericTable(NumericBase):  # type: ignore
+    __tablename__ = "numeric"
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    value = Column(Numeric(), nullable=False)
+
+
+sqlite_with_warnings = create_sqlite_fixture(NumericBase, decimal_warnings=True)
+sqlite_without_warnings = create_sqlite_fixture(NumericBase)
+
+
+def test_decimal_warnings_enabled(sqlite_with_warnings):
+    sqlite_with_warnings.execute("INSERT INTO numeric (id, value) VALUES (1, 1)")
+    with pytest.warns(SAWarning):
+        sqlite_with_warnings.execute(sqlalchemy.select([NumericTable.__table__.c.value])).scalar()
+
+
+@pytest.mark.filterwarnings("error")
+def test_decimal_warnings_disabled(sqlite_without_warnings):
+    sqlite_without_warnings.execute("INSERT INTO numeric (id, value) VALUES (1, 1)")
+    sqlite_without_warnings.execute(sqlalchemy.select([NumericTable.__table__.c.value])).scalar()
