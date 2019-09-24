@@ -11,7 +11,9 @@ Where possible though, this module changes the default SQLite behavior to more c
 mimic postgresql, so as to increase the number of places where SQLite can frictionlessly
 stand in for postgresql.
 """
+import contextlib
 import json
+import warnings
 
 import pytest
 from sqlalchemy import create_engine, event
@@ -19,6 +21,7 @@ from sqlalchemy.dialects import registry
 from sqlalchemy.dialects.postgresql import JSON, JSONB
 from sqlalchemy.dialects.sqlite.base import SQLiteDDLCompiler, SQLiteTypeCompiler
 from sqlalchemy.dialects.sqlite.pysqlite import SQLiteDialect_pysqlite
+from sqlalchemy.exc import SAWarning
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql import sqltypes
 
@@ -80,9 +83,29 @@ def enable_foreign_key_checks(dbapi_connection, connection_record):
     cursor.close()
 
 
+@contextlib.contextmanager
+def filter_sqlalchemy_warnings(decimal_warnings_enabled=True):
+    with warnings.catch_warnings():
+        if decimal_warnings_enabled:
+            warnings.filterwarnings(
+                "ignore",
+                (
+                    r"^Dialect pmrsqlite\+pysqlite does \*not\* support Decimal objects natively\, and "
+                    r"SQLAlchemy must convert from floating point - rounding errors and other issues may occur\. "
+                    r"Please consider storing Decimal numbers as strings or integers on this platform for "
+                    r"lossless storage\.$"
+                ),
+                SAWarning,
+                r"^sqlalchemy\.sql\.sqltypes$",
+            )
+
+        yield
+
+
 def create_sqlite_fixture(*ordered_actions, **kwargs):
     scope = kwargs.pop("scope", "function")
     tables = kwargs.pop("tables", None)
+    decimal_warnings = kwargs.pop("decimal_warnings", False)
 
     if len(kwargs):
         raise KeyError("Unsupported Arguments: {}".format(kwargs))
@@ -97,7 +120,8 @@ def create_sqlite_fixture(*ordered_actions, **kwargs):
         event.listen(raw_engine, "connect", enable_foreign_key_checks)
 
         for engine in manage_engine(raw_engine, ordered_actions, tables=tables):
-            yield engine
+            with filter_sqlalchemy_warnings(decimal_warnings_enabled=(not decimal_warnings)):
+                yield engine
 
         event.remove(raw_engine, "connect", enable_foreign_key_checks)
 
