@@ -12,6 +12,7 @@ mimic postgresql, so as to increase the number of places where SQLite can fricti
 stand in for postgresql.
 """
 import contextlib
+import datetime
 import json
 import warnings
 
@@ -19,7 +20,7 @@ import pytest
 from sqlalchemy import create_engine, event
 from sqlalchemy.dialects import registry
 from sqlalchemy.dialects.postgresql import JSON, JSONB
-from sqlalchemy.dialects.sqlite.base import SQLiteDDLCompiler, SQLiteTypeCompiler
+from sqlalchemy.dialects.sqlite import base as sqlite_base
 from sqlalchemy.dialects.sqlite.pysqlite import SQLiteDialect_pysqlite
 from sqlalchemy.exc import SAWarning
 from sqlalchemy.ext.compiler import compiles
@@ -28,7 +29,7 @@ from sqlalchemy.sql import sqltypes
 from pytest_mock_resources.fixture.database.relational.generic import manage_engine
 
 
-class PMRSQLiteDDLCompiler(SQLiteDDLCompiler):
+class PMRSQLiteDDLCompiler(sqlite_base.SQLiteDDLCompiler):
     """Add features sqlite doesn't support by default.
 
     Adds:
@@ -44,7 +45,7 @@ class PMRSQLiteDDLCompiler(SQLiteDDLCompiler):
         return "DETACH DATABASE " + schema
 
 
-class PMRSQLiteTypeCompiler(SQLiteTypeCompiler):
+class PMRSQLiteTypeCompiler(sqlite_base.SQLiteTypeCompiler):
     """Add features sqlite doesn't support by default.
 
     Adds:
@@ -58,6 +59,54 @@ class PMRSQLiteTypeCompiler(SQLiteTypeCompiler):
         return "BLOB"
 
 
+class UTC(datetime.tzinfo):
+    """UTC timezone.
+
+    Blame python2:
+    https://docs.python.org/2/library/datetime.html#datetime.tzinfo.fromutc
+    """
+
+    ZERO = datetime.timedelta(0)
+
+    def utcoffset(self, dt):
+        return self.ZERO
+
+    def dst(self, dt):
+        return self.ZERO
+
+    def tzname(self, dt):
+        return "UTC"
+
+
+utc = UTC()
+
+
+class PMRDateTime(sqlite_base.DATETIME):
+    def bind_processor(self, dialect):
+        processor = super(PMRDateTime, self).bind_processor(dialect)
+
+        def process(value):
+            if isinstance(value, datetime.datetime):
+                if value.tzinfo is None:
+                    value = value.replace(tzinfo=utc)
+                result = value.astimezone(utc)
+                return processor(result)
+
+        return process
+
+    def result_processor(self, dialect, coltype):
+        processor = super(PMRDateTime, self).result_processor(dialect, coltype)
+
+        def process(value):
+            result = processor(value)
+            if self.timezone:
+                if result is not None and result.tzinfo is None:
+                    result = result.replace(tzinfo=utc)
+            return result
+
+        return process
+
+
 class PMRSQLiteDialect(SQLiteDialect_pysqlite):
     """Define the dialect that collects all postgres-like adapations.
     """
@@ -66,6 +115,14 @@ class PMRSQLiteDialect(SQLiteDialect_pysqlite):
 
     ddl_compiler = PMRSQLiteDDLCompiler
     type_compiler = PMRSQLiteTypeCompiler
+    colspecs = {
+        sqltypes.Date: sqlite_base.DATE,
+        sqltypes.DateTime: PMRDateTime,
+        sqltypes.JSON: sqlite_base.JSON,
+        sqltypes.JSON.JSONIndexType: sqlite_base.JSONIndexType,
+        sqltypes.JSON.JSONPathType: sqlite_base.JSONPathType,
+        sqltypes.Time: sqlite_base.TIME,
+    }
 
     def _json_serializer(self, value):
         return json.dumps(value, sort_keys=True)
