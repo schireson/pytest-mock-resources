@@ -2,8 +2,9 @@ import pytest
 import sqlalchemy
 from sqlalchemy import Column, Integer, SmallInteger, Unicode
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
-from pytest_mock_resources import create_postgres_fixture, create_sqlite_fixture
+from pytest_mock_resources import create_postgres_fixture, create_sqlite_fixture, Rows
 
 Base = declarative_base()
 
@@ -106,3 +107,34 @@ class TestPg:
         pg_explicit_schema.execute("select * from quarter")
         with pytest.raises(sqlalchemy.exc.ProgrammingError):
             pg_explicit_schema.execute("select * from report")
+
+
+rows = Rows(Quarter(id=1, year=1, quarter=1))
+sqlite = create_sqlite_fixture(PGBase, rows, session=True)
+sqlite2 = create_sqlite_fixture(PGBase, rows, session=sessionmaker(autocommit=True))
+pg_session = create_postgres_fixture(
+    PGBase, rows, session=True, tables=["report", "public.quarter"]
+)
+
+
+class TestSessionArg:
+    def test_session(self, sqlite):
+        result = sqlite.query(Quarter).one()
+        assert result.id == 1
+
+        sqlite.execute("INSERT INTO report (id) VALUES (1)")
+
+        sqlite.rollback()
+        result = sqlite.query(Report).all()
+        assert len(result) == 0
+
+    def test_session2(self, sqlite2):
+        sqlite2.execute("INSERT INTO report (id) VALUES (1)")
+        sqlite2.rollback()
+        result = sqlite2.query(Report).all()
+        assert len(result) == 1
+
+    @pytest.mark.postgres
+    def test_session_pg(self, pg_session):
+        result = pg_session.query(Quarter).one()
+        assert result.id == 1

@@ -162,6 +162,8 @@ def filter_sqlalchemy_warnings(decimal_warnings_enabled=True):
 def create_sqlite_fixture(*ordered_actions, **kwargs):
     scope = kwargs.pop("scope", "function")
     tables = kwargs.pop("tables", None)
+
+    session = kwargs.pop("session", None)
     decimal_warnings = kwargs.pop("decimal_warnings", False)
 
     if len(kwargs):
@@ -176,7 +178,7 @@ def create_sqlite_fixture(*ordered_actions, **kwargs):
         # This *must* happen before the connection occurs (implicitly in `manage_engine`).
         event.listen(raw_engine, "connect", enable_foreign_key_checks)
 
-        for engine in manage_engine(raw_engine, ordered_actions, tables=tables):
+        for engine in manage_engine(raw_engine, ordered_actions, session=session, tables=tables):
             with filter_sqlalchemy_warnings(decimal_warnings_enabled=(not decimal_warnings)):
                 yield engine
 
