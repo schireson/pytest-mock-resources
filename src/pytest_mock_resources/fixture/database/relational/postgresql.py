@@ -29,7 +29,9 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
 
         engine.database = database_name
 
-        for engine in manage_engine(engine, ordered_actions, tables=tables):
+        for engine in manage_engine(
+            engine, ordered_actions, tables=tables, default_schema="public"
+        ):
             yield engine
 
     return _
