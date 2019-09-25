@@ -19,6 +19,8 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
     scope = kwargs.pop("scope", "function")
     tables = kwargs.pop("tables", None)
 
+    session = kwargs.pop("session", None)
+
     if len(kwargs):
         raise KeyError("Unsupported Arguments: {}".format(kwargs))
 
@@ -30,7 +32,7 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
         engine.database = database_name
 
         for engine in manage_engine(
-            engine, ordered_actions, tables=tables, default_schema="public"
+            engine, ordered_actions, tables=tables, session=session, default_schema="public"
         ):
             yield engine
 

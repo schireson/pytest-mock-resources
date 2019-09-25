@@ -14,6 +14,8 @@ def create_redshift_fixture(*ordered_actions, **kwargs):
     scope = kwargs.pop("scope", "function")
     tables = kwargs.pop("tables", None)
 
+    session = kwargs.pop("session", None)
+
     if len(kwargs):
         raise KeyError("Unsupported Arguments: {}".format(kwargs))
 
@@ -30,7 +32,7 @@ def create_redshift_fixture(*ordered_actions, **kwargs):
 
         engine = substitute_execute_with_custom_execute(engine)
         for engine in manage_engine(
-            engine, ordered_actions, tables=tables, default_schema="public"
+            engine, ordered_actions, tables=tables, session=session, default_schema="public"
         ):
             yield engine
 
