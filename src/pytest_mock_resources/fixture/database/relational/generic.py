@@ -3,7 +3,7 @@ import abc
 import six
 from sqlalchemy import MetaData
 from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql.ddl import CreateSchema
 from sqlalchemy.sql.schema import Table
 
@@ -90,10 +90,22 @@ def _run_actions(engine, ordered_actions, tables=None, default_schema=None):
             )
 
 
-def manage_engine(engine, ordered_actions, tables=None, default_schema=None):
+def manage_engine(engine, ordered_actions, tables=None, session=False, default_schema=None):
     try:
         _run_actions(engine, ordered_actions, tables=tables, default_schema=default_schema)
-        yield engine
+
+        if session:
+            if isinstance(session, sessionmaker):
+                session_factory = session
+            else:
+                session_factory = sessionmaker(bind=engine)
+
+            Session = scoped_session(session_factory)
+            session = Session(bind=engine)
+            yield session
+            session.close()
+        else:
+            yield engine
     finally:
         engine.dispose()
 
