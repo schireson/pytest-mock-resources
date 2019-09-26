@@ -1,3 +1,4 @@
+attrs
 boto3
 decorator
 docker>=2.5.1
