@@ -5,7 +5,7 @@ coverage==4.5
 flake8==3.5.0
 isort==4.3.3
 mock; python_version < '3.3'
-mypy==0.570; python_version > '2.7'
+mypy==0.730; python_version > '2.7'
 pydocstyle==2.1.1
 pytest-cov==2.5.1
 pytest-xdist

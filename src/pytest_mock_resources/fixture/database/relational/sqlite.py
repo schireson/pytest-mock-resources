@@ -26,7 +26,7 @@ from sqlalchemy.exc import SAWarning
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql import sqltypes
 
-from pytest_mock_resources.fixture.database.relational.generic import manage_engine
+from pytest_mock_resources.fixture.database.relational.generic import EngineManager
 
 
 class PMRSQLiteDDLCompiler(sqlite_base.SQLiteDDLCompiler):
@@ -175,10 +175,11 @@ def create_sqlite_fixture(*ordered_actions, **kwargs):
     def _():
         raw_engine = create_engine("sqlite+pmrsqlite://")
 
-        # This *must* happen before the connection occurs (implicitly in `manage_engine`).
+        # This *must* happen before the connection occurs (implicitly in `EngineManager`).
         event.listen(raw_engine, "connect", enable_foreign_key_checks)
 
-        for engine in manage_engine(raw_engine, ordered_actions, session=session, tables=tables):
+        engine_manager = EngineManager(raw_engine, ordered_actions, tables=tables)
+        for engine in engine_manager.manage(session=session):
             with filter_sqlalchemy_warnings(decimal_warnings_enabled=(not decimal_warnings)):
                 yield engine
 

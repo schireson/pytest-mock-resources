@@ -2,7 +2,7 @@ import pytest
 import sqlalchemy
 
 from pytest_mock_resources.container.postgres import config, get_sqlalchemy_engine
-from pytest_mock_resources.fixture.database.relational.generic import manage_engine
+from pytest_mock_resources.fixture.database.relational.generic import EngineManager
 
 
 @pytest.fixture(scope="session")
@@ -31,9 +31,10 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
 
         engine.database = database_name
 
-        for engine in manage_engine(
-            engine, ordered_actions, tables=tables, session=session, default_schema="public"
-        ):
+        engine_manager = EngineManager(
+            engine, ordered_actions, tables=tables, default_schema="public"
+        )
+        for engine in engine_manager.manage(session=session):
             yield engine
 
     return _
