@@ -17,7 +17,7 @@ bandit==1.4.0
 black==18.9b0 ; python_version > "2.7"
 boto3==1.9.148
 boto==2.49.0
-botocore==1.12.233
+botocore==1.12.236
 bumpversion==0.5.3
 certifi==2019.3.9
 cffi==1.12.3
@@ -56,7 +56,7 @@ mistune==0.8.4            # via m2r
 mock==3.0.5
 more-itertools==5.0.0
 moto==1.3.8
-mypy==0.570 ; python_version > "2.7"
+mypy==0.730 ; python_version > "2.7"
 packaging==19.0           # via sphinx
 pbr==5.2.0                # via stevedore
 pluggy==0.12.0
@@ -90,7 +90,7 @@ sqlalchemy==1.3.3
 sqlparse==0.3.0
 stevedore==1.30.1         # via bandit
 toml==0.10.0              # via black
-typed-ast==1.1.2  ; python_version > "2.7"         # via mypy
+typed-ast==1.4.0  ; python_version > "2.7"         # via mypy
 urllib3==1.24.3
 wcwidth==0.1.7
 websocket-client==0.56.0
