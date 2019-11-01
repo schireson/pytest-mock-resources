@@ -8,7 +8,7 @@ from pytest_mock_resources import create_postgres_fixture, Rows, Statements
 Base = declarative_base()
 
 
-class User(Base):  # type: ignore
+class User(Base):
     __tablename__ = "user"
     __table_args__ = {"schema": "stuffs"}
 
@@ -17,7 +17,7 @@ class User(Base):  # type: ignore
     objects = relationship("Object", back_populates="owner")
 
 
-class Object(Base):  # type: ignore
+class Object(Base):
     __tablename__ = "object"
     __table_args__ = {"schema": "stuffs"}
 

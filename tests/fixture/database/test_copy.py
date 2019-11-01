@@ -128,12 +128,7 @@ def test_inverted_credentials_string(redshift):
             "credentials 'aws_secret_access_key=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;"
             "aws_access_key_id=AAAAAAAAAAAAAAAAAAAA'"
         ).format(
-            COMMAND="COPY",
-            LOCATION="s3://mybucket/file.csv",
-            COLUMNS="",
-            FROM="from",
-            CREDENTIALS="credentials",
-            OPTIONAL_ARGS="",
+            COMMAND="COPY", LOCATION="s3://mybucket/file.csv", COLUMNS="",
         )
     )
 

@@ -1,4 +1,84 @@
-[tool.lucha]
+[tool.poetry]
+name = "pytest-mock-resources"
+version = "0.9.0"
+description = "A pytest plugin for easily instantiating reproduceable mock resources."
+authors = [
+    "Omar Khan <oakhan3@gmail.com>",
+    "Dan Cardin <ddcardin@gmail.com>",
+    "Gabriel Michael <gabriel.j.michael@gmail.com>",
+    "Prateek Pisat <pisatprateek12@gmail.com>",
+]
+license = "Apache-2.0"
+keywords = [ "pytest", "sqlalchemy", "docker", "fixture", "mock" ]
+repository = "https://github.com/schireson/pytest-mock-resources"
+packages = [
+    { include = "pytest_mock_resources", from = "src" },
+]
+readme = 'README.md'
+include = [
+    "*.md",
+]
+
+[tool.poetry.dependencies]
+python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4"
+
+boto3 = "*"
+docker = {version = ">= 2.5.1"}
+functools32 = {version = "*", python = "~2.7"}
+moto = "*"
+pytest = {version = ">=1.0"}
+responses = "*"
+sqlalchemy = "*"
+sqlparse = "*"
+
+# extra [postgres]
+psycopg2 = {version = "*", optional = true}
+
+# extra [mongo]
+pymongo = {version = "*", optional = true}
+
+# extra [docs]
+m2r = {version = "*", optional = true}
+sphinx = {version = "*", optional = true}
+sphinx-autobuild = {version = "*", optional = true}
+sphinx_autodoc_typehints = {version = "*", optional = true}
+sphinx_rtd_theme = {version = "*", optional = true}
+
+[tool.poetry.dev-dependencies]
+black = {version = "=>19.3b0", allows-prereleases = true, python = ">=3.6"}
+coverage = "*"
+flake8 = "*"
+isort = "*"
+mypy = {version = "*", python = ">=3.5"}
+pydocstyle = {version = "*", python = ">=3.5"}
+sqlalchemy-stubs = {version = "*", python = ">=3.5"}
+pytest-xdist = "*"
+
+[tool.poetry.extras]
+postgres = ['psycopg2']
+mongo = ['pymongo']
+docs = ['sphinx', 'm2r', 'sphinx_rtd_theme', 'sphinx-autobuild']
+
+[tool.poetry.plugins.pytest11]
+pytest_mock_resources = "pytest_mock_resources"
+
+[tool.poetry.scripts]
+pmr = "pytest_mock_resources.cli:main"
+
+[tool.isort]
+default_section = 'FIRSTPARTY'
+include_trailing_comma = true
+indent = '    '
+length_sort = false
+line_length = 100
+multi_line_output = 3
+order_by_type = false
+known_first_party = 'tests'
+use_parentheses = true
 
 [tool.black]
 line_length = 100
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

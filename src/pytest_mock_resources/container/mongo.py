@@ -1,10 +1,14 @@
 import pytest
 
-from pytest_mock_resources.container import ContainerCheckFailed, get_container_fn, HOST, IN_CI
+from pytest_mock_resources.container import (
+    ContainerCheckFailed,
+    get_container_fn,
+    get_docker_host,
+    IN_CI,
+)
 
 # XXX: To become overwritable via pytest config.
 config = {
-    "host": HOST,
     "port": 27017 if IN_CI else 28017,
     "root_database": "dev-mongo",
     "image": "mongo:3.6",
@@ -14,7 +18,7 @@ config = {
 def get_pymongo_client():
     from pymongo import MongoClient
 
-    uri = "mongodb://{}:{}".format(config["host"], config["port"])
+    uri = "mongodb://{}:{}".format(get_docker_host(), config["port"])
 
     return MongoClient(uri)
 

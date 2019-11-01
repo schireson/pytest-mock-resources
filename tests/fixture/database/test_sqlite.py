@@ -13,7 +13,7 @@ from pytest_mock_resources.fixture.database.relational.sqlite import utc
 Base = declarative_base()
 
 
-class Thing(Base):  # type: ignore
+class Thing(Base):
     __tablename__ = "thing"
     __table_args__ = {"schema": "other"}
 
@@ -21,7 +21,7 @@ class Thing(Base):  # type: ignore
     name = Column(Unicode(5), nullable=False)
 
 
-class Fk(Base):  # type: ignore
+class Fk(Base):
     __tablename__ = "fk"
     __table_args__ = {"schema": "other"}
 
@@ -29,7 +29,7 @@ class Fk(Base):  # type: ignore
     thing_id = Column(Integer, ForeignKey("other.thing.id"), nullable=False)
 
 
-class ColumnTypesTable(Base):  # type: ignore
+class ColumnTypesTable(Base):
     __tablename__ = "column_types_table"
 
     id = Column(Integer, autoincrement=True, primary_key=True)
@@ -97,7 +97,7 @@ def test_jsonb_column_pg(pg):
 NumericBase = declarative_base()
 
 
-class NumericTable(NumericBase):  # type: ignore
+class NumericTable(NumericBase):
     __tablename__ = "numeric"
 
     id = Column(Integer, autoincrement=True, primary_key=True)
@@ -123,7 +123,7 @@ def test_decimal_warnings_disabled(sqlite_without_warnings):
 DateTimeBase = declarative_base()
 
 
-class DTTable(DateTimeBase):  # type: ignore
+class DTTable(DateTimeBase):
     __tablename__ = "dt"
 
     id = Column(Integer, autoincrement=True, primary_key=True)

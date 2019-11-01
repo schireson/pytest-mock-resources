@@ -1,8 +1,7 @@
-from decorator import decorator
 from sqlalchemy import create_engine
 from sqlalchemy.sql.elements import TextClause
 
-from pytest_mock_resources.compat import mock, psycopg2
+from pytest_mock_resources.compat import functools, mock, psycopg2
 from pytest_mock_resources.container.postgres import config
 from pytest_mock_resources.patch.redshift.create_engine import (
     execute_mock_s3_copy_command,
@@ -32,14 +31,11 @@ class CustomCursor(psycopg2.extensions.cursor):
         return super(CustomCursor, self).execute(sql, args)
 
 
-@decorator
-def patch_psycopg2_connect(func, path=None, *args, **kwargs):
+def patch_psycopg2_connect(path):
     """Patch any occourances of `psycopg2.connect` with mock_psycopg2_connect function.
 
     The `path` should be the path to the `psycopg2` module you want to patch.
     """
-    if path is None:
-        raise ValueError("Path cannot be None")
 
     class MockPsycoPg2:
         """Avoid an infinite circular mock scenario.
@@ -53,8 +49,15 @@ def patch_psycopg2_connect(func, path=None, *args, **kwargs):
         def connect(self, *args, **kwargs):
             return mock_psycopg2_connect(*args, **kwargs)
 
-    with mock.patch(path, new=MockPsycoPg2()):
-        return func(*args, **kwargs)
+    def _patch_psycopg2_connect(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            with mock.patch(path, new=MockPsycoPg2()):
+                return func(*args, **kwargs)
+
+        return wrapper
+
+    return _patch_psycopg2_connect
 
 
 def mock_psycopg2_connect(*args, **kwargs):

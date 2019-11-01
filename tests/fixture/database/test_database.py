@@ -55,14 +55,15 @@ postgres_3 = create_postgres_fixture()
 
 
 @pytest.mark.postgres
-def test_create_custom_connection(PG_PORT, PG_HOST, postgres_3):
+def test_create_custom_connection(postgres_3):
+    creds = postgres_3.pmr_credentials
     engine = create_engine(
         "postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=disable".format(
-            database=postgres_3.database,
-            username="user",
-            password="password",
-            host=PG_HOST,
-            port=PG_PORT,
+            database=creds.database,
+            username=creds.username,
+            password=creds.password,
+            host=creds.host,
+            port=creds.port,
         ),
         isolation_level="AUTOCOMMIT",
     )

@@ -41,12 +41,13 @@ def _parse_s3_command(statement):
                 ending_index = index
                 break
 
-        columns = tokens[0 : ending_index + 1]
+        ending_index += 1
+        columns = tokens[0:ending_index]
         columns[0] = columns[0].replace("(", "")
         columns[-1] = columns[-1].replace(")", "")
         columns = [x.replace(",", "") for x in columns]
         columns = [x for x in columns if x != ""]
-        tokens = tokens[ending_index + 1 :]
+        tokens = tokens[ending_index:]
         params["columns"] = columns
 
     # Fetching s3_uri
@@ -120,7 +121,8 @@ def _mock_s3_copy(
     s3 = boto3.client(
         "s3", aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key
     )
-    path_to_file = s3_uri[5 : len(s3_uri)]
+    ending_index = len(s3_uri)
+    path_to_file = s3_uri[5:ending_index]
     bucket, key = path_to_file.split("/", 1)
     response = s3.get_object(Bucket=bucket, Key=key)
 
