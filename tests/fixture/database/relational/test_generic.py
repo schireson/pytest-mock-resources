@@ -9,14 +9,14 @@ from pytest_mock_resources import create_postgres_fixture, create_sqlite_fixture
 Base = declarative_base()
 
 
-class Thing(Base):  # type: ignore
+class Thing(Base):
     __tablename__ = "thing"
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     name = Column(Unicode(5), nullable=False)
 
 
-class Other(Base):  # type: ignore
+class Other(Base):
     __tablename__ = "other"
     __table_args__ = {"schema": "public"}
 
@@ -24,7 +24,7 @@ class Other(Base):  # type: ignore
     name = Column(Unicode(5), nullable=False)
 
 
-class Other2(Base):  # type: ignore
+class Other2(Base):
     __tablename__ = "other"
     __table_args__ = {"schema": "other"}
 
@@ -76,7 +76,7 @@ class TestTablesArg:
 PGBase = declarative_base()
 
 
-class Quarter(PGBase):  # type: ignore
+class Quarter(PGBase):
     __tablename__ = "quarter"
     __table_args__ = {"schema": "public"}
 
@@ -85,7 +85,7 @@ class Quarter(PGBase):  # type: ignore
     quarter = Column(SmallInteger, nullable=False)
 
 
-class Report(PGBase):  # type: ignore
+class Report(PGBase):
     __tablename__ = "report"
 
     id = Column(Integer, primary_key=True)

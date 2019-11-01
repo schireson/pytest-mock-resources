@@ -26,6 +26,7 @@ from sqlalchemy.exc import SAWarning
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql import sqltypes
 
+from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
 from pytest_mock_resources.fixture.database.relational.generic import EngineManager
 
 
@@ -159,7 +160,19 @@ def filter_sqlalchemy_warnings(decimal_warnings_enabled=True):
         yield
 
 
+def _database_producer():
+    i = 1
+    while True:
+        yield "db{}".format(i)
+        i += 1
+
+
+_database_names = _database_producer()
+
+
 def create_sqlite_fixture(*ordered_actions, **kwargs):
+    """Create a SQLite fixture.
+    """
     scope = kwargs.pop("scope", "function")
     tables = kwargs.pop("tables", None)
 
@@ -173,7 +186,12 @@ def create_sqlite_fixture(*ordered_actions, **kwargs):
 
     @pytest.fixture(scope=scope)
     def _():
-        raw_engine = create_engine("sqlite+pmrsqlite://")
+        # XXX: Ideally we eventually make use of the shared memory cache to enable connecting by
+        #      credentials with sqlite.
+        # database_name = "file:{}?mode=memory&cache=shared".format(next(_database_names))
+        database_name = ""
+
+        raw_engine = create_engine("sqlite+pmrsqlite:///{}".format(database_name))
 
         # This *must* happen before the connection occurs (implicitly in `EngineManager`).
         event.listen(raw_engine, "connect", enable_foreign_key_checks)
@@ -181,6 +199,16 @@ def create_sqlite_fixture(*ordered_actions, **kwargs):
         engine_manager = EngineManager(raw_engine, ordered_actions, tables=tables)
         for engine in engine_manager.manage(session=session):
             with filter_sqlalchemy_warnings(decimal_warnings_enabled=(not decimal_warnings)):
+                assign_fixture_credentials(
+                    raw_engine,
+                    drivername="sqlite+pmrsqlite",
+                    host="",
+                    port=None,
+                    database=database_name,
+                    username="",
+                    password="",
+                )
+
                 yield engine
 
         event.remove(raw_engine, "connect", enable_foreign_key_checks)

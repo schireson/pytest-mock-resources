@@ -5,13 +5,19 @@ import time
 import docker
 import responses
 
+from pytest_mock_resources.compat import functools
+
 IN_CI = os.getenv("CI") == "true"  # type: bool
 
-HOST = "host.docker.internal"
-try:
-    socket.gethostbyname(HOST)
-except socket.gaierror:
-    HOST = os.environ.get("PYTEST_MOCK_RESOURCES_HOST", "localhost")
+
+@functools.lru_cache()
+def get_docker_host():
+    host = "host.docker.internal"
+    try:
+        socket.gethostbyname(host)
+        return host
+    except socket.gaierror:
+        return os.environ.get("PYTEST_MOCK_RESOURCES_HOST", "localhost")
 
 
 class ContainerCheckFailed(Exception):

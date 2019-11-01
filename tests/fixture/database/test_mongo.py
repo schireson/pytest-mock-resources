@@ -128,16 +128,10 @@ def test_multiple_mongos(mongo_1, mongo_2, mongo_3):
 
 
 @pytest.mark.mongo
-def test_create_custom_connection(mongo, MONGO_HOST, MONGO_PORT):
+def test_create_custom_connection(mongo):
     from pymongo import MongoClient
 
-    client = MongoClient(
-        MONGO_HOST,
-        MONGO_PORT,
-        username=mongo.config["username"],
-        password=mongo.config["password"],
-        authSource=mongo.config["database"],
-    )
+    client = MongoClient(**mongo.pmr_credentials.as_mongo_kwargs())
     db = client[mongo.config["database"]]
 
     collection = db["customers"]

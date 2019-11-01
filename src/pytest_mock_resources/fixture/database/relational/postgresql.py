@@ -1,21 +1,18 @@
 import pytest
 import sqlalchemy
 
+from pytest_mock_resources.container import get_docker_host
 from pytest_mock_resources.container.postgres import config, get_sqlalchemy_engine
+from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
 from pytest_mock_resources.fixture.database.relational.generic import EngineManager
 
 
-@pytest.fixture(scope="session")
-def PG_HOST():
-    return config["host"]
-
-
-@pytest.fixture(scope="session")
-def PG_PORT():
-    return config["port"]
-
-
 def create_postgres_fixture(*ordered_actions, **kwargs):
+    """Create a Postgres fixture.
+
+    Any number of fixture functions can be created. Under the hood they will all share the same
+    database server.
+    """
     scope = kwargs.pop("scope", "function")
     tables = kwargs.pop("tables", None)
 
@@ -29,7 +26,15 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
         database_name = _create_clean_database()
         engine = get_sqlalchemy_engine(database_name)
 
-        engine.database = database_name
+        assign_fixture_credentials(
+            engine,
+            drivername="postgresql+psycopg2",
+            host=get_docker_host(),
+            port=config["port"],
+            database=database_name,
+            username="user",
+            password="password",
+        )
 
         engine_manager = EngineManager(
             engine, ordered_actions, tables=tables, default_schema="public"

@@ -1,115 +1,7 @@
-######################################
-# Reusable steps should be added here.
-######################################
-install-dependencies: &install-dependencies
-  run:
-    name: Install Dependencies
-    command: |
-      # pip installing virtualenv in Python 3 will be a no-op
-      pip install virtualenv
-      virtualenv .venv
-      . .venv/bin/activate
+version: 2.1
 
-      make install-deps
-
-install-dependencies-without-extras: &install-dependencies-without-extras
-  run:
-    name: Install Dependencies without extras
-    command: |
-      # pip installing virtualenv in Python 3 will be a no-op
-      pip install virtualenv
-      virtualenv .venv
-      . .venv/bin/activate
-
-      make install-deps-without-extras
-
-lint: &lint
-  run:
-    name: Run Linters
-    command: |
-      . .venv/bin/activate
-
-      make lint
-
-test: &test
-  run:
-    name: Run Tests
-    command: |
-      . .venv/bin/activate
-
-      make test
-
-authenticate-aws: &authenticate-aws
-  run:
-    name: Authenticate with a particular ECR instance on AWS
-    command: |
-      aws configure set default.region "${AWS_DEFAULT_REGION:-us-east-1}"
-      printf "${AWS_CREDENTIALS}" > ~/.aws/credentials
-
-publish: &publish
-  run:
-    name: Publish Python distribution to Artifactory
-    command: |
-      sudo pip3 install twine
-      lucha aws whitelist --profile artifactory -- make publish
-
-publish-docs: &publish-docs
-  run:
-    name: Publish docs to latest.
-    command: |
-      virtualenv .venv
-      . .venv/bin/activate
-
-      sudo pip install sphinx m2r
-      make cicd-publish-docs
-
-###################
-# Job Definitions
-###################
-jobs:
-
-  build:
-    docker:
-      - image: schireson/cicd-python
-      - image: postgres:9.6.10-alpine
-        environment:
-          POSTGRES_DB: dev
-          POSTGRES_USER: user
-          POSTGRES_PASSWORD: password
-      - image: circleci/mongo:3.6.12
-    steps:
-      - checkout
-      - restore_cache:
-          key: dep3-{{ checksum "deps/dev-requirements.txt" }}-{{ checksum "deps/requirements.txt" }}2
-      - <<: *install-dependencies
-      - save_cache:
-          paths:
-            - .venv
-          key: dep3-{{ checksum "deps/dev-requirements.txt" }}-{{ checksum "deps/requirements.txt" }}2
-      - <<: *lint
-      - setup_remote_docker
-      - <<: *test
-
-  build-without-extras:
-    docker:
-      - image: schireson/cicd-python
-    steps:
-      - checkout
-      - restore_cache:
-          key: no-extras-dep-{{ checksum "deps/dev-requirements.txt" }}-{{ checksum "deps/requirements.txt" }}2
-      - <<: *install-dependencies-without-extras
-      - save_cache:
-          paths:
-            - .venv
-          key: no-extras-dep-{{ checksum "deps/dev-requirements.txt" }}-{{ checksum "deps/requirements.txt" }}2
-      - setup_remote_docker
-      - run:
-          name: Run Tests
-          command: |
-            . .venv/bin/activate
-            make test-without-extras
-
-  build-py2:
+executors:
+  python2:
     docker:
       - image: circleci/python:2.7.14
       - image: postgres:9.6.10-alpine
@@ -119,45 +11,187 @@ jobs:
           POSTGRES_PASSWORD: password
       - image: circleci/mongo:3.6.12
         command: "mongod --journal"
-    steps:
-      - checkout
-      - restore_cache:
-          key: dep2-{{ checksum "deps/dev-requirements-py2.txt" }}-{{ checksum "deps/requirements-py2.txt" }}2
-      - <<: *install-dependencies
-      - save_cache:
-          paths:
-            - .venv
-          key: dep2-{{ checksum "deps/dev-requirements-py2.txt" }}-{{ checksum "deps/requirements-py2.txt" }}s
-      - setup_remote_docker
-      - <<: *test
+
+  python36:
+    docker:
+      - image: circleci/python:3.6
+      - image: postgres:9.6.10-alpine
+        environment:
+          POSTGRES_DB: dev
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+      - image: circleci/mongo:3.6.12
+        command: "mongod --journal"
+
+  python37:
+    docker:
+      - image: circleci/python:3.7
+      - image: postgres:9.6.10-alpine
+        environment:
+          POSTGRES_DB: dev
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+      - image: circleci/mongo:3.6.12
+        command: "mongod --journal"
+
+  python38:
+    docker:
+      - image: circleci/python:3.8
+      - image: postgres:9.6.10-alpine
+        environment:
+          POSTGRES_DB: dev
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+      - image: circleci/mongo:3.6.12
+        command: "mongod --journal"
 
   publish:
     docker:
       - image: schireson/cicd-python
+
+      # XXX: Swap to this for public version
+      # - image: circleci/python:3.6
+
+commands:
+  setup:
     steps:
       - checkout
-      - <<: *authenticate-aws
-      - <<: *publish
-      - <<: *publish-docs
+      - run:
+          name: Execute prerequisite setup
+          command: |
+            curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | POETRY_PREVIEW=1 python
+            echo 'export PATH="$HOME/.poetry/bin:$PATH"' >> $BASH_ENV
 
-###########
-# Workflows
-###########
-version: 2
+  run-make:
+    parameters:
+      command:
+        type: string
+    steps:
+      - run:
+          name: Run a make command
+          command: |
+            make << parameters.command >>
+
+  setup-python-base:
+    description: Install python dependencies
+    steps:
+      - setup
+      - restore_cache:
+          key: v1-{{ checksum "pyproject.toml" }}-{{ checksum "poetry.lock" }}
+      - run-make:
+          command: install-base
+      - save_cache:
+          paths:
+            - /home/circleci/.cache/pypoetry/virtualenvs
+          key: v1-{{ checksum "pyproject.toml" }}-{{ checksum "poetry.lock" }}
+
+  setup-python:
+    description: Install python dependencies
+    steps:
+      - setup
+      - restore_cache:
+          key: v1-{{ checksum "pyproject.toml" }}-{{ checksum "poetry.lock" }}
+      - run-make:
+          command: install
+      - save_cache:
+          paths:
+            - /home/circleci/.cache/pypoetry/virtualenvs
+          key: v1-{{ checksum "pyproject.toml" }}-{{ checksum "poetry.lock" }}
+
+  publish-internal:
+    description: Authenticate with a particular ECR instance on AWS
+    steps:
+      - run:
+          command: |
+            aws configure set default.region "${AWS_DEFAULT_REGION:-us-east-1}"
+            printf "${AWS_CREDENTIALS}" > ~/.aws/credentials
+
+            poetry run -- pip install twine
+            poetry run -- lucha aws whitelist --profile artifactory -- lucha cicd publish pypi
+
+            sudo pip install -r docs/requirements.txt
+            lucha build docs
+            lucha aws whitelist-s3-bucket-policy --bucket docs.schireson.com --profile docs -- lucha publish docs --build-dir docs/build/html --package pytest_mock_resources --profile docs --latest
+
+jobs:
+  test-without-extras:
+    executor: python36
+    steps:
+      - setup-python-base
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run-make:
+          command: test-base
+
+  test-python2:
+    executor: python2
+    steps:
+      - setup-python
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run-make:
+          command: test
+
+  test-python36:
+    executor: python36
+    steps:
+      - setup-python
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run-make:
+          command: test
+
+  test-python37:
+    executor: python37
+    steps:
+      - setup-python
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run-make:
+          command: test
+
+  test-python38:
+    executor: python38
+    steps:
+      - setup-python
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run-make:
+          command: test
+
+  lint:
+    executor: python36
+    steps:
+      - setup-python
+      - run-make:
+          command: lint
+
+  publish:
+    executor: publish
+    steps:
+      - setup-python
+      - publish-internal
+      # XXX: Swap to this for public version and delete "publish-internal" command
+      # - run-make:
+      #     command: publish
+
+
 workflows:
-  version: 2
-
   build_all:
     jobs:
-      - build
-      - build-py2
-      - build-without-extras
+      - test-without-extras
+      - test-python2
+      - test-python36
+      - test-python37
+      - test-python38
 
       - publish:
           requires:
-            - build
-            - build-py2
-            - build-without-extras
+            - test-without-extras
+            - test-python2
+            - test-python36
+            - test-python37
+            - test-python38
           filters:
             branches:
               only:

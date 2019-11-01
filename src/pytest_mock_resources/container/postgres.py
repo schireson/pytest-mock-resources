@@ -1,13 +1,17 @@
 import pytest
 import sqlalchemy
 
-from pytest_mock_resources.container import ContainerCheckFailed, get_container_fn, HOST, IN_CI
+from pytest_mock_resources.container import (
+    ContainerCheckFailed,
+    get_container_fn,
+    get_docker_host,
+    IN_CI,
+)
 
 # XXX: To become overwritable via pytest config.
 config = {
     "username": "user",
     "password": "password",
-    "host": HOST,
     "port": 5432 if IN_CI else 5532,
     "root_database": "dev",
     "image": "postgres:9.6.10-alpine",
@@ -22,7 +26,7 @@ def get_sqlalchemy_engine(database_name, isolation_level=None):
         database=database_name,
         username=config["username"],
         password=config["password"],
-        host=config["host"],
+        host=get_docker_host(),
         port=config["port"],
     )
 

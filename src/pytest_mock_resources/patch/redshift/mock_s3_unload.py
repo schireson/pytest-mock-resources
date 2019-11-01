@@ -143,7 +143,8 @@ def _mock_s3_unload(
 ):
     """Execute patched 'unload' command."""
     # Parsing s3 uri
-    path_to_file = s3_uri[5 : len(s3_uri)]
+    ending_index = len(s3_uri)
+    path_to_file = s3_uri[5:ending_index]
     bucket, key = path_to_file.split("/", 1)
 
     result = engine.execute(select_statement)

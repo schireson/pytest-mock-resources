@@ -1,61 +1,52 @@
-.PHONY: init set-py3 set-py2 install-deps lint sync-deps build build-docs publish publish-docs test clean version bump bump-minor up-postgres
+.PHONY: lock install-base install test-base test-parallel test lint format build-package build-docs build publish
+.DEFAULT_GOAL := help
 
-init:
-	bin/pyenv-create-venv pytest-mock-resources
+# Install
+lock:
+	poetry lock
 
-	PYVERSION=2.7.14 bin/pyenv-create-venv pytest-mock-resources-py2
+install-base:
+	poetry install
 
-set-py3:
-	echo pytest-mock-resources > .python-version
+install: install-base
+	poetry install -E mongo -E postgres -E docs
 
-set-py2:
-	echo pytest-mock-resources-py2 > .python-version
+## Test
+test-base:
+	poetry run -- coverage run -m \
+		py.test src tests -vv \
+		-m 'not postgres and not redshift and not mongo'
 
-install-deps:
-	pip install -e .[mongo,postgres,develop] --no-use-pep517
+test-parallel:
+	poetry run -- coverage run -m \
+		py.test -n 4 src tests -vv
 
-install-deps-without-extras:
-	pip install -e .[develop] --no-use-pep517
+test: test-parallel
+	poetry run -- coverage run -m \
+		py.test src tests -vv
+	poetry run -- coverage report
+	poetry run -- coverage xml
 
+## Lint
 lint:
-	lucha lint
-	lucha version diffcheck
+	poetry run -- flake8 src tests
+	poetry run -- isort --check-only --recursive src tests
+	poetry run -- pydocstyle src tests
+	poetry run -- black --check src tests
+	poetry run -- mypy src tests
 
-sync-deps:
-	bin/sync-deps
+format:
+	poetry run -- isort --recursive src tests
+	poetry run -- black src tests
 
-build:
-	python setup.py sdist bdist_wheel
-
-publish: build
-	lucha cicd publish pypi
+## Build
+build-package:
+	poetry build
 
 build-docs:
-	lucha build docs
+	poetry run -- make -C docs html
 
-publish-docs: build-docs
-	lucha publish docs --latest
+build: build-package build-docs
 
-cicd-publish-docs: build-docs
-	lucha aws whitelist-s3-bucket-policy --bucket docs.schireson.com --profile docs \
-	-- lucha publish docs --package pytest_mock_resources --profile docs --latest
-
-test:
-	pytest -n 4
-
-test-without-extras:
-	pytest -n 4 -m 'not postgres and not redshift and not mongo'
-
-clean:
-	lucha env clean
-
-version:
-	lucha version get
-
-bump:
-	# For an arbitrary or additive change.
-	lucha version bump --minor
-
-bump-minor:
-	# For bugfixes.
-	lucha version bump
+publish: build
+	poetry publish -u __token__ -p '${PYPI_PASSWORD}' --no-interaction
