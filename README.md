@@ -1,3 +1,5 @@
+[![Documentation Status](https://readthedocs.org/projects/pytest-mock-resources/badge/?version=latest)](https://pytest-mock-resources.readthedocs.io/en/latest/?badge=latest)
+
 ## Introduction
 
 Code which depends on external resources such a databases (postgres, redshift, etc) can be difficult

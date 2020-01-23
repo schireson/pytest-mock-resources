@@ -10,6 +10,7 @@ authors = [
 ]
 license = "MIT"
 keywords = [ "pytest", "sqlalchemy", "docker", "fixture", "mock" ]
+classifiers = [ "Framework :: Pytest" ]
 repository = "https://github.com/schireson/pytest-mock-resources"
 packages = [
     { include = "pytest_mock_resources", from = "src" },
