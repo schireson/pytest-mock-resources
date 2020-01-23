@@ -1,4 +1,5 @@
-[![Documentation Status](https://readthedocs.org/projects/pytest-mock-resources/badge/?version=latest)](https://pytest-mock-resources.readthedocs.io/en/latest/?badge=latest)
+![CircleCI](https://img.shields.io/circleci/build/gh/schireson/pytest-mock-resources/master) [![codecov](https://codecov.io/gh/schireson/pytest-mock-resources/branch/master/graph/badge.svg)](https://codecov.io/gh/schireson/pytest-mock-resources) [![Documentation Status](https://readthedocs.org/projects/pytest-mock-resources/badge/?version=latest)](https://pytest-mock-resources.readthedocs.io/en/latest/?badge=latest)
+
 
 ## Introduction
 

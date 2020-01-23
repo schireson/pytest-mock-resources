@@ -13,16 +13,16 @@ install: install-base
 
 ## Test
 test-base:
-	poetry run coverage run -m \
+	poetry run coverage run -a -m \
 		py.test src tests -vv \
 		-m 'not postgres and not redshift and not mongo'
 
 test-parallel:
-	poetry run coverage run -m \
+	poetry run coverage run -a -m \
 		py.test -n 4 src tests -vv
 
 test: test-parallel
-	poetry run coverage run -m \
+	poetry run coverage run -a -m \
 		py.test src tests -vv
 	poetry run coverage report
 	poetry run coverage xml
@@ -44,7 +44,7 @@ build-package:
 	poetry build
 
 build-docs:
-	poetry run -- make -C docs html
+	poetry run make -C docs html
 
 build: build-package build-docs
 
