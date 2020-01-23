@@ -47,10 +47,7 @@ executors:
 
   publish:
     docker:
-      - image: schireson/cicd-python
-
-      # XXX: Swap to this for public version
-      # - image: circleci/python:3.6
+      - image: circleci/python:3.6
 
 commands:
   setup:
@@ -98,20 +95,19 @@ commands:
             - /home/circleci/.cache/pypoetry/virtualenvs
           key: v1-{{ checksum "pyproject.toml" }}-{{ checksum "poetry.lock" }}
 
-  publish-internal:
-    description: Authenticate with a particular ECR instance on AWS
+  persist-coverage:
     steps:
-      - run:
-          command: |
-            aws configure set default.region "${AWS_DEFAULT_REGION:-us-east-1}"
-            printf "${AWS_CREDENTIALS}" > ~/.aws/credentials
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .coverage
+            - coverage.xml
 
-            poetry run -- pip install twine
-            poetry run -- lucha aws whitelist --profile artifactory -- lucha cicd publish pypi
-
-            sudo pip install -r docs/requirements.txt
-            lucha build docs
-            lucha aws whitelist-s3-bucket-policy --bucket docs.schireson.com --profile docs -- lucha publish docs --build-dir docs/build/html --package pytest_mock_resources --profile docs --latest
+  publish:
+    steps:
+      - attach_workspace:
+          at: .
+      - run: bash <(curl -s https://codecov.io/bash)
 
 jobs:
   test-without-extras:
@@ -122,6 +118,7 @@ jobs:
           docker_layer_caching: true
       - run-make:
           command: test-base
+      - persist-coverage
 
   test-python2:
     executor: python2
@@ -138,8 +135,11 @@ jobs:
       - setup-python
       - setup_remote_docker:
           docker_layer_caching: true
+      - attach_workspace:
+          at: .
       - run-make:
           command: test
+      - persist-coverage
 
   test-python37:
     executor: python37
@@ -170,10 +170,7 @@ jobs:
     executor: publish
     steps:
       - setup-python
-      - publish-internal
-      # XXX: Swap to this for public version and delete "publish-internal" command
-      # - run-make:
-      #     command: publish
+      - publish
 
 
 workflows:
@@ -181,7 +178,9 @@ workflows:
     jobs:
       - test-without-extras
       - test-python2
-      - test-python36
+      - test-python36:
+          requires:
+            - test-without-extras
       - test-python37
       - test-python38
 
