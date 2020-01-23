@@ -1,14 +1,14 @@
 [tool.poetry]
 name = "pytest-mock-resources"
-version = "0.9.0"
-description = "A pytest plugin for easily instantiating reproduceable mock resources."
+version = "1.0.0"
+description = "A pytest plugin for easily instantiating reproducible mock resources."
 authors = [
     "Omar Khan <oakhan3@gmail.com>",
     "Dan Cardin <ddcardin@gmail.com>",
     "Gabriel Michael <gabriel.j.michael@gmail.com>",
     "Prateek Pisat <pisatprateek12@gmail.com>",
 ]
-license = "Apache-2.0"
+license = "MIT"
 keywords = [ "pytest", "sqlalchemy", "docker", "fixture", "mock" ]
 repository = "https://github.com/schireson/pytest-mock-resources"
 packages = [
