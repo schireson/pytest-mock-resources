@@ -59,7 +59,7 @@ commands:
       - run:
           name: Execute prerequisite setup
           command: |
-            curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | POETRY_PREVIEW=1 python
+            curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
             echo 'export PATH="$HOME/.poetry/bin:$PATH"' >> $BASH_ENV
 
   run-make:

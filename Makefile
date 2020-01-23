@@ -13,31 +13,31 @@ install: install-base
 
 ## Test
 test-base:
-	poetry run -- coverage run -m \
+	poetry run coverage run -m \
 		py.test src tests -vv \
 		-m 'not postgres and not redshift and not mongo'
 
 test-parallel:
-	poetry run -- coverage run -m \
+	poetry run coverage run -m \
 		py.test -n 4 src tests -vv
 
 test: test-parallel
-	poetry run -- coverage run -m \
+	poetry run coverage run -m \
 		py.test src tests -vv
-	poetry run -- coverage report
-	poetry run -- coverage xml
+	poetry run coverage report
+	poetry run coverage xml
 
 ## Lint
 lint:
-	poetry run -- flake8 src tests
-	poetry run -- isort --check-only --recursive src tests
-	poetry run -- pydocstyle src tests
-	poetry run -- black --check src tests
-	poetry run -- mypy src tests
+	poetry run flake8 src tests
+	poetry run isort --check-only --recursive src tests
+	poetry run pydocstyle src tests
+	poetry run black --check src tests
+	poetry run mypy src tests
 
 format:
-	poetry run -- isort --recursive src tests
-	poetry run -- black src tests
+	poetry run isort --recursive src tests
+	poetry run black src tests
 
 ## Build
 build-package:
