@@ -1,5 +1,6 @@
 import pytest
 
+from pytest_mock_resources.compat import pymongo
 from pytest_mock_resources.container import (
     ContainerCheckFailed,
     get_container_fn,
@@ -16,21 +17,17 @@ config = {
 
 
 def get_pymongo_client():
-    from pymongo import MongoClient
-
     uri = "mongodb://{}:{}".format(get_docker_host(), config["port"])
 
-    return MongoClient(uri)
+    return pymongo.MongoClient(uri)
 
 
 def check_mongo_fn():
-    from pymongo.errors import ConnectionFailure
-
     try:
         client = get_pymongo_client()
         db = client[config["root_database"]]
         db.command("ismaster")
-    except ConnectionFailure:
+    except pymongo.errors.ConnectionFailure:
         raise ContainerCheckFailed(
             "Unable to connect to a presumed MongoDB test container via given config: {}".format(
                 config

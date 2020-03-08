@@ -3,8 +3,7 @@ import gzip
 import io
 import sys
 
-import boto3
-
+from pytest_mock_resources.compat import boto3
 from pytest_mock_resources.patch.redshift.mock_s3_copy import strip
 
 

@@ -1,9 +1,8 @@
-import sqlparse
 from sqlalchemy import create_engine
 from sqlalchemy.sql.elements import TextClause
 from sqlalchemy.sql.expression import Insert, Select, Update
 
-from pytest_mock_resources.compat import functools, mock
+from pytest_mock_resources.compat import functools, mock, sqlparse
 from pytest_mock_resources.patch.redshift.mock_s3_copy import execute_mock_s3_copy_command, strip
 from pytest_mock_resources.patch.redshift.mock_s3_unload import execute_mock_s3_unload_command
 

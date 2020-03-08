@@ -12,11 +12,8 @@ from sqlalchemy.sql.schema import Table
 @six.add_metaclass(abc.ABCMeta)
 class AbstractAction(object):
     @abc.abstractmethod
-    def run(self, engine, tables):
-        """Run an action on a database via the passed-in engine.
-
-        Args:
-            engine (sqlalchemy.engine.Engine)
+    def run(self, engine_manager):
+        """Run an action on a database via the passed-in engine_manager instance.
         """
 
 
