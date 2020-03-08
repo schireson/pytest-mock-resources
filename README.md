@@ -28,7 +28,7 @@ def view_function(session):
 Sure, you can test `serialize`, but whether the actual **query** did the correct thing _truly_
 requires that you execute the query.
 
-## The pitch
+## The Pitch
 
 Having tests depend upon a **real** postgres instance running somewhere is a pain, very fragile,
 and prone to issues across machines and test failures.
@@ -38,7 +38,7 @@ and providing access to them inside your tests.
 
 As such, this package makes 2 primary assumptions:
 * You're using `pytest` (hopefully that's appropriate, given the package name)
-* For many resources, `docker` is required to be  available and running (or accessible through remote docker).
+* For many resources, `docker` is required to be available and running (or accessible through remote docker).
 
 If you aren't familiar with Pytest Fixtures, you can read up on them in the [Pytest documentation](https://docs.pytest.org/en/latest/fixture.html).
 
@@ -71,6 +71,12 @@ def test_view_function_user_with_purchases(pg):
 
 ## Existing Resources (many more possible)
 
+* SQLite
+
+  ```python
+  from pytest_mock_resources import create_sqlite_fixture
+  ```
+
 * Postgres
 
   ```python
@@ -92,31 +98,30 @@ def test_view_function_user_with_purchases(pg):
   from pytest_mock_resources import create_mongo_fixture
   ```
 
-* SQLite
-
-  ```python
-  from pytest_mock_resources import create_sqlite_fixture
-  ```
-
-### Possible future resources:
-
-* MySQL
-* Rabbit Broker
-* Redis
-* AWS Presto
-* AWS S3
-
-Feel free to file an [issue](https://github.com/schireson/pytest-mock-resources/issues) if you find any bugs or want to start a conversation around a mock resource you want implemented!
-
 ## Installing
 
 ```bash
 # Basic fixture support
 pip install "pytest-mock-resources"
 
-# For postgres and redshift
+# For postgres install EITHER of the following:
+pip install "pytest-mock-resources[postgres-binary]"
 pip install "pytest-mock-resources[postgres]"
 
-# For mongo
+# For redshift install EITHER of the following:
+# (redshift fixtures require postgres dependencies...)
+pip install "pytest-mock-resources[postgres, redshift]"
+pip install "pytest-mock-resources[postgres-binary, redshift]"
+
+# For mongo install the following:
 pip install "pytest-mock-resources[mongo]"
 ```
+
+## Possible Future Resources
+
+* MySQL
+* Rabbit Broker
+* Redis
+* AWS Presto
+
+Feel free to file an [issue](https://github.com/schireson/pytest-mock-resources/issues) if you find any bugs or want to start a conversation around a mock resource you want implemented!
