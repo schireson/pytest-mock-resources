@@ -34,12 +34,12 @@ def get_sqlalchemy_engine(database_name, isolation_level=None):
     if isolation_level:
         options["isolation_level"] = isolation_level
 
-    try:
-        engine = sqlalchemy.create_engine(DB_URI, **options)
-    except ModuleNotFoundError:
-        from pytest_mock_resources.compat import ImportAdaptor
+    # Trigger any psycopg2-based import failures
+    from pytest_mock_resources.compat import psycopg2
 
-        ImportAdaptor("postgres").fail()
+    psycopg2.connect
+
+    engine = sqlalchemy.create_engine(DB_URI, **options)
 
     # Verify engine is connected
     engine.connect()

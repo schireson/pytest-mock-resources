@@ -1,5 +1,6 @@
 import pytest
 
+from pytest_mock_resources.compat import pymongo
 from pytest_mock_resources.container import get_docker_host
 from pytest_mock_resources.container.mongo import config, get_pymongo_client
 from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
@@ -19,8 +20,6 @@ def create_mongo_fixture(**kwargs):
 
 
 def _create_clean_database():
-    from pymongo import MongoClient
-
     client = get_pymongo_client()
     db = client[config["root_database"]]
 
@@ -39,7 +38,7 @@ def _create_clean_database():
     create_db.command("createUser", db_id, pwd="password", roles=["dbOwner"])  # nosec
 
     #  pass back an authenticated db connection
-    limited_client = MongoClient(get_docker_host(), config["port"])
+    limited_client = pymongo.MongoClient(get_docker_host(), config["port"])
     db = limited_client[db_id]
     db.authenticate(db_id, "password")
 

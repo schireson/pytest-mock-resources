@@ -1,7 +1,6 @@
 from datetime import date, datetime
 
 import pytest
-import pytz
 from sqlalchemy.exc import InternalError
 
 from pytest_mock_resources import create_redshift_fixture
@@ -28,48 +27,13 @@ class TestUdf:
             ("week", 1, datetime(2018, 1, 1), datetime(2018, 1, 8, 0, 0, 0)),
             ("month", 1, datetime(2018, 1, 1), datetime(2018, 2, 1, 0, 0, 0)),
             ("year", 1, datetime(2018, 1, 1), datetime(2019, 1, 1, 0, 0, 0)),
-            (
-                "second",
-                1,
-                datetime(2018, 1, 1, tzinfo=pytz.UTC),
-                datetime(2018, 1, 1, 0, 0, 1, tzinfo=pytz.UTC),
-            ),
-            (
-                "minute",
-                1,
-                datetime(2018, 1, 1, tzinfo=pytz.UTC),
-                datetime(2018, 1, 1, 0, 1, 0, tzinfo=pytz.UTC),
-            ),
-            (
-                "hour",
-                1,
-                datetime(2018, 1, 1, tzinfo=pytz.UTC),
-                datetime(2018, 1, 1, 1, 0, 0, tzinfo=pytz.UTC),
-            ),
-            (
-                "day",
-                1,
-                datetime(2018, 1, 1, tzinfo=pytz.UTC),
-                datetime(2018, 1, 2, 0, 0, 0, tzinfo=pytz.UTC),
-            ),
-            (
-                "week",
-                1,
-                datetime(2018, 1, 1, tzinfo=pytz.UTC),
-                datetime(2018, 1, 8, 0, 0, 0, tzinfo=pytz.UTC),
-            ),
-            (
-                "month",
-                1,
-                datetime(2018, 1, 1, tzinfo=pytz.UTC),
-                datetime(2018, 2, 1, 0, 0, 0, tzinfo=pytz.UTC),
-            ),
-            (
-                "year",
-                1,
-                datetime(2018, 1, 1, tzinfo=pytz.UTC),
-                datetime(2019, 1, 1, 0, 0, 0, tzinfo=pytz.UTC),
-            ),
+            ("second", 1, datetime(2018, 1, 1), datetime(2018, 1, 1, 0, 0, 1),),
+            ("minute", 1, datetime(2018, 1, 1), datetime(2018, 1, 1, 0, 1, 0),),
+            ("hour", 1, datetime(2018, 1, 1), datetime(2018, 1, 1, 1, 0, 0),),
+            ("day", 1, datetime(2018, 1, 1), datetime(2018, 1, 2, 0, 0, 0),),
+            ("week", 1, datetime(2018, 1, 1), datetime(2018, 1, 8, 0, 0, 0),),
+            ("month", 1, datetime(2018, 1, 1), datetime(2018, 2, 1, 0, 0, 0),),
+            ("year", 1, datetime(2018, 1, 1), datetime(2019, 1, 1, 0, 0, 0),),
         ),
     )
     def test_date_add(self, redshift, interval_str, num, date_or_datetime, expected):
@@ -105,54 +69,14 @@ class TestUdf:
             ("month", datetime(2018, 1, 1), datetime(2018, 2, 1), 1),
             ("year", datetime(2018, 1, 1), datetime(2018, 12, 31), 0),
             ("year", datetime(2018, 12, 31), datetime(2019, 1, 1), 1),
-            (
-                "second",
-                datetime(2018, 1, 1, tzinfo=pytz.UTC),
-                datetime(2018, 1, 2, tzinfo=pytz.UTC),
-                86400,
-            ),
-            (
-                "minute",
-                datetime(2018, 1, 1, tzinfo=pytz.UTC),
-                datetime(2018, 1, 2, tzinfo=pytz.UTC),
-                1440,
-            ),
-            (
-                "hour",
-                datetime(2018, 1, 1, tzinfo=pytz.UTC),
-                datetime(2018, 1, 2, tzinfo=pytz.UTC),
-                24,
-            ),
-            (
-                "day",
-                datetime(2018, 1, 1, tzinfo=pytz.UTC),
-                datetime(2018, 1, 2, tzinfo=pytz.UTC),
-                1,
-            ),
-            (
-                "week",
-                datetime(2018, 1, 1, tzinfo=pytz.UTC),
-                datetime(2018, 1, 31, tzinfo=pytz.UTC),
-                4,
-            ),
-            (
-                "month",
-                datetime(2018, 1, 1, tzinfo=pytz.UTC),
-                datetime(2018, 2, 1, tzinfo=pytz.UTC),
-                1,
-            ),
-            (
-                "year",
-                datetime(2018, 1, 1, tzinfo=pytz.UTC),
-                datetime(2018, 12, 31, tzinfo=pytz.UTC),
-                0,
-            ),
-            (
-                "year",
-                datetime(2018, 12, 31, tzinfo=pytz.UTC),
-                datetime(2019, 1, 1, tzinfo=pytz.UTC),
-                1,
-            ),
+            ("second", datetime(2018, 1, 1), datetime(2018, 1, 2), 86400,),
+            ("minute", datetime(2018, 1, 1), datetime(2018, 1, 2), 1440,),
+            ("hour", datetime(2018, 1, 1), datetime(2018, 1, 2), 24,),
+            ("day", datetime(2018, 1, 1), datetime(2018, 1, 2), 1,),
+            ("week", datetime(2018, 1, 1), datetime(2018, 1, 31), 4,),
+            ("month", datetime(2018, 1, 1), datetime(2018, 2, 1), 1,),
+            ("year", datetime(2018, 1, 1), datetime(2018, 12, 31), 0,),
+            ("year", datetime(2018, 12, 31), datetime(2019, 1, 1), 1,),
         ),
     )
     def test_datediff(

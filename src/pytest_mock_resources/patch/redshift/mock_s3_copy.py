@@ -4,8 +4,9 @@ import gzip
 import io
 import sys
 
-import boto3
 from sqlalchemy import MetaData, Table
+
+from pytest_mock_resources.compat import boto3
 
 
 def execute_mock_s3_copy_command(statement, engine):

@@ -2,11 +2,9 @@ from __future__ import unicode_literals
 
 import random
 
-import boto3
-from moto import mock_s3
 from sqlalchemy import create_engine
 
-from pytest_mock_resources.compat import psycopg2
+from pytest_mock_resources.compat import boto3, moto, psycopg2
 from pytest_mock_resources.patch.redshift.mock_s3_copy import read_data_csv
 from pytest_mock_resources.patch.redshift.mock_s3_unload import get_data_csv
 
@@ -123,118 +121,118 @@ def randomcase(s):
     return "".join(c.upper() if random.randint(0, 1) else c.lower() for c in s)
 
 
-@mock_s3
 def copy_fn_to_test_create_engine_patch(redshift):
-    engine = create_engine(redshift.url)
-    setup_table_and_bucket(engine)
+    with moto.mock_s3():
+        engine = create_engine(redshift.url)
+        setup_table_and_bucket(engine)
 
-    engine.execute(
-        COPY_TEMPLATE.format(
-            COMMAND="COPY",
-            LOCATION="s3://mybucket/file.csv",
-            COLUMNS="",
-            FROM="from",
-            CREDENTIALS="credentials",
-            OPTIONAL_ARGS="",
+        engine.execute(
+            COPY_TEMPLATE.format(
+                COMMAND="COPY",
+                LOCATION="s3://mybucket/file.csv",
+                COLUMNS="",
+                FROM="from",
+                CREDENTIALS="credentials",
+                OPTIONAL_ARGS="",
+            )
         )
-    )
 
-    fetch_values_from_table_and_assert(engine)
+        fetch_values_from_table_and_assert(engine)
 
 
-@mock_s3
 def copy_fn_to_test_psycopg2_connect_patch(config):
-    conn = psycopg2.connect(**config)
-    cursor = conn.cursor()
-    setup_table_and_bucket(cursor)
+    with moto.mock_s3():
+        conn = psycopg2.connect(**config)
+        cursor = conn.cursor()
+        setup_table_and_bucket(cursor)
 
-    cursor.execute(
-        COPY_TEMPLATE.format(
-            COMMAND="COPY",
-            LOCATION="s3://mybucket/file.csv",
-            COLUMNS="",
-            FROM="from",
-            CREDENTIALS="credentials",
-            OPTIONAL_ARGS="",
+        cursor.execute(
+            COPY_TEMPLATE.format(
+                COMMAND="COPY",
+                LOCATION="s3://mybucket/file.csv",
+                COLUMNS="",
+                FROM="from",
+                CREDENTIALS="credentials",
+                OPTIONAL_ARGS="",
+            )
         )
-    )
 
-    fetch_and_assert_psycopg2(cursor)
+        fetch_and_assert_psycopg2(cursor)
 
 
-@mock_s3
 def copy_fn_to_test_psycopg2_connect_patch_as_context_manager(config):
-    with psycopg2.connect(**config) as conn:
-        with conn.cursor() as cursor:
-            setup_table_and_bucket(cursor)
+    with moto.mock_s3():
+        with psycopg2.connect(**config) as conn:
+            with conn.cursor() as cursor:
+                setup_table_and_bucket(cursor)
 
-            cursor.execute(
-                COPY_TEMPLATE.format(
-                    COMMAND="COPY",
-                    LOCATION="s3://mybucket/file.csv",
-                    COLUMNS="",
-                    FROM="from",
-                    CREDENTIALS="credentials",
-                    OPTIONAL_ARGS="",
+                cursor.execute(
+                    COPY_TEMPLATE.format(
+                        COMMAND="COPY",
+                        LOCATION="s3://mybucket/file.csv",
+                        COLUMNS="",
+                        FROM="from",
+                        CREDENTIALS="credentials",
+                        OPTIONAL_ARGS="",
+                    )
                 )
-            )
 
-            fetch_and_assert_psycopg2(cursor)
+                fetch_and_assert_psycopg2(cursor)
 
 
-@mock_s3()
 def unload_fn_to_test_create_engine_patch(redshift):
-    engine = create_engine(redshift.url)
-    setup_table_and_insert_data(engine)
-    engine.execute(
-        UNLOAD_TEMPLATE.format(
-            COMMAND="UNLOAD",
-            SELECT_STATEMENT="select * from test_s3_unload_from_redshift",
-            TO="TO",
-            LOCATION="s3://mybucket/myfile.csv",
-            AUTHORIZATION="AUTHORIZATION",
-            OPTIONAL_ARGS="",
-        )
-    )
-
-    fetch_values_from_s3_and_assert(engine, is_gzipped=False)
-
-
-@mock_s3()
-def unload_fn_to_test_psycopg2_connect_patch(config):
-    conn = psycopg2.connect(**config)
-    cursor = conn.cursor()
-    setup_table_and_insert_data(cursor)
-
-    cursor.execute(
-        UNLOAD_TEMPLATE.format(
-            COMMAND="UNLOAD",
-            SELECT_STATEMENT="select * from test_s3_unload_from_redshift",
-            TO="TO",
-            LOCATION="s3://mybucket/myfile.csv",
-            AUTHORIZATION="AUTHORIZATION",
-            OPTIONAL_ARGS="",
-        )
-    )
-
-    fetch_values_from_s3_and_assert(cursor, is_gzipped=False)
-
-
-@mock_s3()
-def unload_fn_to_test_psycopg2_connect_patch_as_context_manager(config):
-    with psycopg2.connect(**config) as conn:
-        with conn.cursor() as cursor:
-            setup_table_and_insert_data(cursor)
-
-            cursor.execute(
-                UNLOAD_TEMPLATE.format(
-                    COMMAND="UNLOAD",
-                    SELECT_STATEMENT="select * from test_s3_unload_from_redshift",
-                    TO="TO",
-                    LOCATION="s3://mybucket/myfile.csv",
-                    AUTHORIZATION="AUTHORIZATION",
-                    OPTIONAL_ARGS="",
-                )
+    with moto.mock_s3():
+        engine = create_engine(redshift.url)
+        setup_table_and_insert_data(engine)
+        engine.execute(
+            UNLOAD_TEMPLATE.format(
+                COMMAND="UNLOAD",
+                SELECT_STATEMENT="select * from test_s3_unload_from_redshift",
+                TO="TO",
+                LOCATION="s3://mybucket/myfile.csv",
+                AUTHORIZATION="AUTHORIZATION",
+                OPTIONAL_ARGS="",
             )
+        )
 
-            fetch_values_from_s3_and_assert(cursor, is_gzipped=False)
+        fetch_values_from_s3_and_assert(engine, is_gzipped=False)
+
+
+def unload_fn_to_test_psycopg2_connect_patch(config):
+    with moto.mock_s3():
+        conn = psycopg2.connect(**config)
+        cursor = conn.cursor()
+        setup_table_and_insert_data(cursor)
+
+        cursor.execute(
+            UNLOAD_TEMPLATE.format(
+                COMMAND="UNLOAD",
+                SELECT_STATEMENT="select * from test_s3_unload_from_redshift",
+                TO="TO",
+                LOCATION="s3://mybucket/myfile.csv",
+                AUTHORIZATION="AUTHORIZATION",
+                OPTIONAL_ARGS="",
+            )
+        )
+
+        fetch_values_from_s3_and_assert(cursor, is_gzipped=False)
+
+
+def unload_fn_to_test_psycopg2_connect_patch_as_context_manager(config):
+    with moto.mock_s3():
+        with psycopg2.connect(**config) as conn:
+            with conn.cursor() as cursor:
+                setup_table_and_insert_data(cursor)
+
+                cursor.execute(
+                    UNLOAD_TEMPLATE.format(
+                        COMMAND="UNLOAD",
+                        SELECT_STATEMENT="select * from test_s3_unload_from_redshift",
+                        TO="TO",
+                        LOCATION="s3://mybucket/myfile.csv",
+                        AUTHORIZATION="AUTHORIZATION",
+                        OPTIONAL_ARGS="",
+                    )
+                )
+
+                fetch_values_from_s3_and_assert(cursor, is_gzipped=False)
