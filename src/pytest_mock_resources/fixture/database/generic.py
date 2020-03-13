@@ -11,7 +11,7 @@ class Credentials:
         self.password = password
 
     def as_url(self):
-        return str(self.as_url())
+        return str(self.as_sqlalchemy_url())
 
     def as_sqlalchemy_url(self):
         return URL(
@@ -39,6 +39,15 @@ class Credentials:
             "username": self.username,
             "password": self.password,
             "authSource": self.database,
+        }
+
+    def as_redis_kwargs(self):
+        return {
+            "host": self.host,
+            "port": self.port,
+            "db": self.database,
+            "username": self.username,
+            "password": self.password,
         }
 
 

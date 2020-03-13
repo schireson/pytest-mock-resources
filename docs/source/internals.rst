@@ -1,5 +1,3 @@
-.. toctree::
-
 .. _internals-label:
 
 Internals

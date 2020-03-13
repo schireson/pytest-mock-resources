@@ -1,5 +1,3 @@
-.. toctree::
-
 Relational Database Fixtures
 ============================
 
@@ -172,9 +170,9 @@ The :code:`Statements` class is used to supply a :code:`create_*_function` with 
 .. code-block:: python
 
    # tests/conftest.py:
- 
+
    from pytest_mock_resources import create_redshift_fixture, Statements
- 
+
    statements = Statements(
        """
        CREATE TABLE account(
@@ -187,7 +185,7 @@ The :code:`Statements` class is used to supply a :code:`create_*_function` with 
        INSERT INTO account VALUES (1, 'user1', 'password1')
        """,
    )
- 
+
    redshift = create_redshift_fixture(
        statements,
    )
@@ -199,10 +197,10 @@ the state of the database is identical across all tests which share that fixture
 .. code-block:: python
 
    # tests/test_something.py:
- 
+
    def test_something_exists(redshift):
        execute = redshift.execute("SELECT password FROM account")
- 
+
        result = sorted([row[0] for row in execute])
        assert ["password1"] == result
 
@@ -221,16 +219,16 @@ For example, given a models package:
 .. code-block:: python
 
    # src/package/models.py:
- 
+
    from sqlalchemy import Column, Integer, String
    from sqlalchemy.ext.declarative import declarative_base
- 
+
    Base = declarative_base()
- 
+
    class User(Base):
        __tablename__ = "user"
        __table_args__ = {"schema": "stuffs"}
- 
+
        id = Column(Integer, primary_key=True, autoincrement=True)
        name = Column(String)
 
@@ -239,26 +237,26 @@ A corresponding test file could look like
 .. code-block:: python
 
    # tests/test_user.py:
- 
+
    from package.models import Base
    from pytest_mock_resources import create_postgres_fixture
- 
+
    pg = create_redshift_fixture(
        Base,
- 
+
        # Of course you can use this with statements
        Statements("INSERT INTO stuffs.user(name) VALUES ('Picante', )"),
    )
- 
+
    def test_something_exists(pg):
        # Insert a row into the user table DURING the test
        pg.execute("INSERT INTO stuffs.user(name) VALUES ('Beef', )")
- 
+
        # Confirm that the user table exists and the row was inserted
        rows = pg.execute("SELECT name FROM stuffs.user")
        result = [row[0] for row in rows]
        assert ["Picante", "Beef"] == result
- 
+
 Even if you don't plan on using SQLAlchemy models or the ORM layer throughout your actual code,
 defining these models can be EXTREMELY beneficial for DDL maintenance and testing.
 
@@ -294,17 +292,17 @@ This can be a great way to keep track of all the tables a given block of code in
 .. code-block:: python
 
    # tests/conftest.py:
- 
+
    from pytest_mock_resources import create_redshift_fixture, Statements
    from redshift_schema import meta, example_table
- 
+
    redshift = create_redshift_fixture(
        meta,
        statements,
        Statements(
            example_table.insert().values(name="ABCDE"),
        ),
- 
+
        # ONLY create this single table for this test.
        tables=[
            example_table,

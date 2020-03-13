@@ -69,3 +69,8 @@ try:
     import pymongo
 except ImportError:
     pymongo = ImportAdaptor("pymongo", "mongo")
+
+try:
+    import redis
+except ImportError:
+    redis = ImportAdaptor("redis", "redis")

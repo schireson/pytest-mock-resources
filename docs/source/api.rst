@@ -5,7 +5,7 @@ Fixture Functions
 -----------------
 
 .. automodule:: pytest_mock_resources
-    :members: create_postgres_fixture, create_redshift_fixture, create_sqlite_fixture, create_mongo_fixture, Rows, Statements
+    :members: create_postgres_fixture, create_redshift_fixture, create_sqlite_fixture, create_mongo_fixture, create_redis_fixture, Rows, Statements
 
 
 

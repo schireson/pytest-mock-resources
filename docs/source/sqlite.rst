@@ -1,5 +1,3 @@
-.. toctree::
-
 SQLite
 ======
 While SQLite is a widely used database in its own right, we also aim to make SQLite a reasonable
@@ -52,7 +50,7 @@ We simply, turn that support on by default, to match the postgres behavior.
 
 JSON/JSONB
 ----------
-Tables which use either :code:`sqlalchemy.dialects.postgresql.JSON/JSONB` or 
+Tables which use either :code:`sqlalchemy.dialects.postgresql.JSON/JSONB` or
 :code:`sqlalchemy.types.Json` will work as they would in postgres.
 
 SQLite itself, recently added support for json natively, but this allows a much wider version
@@ -63,7 +61,7 @@ Datetime (timezone support)
 ---------------------------
 By default, SQLite does not respect the :code:`Datetime(timezone=True)` flag. This means that normally
 a :code:`Datetime` column would behave differently from postgres. For example, where postgres
-would return timezone-aware :code:`datetime.datetime` objects, SQLite would return naive 
+would return timezone-aware :code:`datetime.datetime` objects, SQLite would return naive
 :code:`datetime.datetime` (which do **not** behave the same way when doing datetime math).
 
 This does **not** actually store the timezones of the datetime (as is also true for postgres).

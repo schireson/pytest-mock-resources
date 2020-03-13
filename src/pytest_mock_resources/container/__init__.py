@@ -65,5 +65,7 @@ def get_container_fn(name, image, ports, environment, check_fn):
     return wrapped
 
 
-from pytest_mock_resources.container.mongo import _mongo_container  # noqa, isort:skip
-from pytest_mock_resources.container.postgres import _postgres_container  # noqa, isort:skip
+# flake8: noqa
+from pytest_mock_resources.container.mongo import _mongo_container
+from pytest_mock_resources.container.postgres import _postgres_container
+from pytest_mock_resources.container.redis import _redis_container
