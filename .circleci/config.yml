@@ -11,6 +11,8 @@ executors:
           POSTGRES_PASSWORD: password
       - image: circleci/mongo:3.6.12
         command: "mongod --journal"
+      - image: redis:5.0.7
+
 
   python36:
     docker:
@@ -22,6 +24,7 @@ executors:
           POSTGRES_PASSWORD: password
       - image: circleci/mongo:3.6.12
         command: "mongod --journal"
+      - image: redis:5.0.7
 
   python37:
     docker:
@@ -33,6 +36,7 @@ executors:
           POSTGRES_PASSWORD: password
       - image: circleci/mongo:3.6.12
         command: "mongod --journal"
+      - image: redis:5.0.7
 
   python38:
     docker:
@@ -44,6 +48,7 @@ executors:
           POSTGRES_PASSWORD: password
       - image: circleci/mongo:3.6.12
         command: "mongod --journal"
+      - image: redis:5.0.7
 
   publish:
     docker:

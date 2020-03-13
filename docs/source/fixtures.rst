@@ -17,5 +17,6 @@ from one test to another, see :ref:`internals-label` for more details.
    Redshift <redshift>
    SQLite <sqlite>
    Mongo <mongo>
+   Redis <redis>
 
    Internals <internals>

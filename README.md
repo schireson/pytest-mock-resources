@@ -98,6 +98,12 @@ def test_view_function_user_with_purchases(pg):
   from pytest_mock_resources import create_mongo_fixture
   ```
 
+* Redis
+
+  ```python
+  from pytest_mock_resources import create_redis_fixture
+  ```
+
 ## Installing
 
 ```bash
@@ -115,13 +121,15 @@ pip install "pytest-mock-resources[postgres-binary, redshift]"
 
 # For mongo install the following:
 pip install "pytest-mock-resources[mongo]"
+
+# For redis
+pip install "pytest-mock-resources[redis]"
 ```
 
 ## Possible Future Resources
 
 * MySQL
 * Rabbit Broker
-* Redis
 * AWS Presto
 
 Feel free to file an [issue](https://github.com/schireson/pytest-mock-resources/issues) if you find any bugs or want to start a conversation around a mock resource you want implemented!

@@ -1,5 +1,3 @@
-.. toctree::
-
 Mongo
 =====
 
