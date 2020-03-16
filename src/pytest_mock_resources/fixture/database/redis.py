@@ -1,7 +1,15 @@
 import pytest
 
 from pytest_mock_resources.compat import redis
+from pytest_mock_resources.container.redis import RedisConfig
 from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
+
+
+@pytest.fixture(scope="session")
+def pmr_redis_config():
+    """Override this fixture with a :class:`RedisConfig` instance to specify different defaults.
+    """
+    return RedisConfig()
 
 
 def create_redis_fixture(**kwargs):

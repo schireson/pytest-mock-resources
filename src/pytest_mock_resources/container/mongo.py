@@ -21,11 +21,6 @@ class MongoConfig(DockerContainerConfig):
         raise NotImplementedError()
 
 
-@pytest.fixture(scope="session")
-def pmr_mongo_config():
-    return MongoConfig()
-
-
 def get_pymongo_client(config):
     uri = "mongodb://{}:{}".format(config.host, config.port)
 

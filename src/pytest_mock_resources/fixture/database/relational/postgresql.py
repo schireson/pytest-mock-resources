@@ -1,9 +1,14 @@
 import pytest
 import sqlalchemy
 
-from pytest_mock_resources.container.postgres import get_sqlalchemy_engine
+from pytest_mock_resources.container.postgres import get_sqlalchemy_engine, PostgresConfig
 from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
 from pytest_mock_resources.fixture.database.relational.generic import EngineManager
+
+
+@pytest.fixture(scope="session")
+def pmr_postgres_config():
+    return PostgresConfig()
 
 
 def create_postgres_fixture(*ordered_actions, **kwargs):

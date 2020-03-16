@@ -1,8 +1,13 @@
 import pytest
 
 from pytest_mock_resources.compat import pymongo
-from pytest_mock_resources.container.mongo import get_pymongo_client
+from pytest_mock_resources.container.mongo import get_pymongo_client, MongoConfig
 from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
+
+
+@pytest.fixture(scope="session")
+def pmr_mongo_config():
+    return MongoConfig()
 
 
 def create_mongo_fixture(**kwargs):
