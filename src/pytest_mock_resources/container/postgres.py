@@ -1,33 +1,50 @@
 import pytest
 import sqlalchemy
 
-from pytest_mock_resources.container import (
-    ContainerCheckFailed,
-    get_container_fn,
-    get_docker_host,
-    IN_CI,
-)
-
-# XXX: To become overwritable via pytest config.
-config = {
-    "username": "user",
-    "password": "password",
-    "port": 5432 if IN_CI else 5532,
-    "root_database": "dev",
-    "image": "postgres:9.6.10-alpine",
-}
+from pytest_mock_resources.config import DockerContainerConfig, fallback
+from pytest_mock_resources.container import ContainerCheckFailed, get_container_fn
 
 
-def get_sqlalchemy_engine(database_name, isolation_level=None):
+class PostgresConfig(DockerContainerConfig):
+    name = "postgres"
+    _fields = {"image", "host", "port", "ci_port", "username", "password", "root_database"}
+    _fields_defaults = {
+        "image": "postgres:9.6.10-alpine",
+        "port": 5532,
+        "ci_port": 5432,
+        "username": "user",
+        "password": "password",
+        "root_database": "dev",
+    }
+
+    @fallback
+    def username(self):
+        raise NotImplementedError()
+
+    @fallback
+    def password(self):
+        raise NotImplementedError()
+
+    @fallback
+    def root_database(self):
+        raise NotImplementedError()
+
+
+@pytest.fixture(scope="session")
+def pmr_postgres_config():
+    return PostgresConfig()
+
+
+def get_sqlalchemy_engine(config, database_name, isolation_level=None):
     URI_TEMPLATE = (
         "postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}?sslmode=disable"
     )
     DB_URI = URI_TEMPLATE.format(
+        host=config.host,
+        port=config.port,
         database=database_name,
-        username=config["username"],
-        password=config["password"],
-        host=get_docker_host(),
-        port=config["port"],
+        username=config.username,
+        password=config.password,
     )
 
     options = {}
@@ -47,27 +64,34 @@ def get_sqlalchemy_engine(database_name, isolation_level=None):
     return engine
 
 
-def check_postgres_fn():
-    try:
-        get_sqlalchemy_engine(config["root_database"])
-    except sqlalchemy.exc.OperationalError:
-        raise ContainerCheckFailed(
-            "Unable to connect to a presumed Postgres test container via given config: {}".format(
-                config
+def check_postgres_fn(config):
+    def _check_postgres_fn():
+        try:
+            get_sqlalchemy_engine(config, config.root_database)
+        except sqlalchemy.exc.OperationalError:
+            raise ContainerCheckFailed(
+                "Unable to connect to a presumed Postgres test container via given config: {}".format(
+                    config
+                )
             )
-        )
+
+    return _check_postgres_fn
 
 
-_postgres_container = pytest.fixture(scope="session")(
-    get_container_fn(
+@pytest.fixture("session")
+def _postgres_container(pmr_postgres_config):
+    fn = get_container_fn(
         "_postgres_container",
-        config["image"],
-        {5432: config["port"]},
+        pmr_postgres_config.image,
+        {5432: pmr_postgres_config.port},
         {
-            "POSTGRES_DB": config["root_database"],
-            "POSTGRES_USER": config["username"],
-            "POSTGRES_PASSWORD": config["password"],
+            "POSTGRES_DB": pmr_postgres_config.root_database,
+            "POSTGRES_USER": pmr_postgres_config.username,
+            "POSTGRES_PASSWORD": pmr_postgres_config.password,
         },
-        check_postgres_fn,
+        check_postgres_fn(pmr_postgres_config),
     )
-)
+    result = fn()
+
+    for item in result:
+        yield item

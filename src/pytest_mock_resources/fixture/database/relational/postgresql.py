@@ -1,8 +1,7 @@
 import pytest
 import sqlalchemy
 
-from pytest_mock_resources.container import get_docker_host
-from pytest_mock_resources.container.postgres import config, get_sqlalchemy_engine
+from pytest_mock_resources.container.postgres import get_sqlalchemy_engine
 from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
 from pytest_mock_resources.fixture.database.relational.generic import EngineManager
 
@@ -22,18 +21,18 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
         raise KeyError("Unsupported Arguments: {}".format(kwargs))
 
     @pytest.fixture(scope=scope)
-    def _(_postgres_container):
-        database_name = _create_clean_database()
-        engine = get_sqlalchemy_engine(database_name)
+    def _(_postgres_container, pmr_postgres_config):
+        database_name = _create_clean_database(pmr_postgres_config)
+        engine = get_sqlalchemy_engine(pmr_postgres_config, database_name)
 
         assign_fixture_credentials(
             engine,
             drivername="postgresql+psycopg2",
-            host=get_docker_host(),
-            port=config["port"],
+            host=pmr_postgres_config.host,
+            port=pmr_postgres_config.port,
             database=database_name,
-            username="user",
-            password="password",
+            username=pmr_postgres_config.username,
+            password=pmr_postgres_config.password,
         )
 
         engine_manager = EngineManager(
@@ -45,8 +44,10 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
     return _
 
 
-def _create_clean_database():
-    root_engine = get_sqlalchemy_engine(config["root_database"], isolation_level="AUTOCOMMIT")
+def _create_clean_database(pmr_postgres_config):
+    root_engine = get_sqlalchemy_engine(
+        pmr_postgres_config, pmr_postgres_config.root_database, isolation_level="AUTOCOMMIT"
+    )
 
     try:
         root_engine.execute(
