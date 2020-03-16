@@ -30,11 +30,6 @@ class PostgresConfig(DockerContainerConfig):
         raise NotImplementedError()
 
 
-@pytest.fixture(scope="session")
-def pmr_postgres_config():
-    return PostgresConfig()
-
-
 def get_sqlalchemy_engine(config, database_name, isolation_level=None):
     URI_TEMPLATE = (
         "postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}?sslmode=disable"
