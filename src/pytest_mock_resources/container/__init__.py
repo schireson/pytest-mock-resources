@@ -66,7 +66,7 @@ def get_container_fn(name, image, ports, environment, check_fn):
 
 
 # flake8: noqa
-from pytest_mock_resources.container.mongo import _mongo_container  # isort:skip
+from pytest_mock_resources.container.mongo import _mongo_container, pmr_mongo_config  # isort:skip
 from pytest_mock_resources.container.postgres import (  # isort:skip
     _postgres_container,
     pmr_postgres_config,
