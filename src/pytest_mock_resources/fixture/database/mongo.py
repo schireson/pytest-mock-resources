@@ -1,8 +1,7 @@
 import pytest
 
 from pytest_mock_resources.compat import pymongo
-from pytest_mock_resources.container import get_docker_host
-from pytest_mock_resources.container.mongo import config, get_pymongo_client
+from pytest_mock_resources.container.mongo import get_pymongo_client
 from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
 
 
@@ -13,15 +12,15 @@ def create_mongo_fixture(**kwargs):
         raise KeyError("Unsupported Arguments: {}".format(kwargs))
 
     @pytest.fixture(scope=scope)
-    def _(_mongo_container):
-        return _create_clean_database()
+    def _(_mongo_container, pmr_mongo_config):
+        return _create_clean_database(pmr_mongo_config)
 
     return _
 
 
-def _create_clean_database():
-    client = get_pymongo_client()
-    db = client[config["root_database"]]
+def _create_clean_database(config):
+    client = get_pymongo_client(config)
+    db = client[config.root_database]
 
     # Create a collection called `pytestMockResourceDbs' in the admin tab if it hasnt already been
     # created.
@@ -38,7 +37,7 @@ def _create_clean_database():
     create_db.command("createUser", db_id, pwd="password", roles=["dbOwner"])  # nosec
 
     #  pass back an authenticated db connection
-    limited_client = pymongo.MongoClient(get_docker_host(), config["port"])
+    limited_client = pymongo.MongoClient(config.host, config.port)
     db = limited_client[db_id]
     db.authenticate(db_id, "password")
 
@@ -47,8 +46,8 @@ def _create_clean_database():
     assign_fixture_credentials(
         db,
         drivername="mongodb",
-        host=get_docker_host(),
-        port=config["port"],
+        host=config.host,
+        port=config.port,
         database=db_id,
         username=db_id,
         password="password",
