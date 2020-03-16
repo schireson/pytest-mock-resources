@@ -71,6 +71,6 @@ from pytest_mock_resources.container.postgres import (  # isort:skip
     _postgres_container,
     pmr_postgres_config,
 )
-from pytest_mock_resources.container.redis import _redis_container  # isort:skip
+from pytest_mock_resources.container.redis import _redis_container, pmr_redis_config  # isort:skip
 from pytest_mock_resources.container.redshift import _redshift_container  # isort:skip
 from pytest_mock_resources.container.mysql import _mysql_container # isort:skip

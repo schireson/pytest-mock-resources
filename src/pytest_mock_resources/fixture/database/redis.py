@@ -1,8 +1,6 @@
 import pytest
 
 from pytest_mock_resources.compat import redis
-from pytest_mock_resources.container import get_docker_host
-from pytest_mock_resources.container.redis import redis_config
 from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
 
 
@@ -21,14 +19,14 @@ def create_redis_fixture(**kwargs):
         raise KeyError("Unsupported Arguments: {}".format(kwargs))
 
     @pytest.fixture(scope=scope)
-    def _(_redis_container):
-        db = redis.Redis(host=get_docker_host(), port=redis_config["port"])
+    def _(_redis_container, pmr_redis_config):
+        db = redis.Redis(host=pmr_redis_config.host, port=pmr_redis_config.port)
         db.flushall()
         assign_fixture_credentials(
             db,
             drivername="redis",
-            host=get_docker_host(),
-            port=redis_config["port"],
+            host=pmr_redis_config.host,
+            port=pmr_redis_config.port,
             database=None,
             username=None,
             password=None,
