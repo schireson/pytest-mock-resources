@@ -5,6 +5,7 @@ from pytest_mock_resources.container import (
     _redis_container,
     _redshift_container,
     _mysql_container
+    pmr_postgres_config,
 )
 from pytest_mock_resources.fixture.database import (
     create_mongo_fixture,
@@ -17,4 +18,3 @@ from pytest_mock_resources.fixture.database import (
     Statements,
 )
 from pytest_mock_resources.hooks import pytest_configure, pytest_itemcollected
-from pytest_mock_resources.patch import patch_create_engine, patch_psycopg2_connect

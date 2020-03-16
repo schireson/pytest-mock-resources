@@ -1,16 +1,12 @@
 import pytest
 
-from pytest_mock_resources.container import get_docker_host
-from pytest_mock_resources.container.postgres import config
 from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
 from pytest_mock_resources.fixture.database.relational.generic import EngineManager
 from pytest_mock_resources.fixture.database.relational.postgresql import (
     _create_clean_database,
     get_sqlalchemy_engine,
 )
-from pytest_mock_resources.patch.redshift.create_engine import (
-    substitute_execute_with_custom_execute,
-)
+from pytest_mock_resources.patch.redshift import psycopg2, sqlalchemy
 
 
 def create_redshift_fixture(*ordered_actions, **kwargs):
@@ -32,25 +28,27 @@ def create_redshift_fixture(*ordered_actions, **kwargs):
     ordered_actions = ordered_actions + (REDSHIFT_UDFS,)
 
     @pytest.fixture(scope=scope)
-    def _(_redshift_container):
-        database_name = _create_clean_database()
-        engine = get_sqlalchemy_engine(database_name)
+    def _(_redshift_container, pmr_postgres_config):
+        database_name = _create_clean_database(pmr_postgres_config)
+        engine = get_sqlalchemy_engine(pmr_postgres_config, database_name)
 
         assign_fixture_credentials(
             engine,
             drivername="postgresql+psycopg2",
-            host=get_docker_host(),
-            port=config["port"],
+            host=pmr_postgres_config.host,
+            port=pmr_postgres_config.port,
             database=database_name,
-            username="user",
-            password="password",
+            username=pmr_postgres_config.username,
+            password=pmr_postgres_config.password,
         )
 
-        engine = substitute_execute_with_custom_execute(engine)
+        engine = sqlalchemy.substitute_execute_with_custom_execute(engine)
         engine_manager = EngineManager(
             engine, ordered_actions, tables=tables, default_schema="public"
         )
-        for engine in engine_manager.manage(session=session):
-            yield engine
+
+        with psycopg2.patch_connect(pmr_postgres_config):
+            for engine in engine_manager.manage(session=session):
+                yield engine
 
     return _
