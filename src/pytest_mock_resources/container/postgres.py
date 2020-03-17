@@ -2,10 +2,29 @@ import pytest
 import sqlalchemy
 
 from pytest_mock_resources.config import DockerContainerConfig, fallback
-from pytest_mock_resources.container import ContainerCheckFailed, get_container_fn
+from pytest_mock_resources.container import ContainerCheckFailed, get_container
 
 
 class PostgresConfig(DockerContainerConfig):
+    """Define the configuration object for postgres.
+
+    Args:
+        image (str): The docker image:tag specifier to use for postgres containers.
+            Defaults to :code:`"postgres:9.6.10-alpine"`.
+        host (str): The hostname under which a mounted port will be available.
+            Defaults to :code:`"localhost"`.
+        port (int): The port to bind the container to.
+            Defaults to :code:`5532`.
+        ci_port (int): The port to bind the container to when a CI environment is detected.
+            Defaults to :code:`5432`.
+        username (str): The username of the root postgres user
+            Defaults to :code:`"user"`.
+        password (str): The password of the root postgres password
+            Defaults to :code:`"password"`.
+        root_database (str): The name of the root postgres database to create.
+            Defaults to :code:`"dev"`.
+    """
+
     name = "postgres"
     _fields = {"image", "host", "port", "ci_port", "username", "password", "root_database"}
     _fields_defaults = {
@@ -37,9 +56,9 @@ def get_sqlalchemy_engine(config, database_name, isolation_level=None):
     DB_URI = URI_TEMPLATE.format(
         host=config.host,
         port=config.port,
-        database=database_name,
         username=config.username,
         password=config.password,
+        database=database_name,
     )
 
     options = {}
@@ -60,33 +79,27 @@ def get_sqlalchemy_engine(config, database_name, isolation_level=None):
 
 
 def check_postgres_fn(config):
-    def _check_postgres_fn():
-        try:
-            get_sqlalchemy_engine(config, config.root_database)
-        except sqlalchemy.exc.OperationalError:
-            raise ContainerCheckFailed(
-                "Unable to connect to a presumed Postgres test container via given config: {}".format(
-                    config
-                )
+    try:
+        get_sqlalchemy_engine(config, config.root_database)
+    except sqlalchemy.exc.OperationalError:
+        raise ContainerCheckFailed(
+            "Unable to connect to a presumed Postgres test container via given config: {}".format(
+                config
             )
-
-    return _check_postgres_fn
+        )
 
 
 @pytest.fixture("session")
 def _postgres_container(pmr_postgres_config):
-    fn = get_container_fn(
-        "_postgres_container",
-        pmr_postgres_config.image,
+    result = get_container(
+        pmr_postgres_config,
         {5432: pmr_postgres_config.port},
         {
             "POSTGRES_DB": pmr_postgres_config.root_database,
             "POSTGRES_USER": pmr_postgres_config.username,
             "POSTGRES_PASSWORD": pmr_postgres_config.password,
         },
-        check_postgres_fn(pmr_postgres_config),
+        check_postgres_fn,
     )
-    result = fn()
 
-    for item in result:
-        yield item
+    yield next(iter(result))

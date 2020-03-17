@@ -2,10 +2,23 @@ import pytest
 
 from pytest_mock_resources.compat import redis
 from pytest_mock_resources.config import DockerContainerConfig
-from pytest_mock_resources.container import ContainerCheckFailed, get_container_fn
+from pytest_mock_resources.container import ContainerCheckFailed, get_container
 
 
 class RedisConfig(DockerContainerConfig):
+    """Define the configuration object for redis.
+
+    Args:
+        image (str): The docker image:tag specifier to use for redis containers.
+            Defaults to :code:`"redis:5.0.7"`.
+        host (str): The hostname under which a mounted port will be available.
+            Defaults to :code:`"localhost"`.
+        port (int): The port to bind the container to.
+            Defaults to :code:`6380`.
+        ci_port (int): The port to bind the container to when a CI environment is detected.
+            Defaults to :code:`6379`.
+    """
+
     name = "redis"
 
     _fields = {"image", "host", "port", "ci_port"}
@@ -17,30 +30,23 @@ class RedisConfig(DockerContainerConfig):
 
 
 def check_redis_fn(config):
-    def _check_redis_fn():
-        try:
-            client = redis.Redis(host=config.host, port=config.port)
-            client.ping()
-        except redis.ConnectionError:
-            raise ContainerCheckFailed(
-                "Unable to connect to a presumed Redis test container via given config: {}".format(
-                    config
-                )
+    try:
+        client = redis.Redis(host=config.host, port=config.port)
+        client.ping()
+    except redis.ConnectionError:
+        raise ContainerCheckFailed(
+            "Unable to connect to a presumed Redis test container via given config: {}".format(
+                config
             )
-
-    return _check_redis_fn
+        )
 
 
 @pytest.fixture(scope="session")
 def _redis_container(pmr_redis_config):
-    fn = get_container_fn(
-        name="pmr_redis_container",
-        image=pmr_redis_config.image,
+    result = get_container(
+        pmr_redis_config,
         ports={6379: pmr_redis_config.port},
         environment={},
-        check_fn=check_redis_fn(pmr_redis_config),
+        check_fn=check_redis_fn,
     )
-    result = fn()
-
-    for item in result:
-        yield item
+    yield next(iter(result))

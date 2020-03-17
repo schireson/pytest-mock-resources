@@ -7,6 +7,13 @@ from pytest_mock_resources.fixture.database.generic import assign_fixture_creden
 
 @pytest.fixture(scope="session")
 def pmr_mongo_config():
+    """Override this fixture with a :class:`MongoConfig` instance to specify different defaults.
+
+    Examples:
+        >>> @pytest.fixture(scope='session')
+        ... def pmr_mongo_config():
+        ...     return MongoConfig(image="mongo:3.4", root_database="foo")
+    """
     return MongoConfig()
 
 

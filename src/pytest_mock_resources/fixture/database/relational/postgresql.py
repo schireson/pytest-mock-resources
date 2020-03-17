@@ -8,6 +8,13 @@ from pytest_mock_resources.fixture.database.relational.generic import EngineMana
 
 @pytest.fixture(scope="session")
 def pmr_postgres_config():
+    """Override this fixture with a :class:`PostgresConfig` instance to specify different defaults.
+
+    Examples:
+        >>> @pytest.fixture(scope='session')
+        ... def pmr_postgres_config():
+        ...     return PostgresConfig(image="postgres:9.6.10", root_database="foo")
+    """
     return PostgresConfig()
 
 
@@ -49,10 +56,8 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
     return _
 
 
-def _create_clean_database(pmr_postgres_config):
-    root_engine = get_sqlalchemy_engine(
-        pmr_postgres_config, pmr_postgres_config.root_database, isolation_level="AUTOCOMMIT"
-    )
+def _create_clean_database(config):
+    root_engine = get_sqlalchemy_engine(config, config.root_database, isolation_level="AUTOCOMMIT")
 
     try:
         root_engine.execute(
