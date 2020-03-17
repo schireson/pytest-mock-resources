@@ -32,7 +32,7 @@ def create_redshift_fixture(*ordered_actions, **kwargs):
     ordered_actions = ordered_actions + (REDSHIFT_UDFS,)
 
     @pytest.fixture(scope=scope)
-    def _(_postgres_container):
+    def _(_redshift_container):
         database_name = _create_clean_database()
         engine = get_sqlalchemy_engine(database_name)
 

@@ -70,7 +70,6 @@ def test_json_column(sqlite):
     assert result == {"foo": 2}
 
 
-@pytest.mark.postgres
 def test_json_column_pg(pg):
     """Included here as a way of showing that this mimics postgres' behavior
     """
@@ -85,7 +84,6 @@ def test_jsonb_column(sqlite):
     assert result == {"foo": "bar"}
 
 
-@pytest.mark.postgres
 def test_jsonb_column_pg(pg):
     """Included here as a way of showing that this mimics postgres' behavior
     """
@@ -177,7 +175,6 @@ def test_dt_tz_column_tzaware_input(sqlite_dt):
     assert result == datetime(2018, 1, 1, 9, 0, 0, tzinfo=utc)
 
 
-@pytest.mark.postgres
 def test_dt_column_naive_input_pg(pg_dt):
     """Included here as a way of showing that this mimics postgres' behavior
     """
@@ -186,7 +183,6 @@ def test_dt_column_naive_input_pg(pg_dt):
     assert result == datetime(2018, 1, 1, 5, 0, 0)
 
 
-@pytest.mark.postgres
 def test_dt_column_tzaware_input_pg(pg_dt):
     """Included here as a way of showing that this mimics postgres' behavior
     """
@@ -197,7 +193,6 @@ def test_dt_column_tzaware_input_pg(pg_dt):
     assert result == datetime(2018, 1, 1, 9, 0, 0)
 
 
-@pytest.mark.postgres
 def test_dt_tz_column_naive_input_pg(pg_dt):
     """Included here as a way of showing that this mimics postgres' behavior
     """
@@ -206,7 +201,6 @@ def test_dt_tz_column_naive_input_pg(pg_dt):
     assert result == datetime(2018, 1, 1, 5, 0, 0, tzinfo=utc)
 
 
-@pytest.mark.postgres
 def test_dt_tz_column_tzaware_input_pg(pg_dt):
     """Included here as a way of showing that this mimics postgres' behavior
     """

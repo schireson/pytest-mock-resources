@@ -47,7 +47,6 @@ postgres_session_function = create_postgres_fixture(Base, session_function)
 
 # Run the test 5 times to ensure fixture is stateless
 @pytest.mark.parametrize("run", range(5))
-@pytest.mark.postgres
 def test_ordered_actions(postgres_ordered_actions, run):
     execute = postgres_ordered_actions.execute("SELECT * FROM user1")
     result = sorted([row[0] for row in execute])
@@ -56,7 +55,6 @@ def test_ordered_actions(postgres_ordered_actions, run):
 
 # Run the test 5 times to ensure fixture is stateless
 @pytest.mark.parametrize("run", range(5))
-@pytest.mark.postgres
 def test_session_function(postgres_session_function, run):
     execute = postgres_session_function.execute("SELECT * FROM stuffs.object")
     owner_id = sorted([row[2] for row in execute])[0]
@@ -70,7 +68,6 @@ def test_session_function(postgres_session_function, run):
 postgres_metadata_only = create_postgres_fixture(Base.metadata)
 
 
-@pytest.mark.postgres
 def test_metadata_only(postgres_metadata_only):
     execute = postgres_metadata_only.execute("SELECT * FROM stuffs.user")
 
