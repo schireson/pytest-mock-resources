@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 
 import time
 
-import pytest
 from sqlalchemy import text
 
 from pytest_mock_resources import create_redshift_fixture
