@@ -61,7 +61,11 @@ base_2_postgres = create_postgres_fixture(rows)
 base_2_mysql = create_mysql_fixture(rows)
 
 
+<<<<<<< HEAD
 def test_2_bases_postgres(base_2_postgres):
+=======
+def test_2_bases(base_2_postgres):
+>>>>>>> bbba342 (Register marks.)
     execute = base_2_postgres.execute(
         """
         SELECT *
