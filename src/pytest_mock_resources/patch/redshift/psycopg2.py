@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import contextlib
 
 from sqlalchemy import create_engine
@@ -14,7 +16,7 @@ from pytest_mock_resources.patch.redshift.sqlalchemy import (
 def mock_psycopg2_connect(config, _connect):
     """Patch `psycopg2._connect`.
 
-    Adds support for S3 COPY and UNLOAD.
+    Add support for S3 COPY and UNLOAD.
     """
 
     class CustomCursor(psycopg2.extensions.cursor):

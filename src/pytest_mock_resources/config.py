@@ -39,10 +39,11 @@ def fallback(fn):
         if value is not None:
             return value
 
-        if attr in self._fields_defaults:
-            return self._fields_defaults[attr]
-
-        return fn(self)
+        try:
+            return fn(self)
+        except NotImplementedError:
+            if attr in self._fields_defaults:
+                return self._fields_defaults[attr]
 
     return wrapper
 
@@ -87,4 +88,4 @@ class DockerContainerConfig:
         if ci_port and is_ci():
             return ci_port
 
-        return self._port
+        raise NotImplementedError()
