@@ -25,44 +25,44 @@ class ContainerCheckFailed(Exception):
     """
 
 
-def get_container_fn(name, image, ports, environment, check_fn):
-    def wrapped():
-        # XXX: moto library may over-mock responses. SEE: https://github.com/spulec/moto/issues/1026
-        responses.add_passthru("http+docker")
+def get_container(config, ports, environment, check_fn):
+    # XXX: moto library may over-mock responses. SEE: https://github.com/spulec/moto/issues/1026
+    responses.add_passthru("http+docker")
 
-        def retriable_check_fn(retries):
-            while retries:
-                retries -= 1
-                try:
-                    check_fn()
-                    return
-                except Exception:
-                    if not retries:
-                        raise
-                    time.sleep(1)
-
-        try:
-            container = None
+    def retriable_check_fn(retries):
+        while retries:
+            retries -= 1
             try:
-                retriable_check_fn(1)
+                check_fn(config)
+                return
             except ContainerCheckFailed:
+                if not retries:
+                    raise
+                time.sleep(0.5)
+
+    try:
+        container = None
+        try:
+            retriable_check_fn(1)
+        except ContainerCheckFailed:
+            try:
                 client = docker.from_env(version="auto")
                 container = client.containers.run(
-                    image, ports=ports, environment=environment, detach=True, remove=True
+                    config.image, ports=ports, environment=environment, detach=True, remove=True
                 )
-                retriable_check_fn(20)
+            except docker.errors.APIError as e:
+                if "port is already allocated" not in str(e):
+                    raise
 
-            yield
-        except Exception:
-            raise
+            retriable_check_fn(40)
 
-        finally:
-            if container:
-                container.kill()
+        yield
+    except Exception:
+        raise
 
-    wrapped.__name__ = name
-
-    return wrapped
+    finally:
+        if container:
+            container.kill()
 
 
 # flake8: noqa

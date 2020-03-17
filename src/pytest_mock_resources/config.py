@@ -31,12 +31,11 @@ def fallback(fn):
     @property
     @functools.wraps(fn)
     def wrapper(self):
-        value = getattr(self, "_{attr}".format(attr=attr), None)
-
+        value = get_env_config(self.name, attr)
         if value is not None:
             return value
 
-        value = get_env_config(self.name, attr)
+        value = getattr(self, "_{attr}".format(attr=attr), None)
         if value is not None:
             return value
 
@@ -57,16 +56,14 @@ class DockerContainerConfig:
             value = kwargs.get(field)
             attr = "_{}".format(field)
             setattr(self, attr, value)
-        # self._image = image
-        # self._host = host
-        # self._port = port
-        # self._ci_port = ci_port
 
     def __repr__(self):
         cls_name = self.__class__.__name__
         return "{cls_name}({attrs})".format(
             cls_name=cls_name,
-            attrs=", ".join("{}={}".format(attr, getattr(self, attr)) for attr in self._fields),
+            attrs=", ".join(
+                "{}={}".format(attr, repr(getattr(self, attr))) for attr in self._fields
+            ),
         )
 
     @fallback

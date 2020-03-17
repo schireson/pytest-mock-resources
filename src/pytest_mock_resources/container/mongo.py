@@ -2,10 +2,25 @@ import pytest
 
 from pytest_mock_resources.compat import pymongo
 from pytest_mock_resources.config import DockerContainerConfig, fallback
-from pytest_mock_resources.container import ContainerCheckFailed, get_container_fn
+from pytest_mock_resources.container import ContainerCheckFailed, get_container
 
 
 class MongoConfig(DockerContainerConfig):
+    """Define the configuration object for mongo.
+
+    Args:
+        image (str): The docker image:tag specifier to use for mongo containers.
+            Defaults to :code:`"mongo:3.6"`.
+        host (str): The hostname under which a mounted port will be available.
+            Defaults to :code:`"localhost"`.
+        port (int): The port to bind the container to.
+            Defaults to :code:`28017`.
+        ci_port (int): The port to bind the container to when a CI environment is detected.
+            Defaults to :code:`27017`.
+        root_database (str): The name of the root mongo database to create.
+            Defaults to :code:`"dev-mongo"`.
+    """
+
     name = "mongo"
 
     _fields = {"image", "host", "port", "ci_port", "root_database"}
@@ -28,31 +43,19 @@ def get_pymongo_client(config):
 
 
 def check_mongo_fn(config):
-    def _check_mongo_fn():
-        try:
-            client = get_pymongo_client(config)
-            db = client[config.root_database]
-            db.command("ismaster")
-        except pymongo.errors.ConnectionFailure:
-            raise ContainerCheckFailed(
-                "Unable to connect to a presumed MongoDB test container via given config: {}".format(
-                    config
-                )
+    try:
+        client = get_pymongo_client(config)
+        db = client[config.root_database]
+        db.command("ismaster")
+    except pymongo.errors.ConnectionFailure:
+        raise ContainerCheckFailed(
+            "Unable to connect to a presumed MongoDB test container via given config: {}".format(
+                config
             )
-
-    return _check_mongo_fn
+        )
 
 
 @pytest.fixture(scope="session")
 def _mongo_container(pmr_mongo_config):
-    fn = get_container_fn(
-        "_mongo_container",
-        pmr_mongo_config.image,
-        {27017: pmr_mongo_config.port},
-        {},
-        check_mongo_fn(pmr_mongo_config),
-    )
-    result = fn()
-
-    for item in result:
-        yield item
+    result = get_container(pmr_mongo_config, {27017: pmr_mongo_config.port}, {}, check_mongo_fn)
+    yield next(iter(result))
