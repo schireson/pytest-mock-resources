@@ -1,7 +1,5 @@
 from __future__ import unicode_literals
 
-import pytest
-
 from pytest_mock_resources import (
     create_redshift_fixture,
     patch_create_engine,
@@ -20,40 +18,34 @@ redshift = create_redshift_fixture()
 
 
 @patch_create_engine(path="tests.fixture.database.create_engine")
-@pytest.mark.redshift
 def test_copy(redshift):
     copy_fn_to_test_create_engine_patch(redshift)
 
 
 @patch_create_engine(path="tests.fixture.database.create_engine")
-@pytest.mark.redshift
 def test_unload(redshift):
     unload_fn_to_test_create_engine_patch(redshift)
 
 
 @patch_psycopg2_connect(path="tests.fixture.database.psycopg2")
-@pytest.mark.redshift
 def test_copy_with_psycopg2(redshift):
     config = redshift.pmr_credentials.as_psycopg2_kwargs()
     copy_fn_to_test_psycopg2_connect_patch(config)
 
 
 @patch_psycopg2_connect(path="tests.fixture.database.psycopg2")
-@pytest.mark.redshift
 def test_copy_with_psycopg2_as_context_manager(redshift):
     config = redshift.pmr_credentials.as_psycopg2_kwargs()
     copy_fn_to_test_psycopg2_connect_patch_as_context_manager(config)
 
 
 @patch_psycopg2_connect(path="tests.fixture.database.psycopg2")
-@pytest.mark.redshift
 def test_unload_with_psycopg2(redshift):
     config = redshift.pmr_credentials.as_psycopg2_kwargs()
     unload_fn_to_test_psycopg2_connect_patch(config)
 
 
 @patch_psycopg2_connect(path="tests.fixture.database.psycopg2")
-@pytest.mark.redshift
 def test_unload_with_psycopg2_as_context_manager(redshift):
     config = redshift.pmr_credentials.as_psycopg2_kwargs()
     unload_fn_to_test_psycopg2_connect_patch_as_context_manager(config)

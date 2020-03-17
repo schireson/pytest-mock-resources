@@ -8,7 +8,6 @@ from pytest_mock_resources.container import (
     IN_CI,
 )
 
-
 redis_config = {
     "port": 6379 if IN_CI else 6380,
     "image": "redis:5.0.7",

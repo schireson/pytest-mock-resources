@@ -73,4 +73,4 @@ except ImportError:
 try:
     import redis
 except ImportError:
-    redis = ImportAdaptor("redis", "redis")
+    redis = ImportAdaptor("redis", "redis")  # type: ignore

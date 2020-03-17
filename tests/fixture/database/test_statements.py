@@ -1,5 +1,3 @@
-import pytest
-
 from pytest_mock_resources import (
     create_postgres_fixture,
     create_redshift_fixture,
@@ -12,7 +10,6 @@ postgres = create_postgres_fixture(statements)
 sqlite = create_sqlite_fixture(statements)
 
 
-@pytest.mark.postgres
 def test_statements(postgres):
     execute = postgres.execute(
         """
@@ -40,7 +37,6 @@ statements = Statements(
 redshift = create_redshift_fixture(statements)
 
 
-@pytest.mark.redshift
 def test_multi_statement_statements(redshift):
     execute = redshift.execute("SELECT password FROM account")
 

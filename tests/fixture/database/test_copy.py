@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 
 import time
 
-import pytest
 from sqlalchemy import text
 
 from pytest_mock_resources import create_redshift_fixture
@@ -20,7 +19,6 @@ from tests.fixture.database import (
 redshift = create_redshift_fixture()
 
 
-@pytest.mark.redshift
 def test_s3_copy_into_redshift(redshift):
     with moto.mock_s3():
         setup_table_and_bucket(redshift)
@@ -40,7 +38,6 @@ def test_s3_copy_into_redshift(redshift):
         fetch_values_from_table_and_assert(redshift)
 
 
-@pytest.mark.redshift
 def test_case_sensitivity(redshift):
     with moto.mock_s3():
         setup_table_and_bucket(redshift)
@@ -60,7 +57,6 @@ def test_case_sensitivity(redshift):
         fetch_values_from_table_and_assert(redshift)
 
 
-@pytest.mark.redshift
 def test_s3_copy_from_gzip(redshift):
     with moto.mock_s3():
         redshift.execute(
@@ -96,7 +92,6 @@ def test_s3_copy_from_gzip(redshift):
         fetch_values_from_table_and_assert(redshift)
 
 
-@pytest.mark.redshift
 def test_s3_copy_columns(redshift):
     with moto.mock_s3():
         setup_table_and_bucket(redshift)
@@ -116,7 +111,6 @@ def test_s3_copy_columns(redshift):
         fetch_values_from_table_and_assert(redshift)
 
 
-@pytest.mark.redshift
 def test_inverted_credentials_string(redshift):
     with moto.mock_s3():
         setup_table_and_bucket(redshift)
@@ -135,7 +129,6 @@ def test_inverted_credentials_string(redshift):
         fetch_values_from_table_and_assert(redshift)
 
 
-@pytest.mark.redshift
 def test_optional_keywords(redshift):
     with moto.mock_s3():
         setup_table_and_bucket(redshift)
@@ -155,7 +148,6 @@ def test_optional_keywords(redshift):
         fetch_values_from_table_and_assert(redshift)
 
 
-@pytest.mark.redshift
 def test_random_spacing(redshift):
     with moto.mock_s3():
         setup_table_and_bucket(redshift)
@@ -175,7 +167,6 @@ def test_random_spacing(redshift):
         fetch_values_from_table_and_assert(redshift)
 
 
-@pytest.mark.redshift
 def test_ignores_sqlalchmey_text_obj(redshift):
     with moto.mock_s3():
         setup_table_and_bucket(redshift)
@@ -195,7 +186,6 @@ def test_ignores_sqlalchmey_text_obj(redshift):
         fetch_values_from_table_and_assert(redshift)
 
 
-@pytest.mark.redshift
 def test_multiple_sql_statemts(redshift):
     with moto.mock_s3():
         conn = boto3.resource(

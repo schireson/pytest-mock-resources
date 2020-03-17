@@ -52,7 +52,7 @@ sphinx_autodoc_typehints = {version = "*", optional = true}
 sphinx_rtd_theme = {version = "*", optional = true}
 
 [tool.poetry.dev-dependencies]
-black = {version = "=>19.3b0", allows-prereleases = true, python = ">=3.6"}
+black = {version = "=>19.3b0", allow-prereleases = true, python = ">=3.6"}
 coverage = "*"
 flake8 = "*"
 isort = "*"

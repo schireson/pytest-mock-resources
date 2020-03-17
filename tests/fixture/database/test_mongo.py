@@ -1,17 +1,13 @@
-import pytest
-
 from pytest_mock_resources import create_mongo_fixture
 
 mongo = create_mongo_fixture()
 
 
-@pytest.mark.mongo
 def test_basic_mongo_fixture(mongo):
     collections = mongo.list_collection_names()
     assert collections == []
 
 
-@pytest.mark.mongo
 def test_collection_exists(mongo):
     collection = mongo["customers"]
     to_insert = {"name": "John", "address": "Highway 37"}
@@ -20,7 +16,6 @@ def test_collection_exists(mongo):
     assert "customers" in collections
 
 
-@pytest.mark.mongo
 def test_insert_one(mongo):
     collection = mongo["customers"]
     to_insert = {"name": "John", "address": "Highway 37"}
@@ -29,7 +24,6 @@ def test_insert_one(mongo):
     assert returned == to_insert
 
 
-@pytest.mark.mongo
 def test_insert_all(mongo):
     collection = mongo["customers"]
     to_insert = [
@@ -52,7 +46,6 @@ def test_insert_all(mongo):
     assert returned == sorted(to_insert, key=lambda x: x["name"])
 
 
-@pytest.mark.mongo
 def test_query(mongo):
     collection = mongo["customers"]
     to_insert = [
@@ -67,7 +60,6 @@ def test_query(mongo):
     assert returned == sorted(to_insert, key=lambda x: x["name"])
 
 
-@pytest.mark.mongo
 def test_delete_one(mongo):
     collection = mongo["customers"]
     to_insert = [
@@ -84,7 +76,6 @@ def test_delete_one(mongo):
     assert returned == sorted(to_insert[1:], key=lambda x: x["name"])
 
 
-@pytest.mark.mongo
 def test_delete_all(mongo):
     collection = mongo["customers"]
     to_insert = [
@@ -107,7 +98,6 @@ mongo_2 = create_mongo_fixture()
 mongo_3 = create_mongo_fixture()
 
 
-@pytest.mark.mongo
 def test_multiple_mongos(mongo_1, mongo_2, mongo_3):
     def validate_isolation(db_client):
         collection = db_client["customers"]
@@ -127,7 +117,6 @@ def test_multiple_mongos(mongo_1, mongo_2, mongo_3):
     validate_isolation(mongo_3)
 
 
-@pytest.mark.mongo
 def test_create_custom_connection(mongo):
     from pymongo import MongoClient
 

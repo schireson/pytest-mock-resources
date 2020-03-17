@@ -96,13 +96,11 @@ pg_explicit_schema = create_postgres_fixture(PGBase, tables=["public.quarter"])
 
 
 class TestPg:
-    @pytest.mark.postgres
     def test_implicit_schema(self, pg_implicit_schema):
         pg_implicit_schema.execute("select * from report")
         with pytest.raises(sqlalchemy.exc.ProgrammingError):
             pg_implicit_schema.execute("select * from public.quarter")
 
-    @pytest.mark.postgres
     def test_explicit_schema(self, pg_explicit_schema):
         pg_explicit_schema.execute("select * from quarter")
         with pytest.raises(sqlalchemy.exc.ProgrammingError):
@@ -134,7 +132,6 @@ class TestSessionArg:
         result = sqlite2.query(Report).all()
         assert len(result) == 1
 
-    @pytest.mark.postgres
     def test_session_pg(self, pg_session):
         result = pg_session.query(Quarter).one()
         assert result.id == 1

@@ -1,5 +1,3 @@
-import pytest
-
 from pytest_mock_resources import create_redis_fixture
 from pytest_mock_resources.compat import redis
 
@@ -26,7 +24,6 @@ def _list_setup(redis_client):
     redis_client.lpush("dbs", "mysql_lite")
 
 
-@pytest.mark.redis
 class TestGeneric:
     def test_basic_redis_fixture(self, redis_client):
         keys = redis_client.keys()
@@ -45,7 +42,6 @@ class TestGeneric:
         assert value == "bar"
 
 
-@pytest.mark.redis
 class TestStrings:
     def test_set(self, redis_client):
         redis_client.set("foo", "bar")
@@ -105,7 +101,6 @@ class TestStrings:
         assert b"flo" not in foo_keys
 
 
-@pytest.mark.redis
 class TestSets:
     def test_sadd(self, redis_client):
         _sets_setup(redis_client)
@@ -135,7 +130,6 @@ class TestSets:
         assert redis_client.sismember("friends:paul", "ghanima")
 
 
-@pytest.mark.redis
 class TestHashes:
     def test_hset(self, redis_client):
         _hash_setup(redis_client)
@@ -157,7 +151,6 @@ class TestHashes:
         assert vals == [b"foo", b"30"]
 
 
-@pytest.mark.redis
 class TestLists:
     def test_lset(self, redis_client):
         _list_setup(redis_client)
