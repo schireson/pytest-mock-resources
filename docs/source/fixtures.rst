@@ -10,6 +10,7 @@ DDL, preset data, or functions you might require.
 Each fixture you create can be used in multiple tests without risking data leakage or side-effects
 from one test to another, see :ref:`internals-label` for more details.
 
+See :ref:`docker-config-label` for information on customizing the configuration for docker-based fixtures.
 
 .. toctree::
 
