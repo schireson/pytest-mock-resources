@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import time
 
+import pytest
 from sqlalchemy import text
 
 from pytest_mock_resources import create_redshift_fixture
@@ -33,6 +34,27 @@ def test_s3_copy_into_redshift(redshift):
                 OPTIONAL_ARGS="",
             )
         )
+
+        # Assert the values fetched for the database are the same as the values in the data.
+        fetch_values_from_table_and_assert(redshift)
+
+
+@pytest.mark.xfail(strict=True, reason="Existing bug, we should reconsider our existing mechanism")
+def test_s3_copy_into_redshift_transaction(redshift):
+    with moto.mock_s3():
+        setup_table_and_bucket(redshift)
+
+        with redshift.begin() as redshift_connection:
+            redshift_connection.execute(
+                COPY_TEMPLATE.format(
+                    COMMAND="COPY",
+                    LOCATION="s3://mybucket/file.csv",
+                    COLUMNS="",
+                    FROM="from",
+                    CREDENTIALS="credentials",
+                    OPTIONAL_ARGS="",
+                )
+            )
 
         # Assert the values fetched for the database are the same as the values in the data.
         fetch_values_from_table_and_assert(redshift)
