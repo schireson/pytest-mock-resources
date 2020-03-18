@@ -14,6 +14,9 @@ def pytest_configure(config):
 def pytest_itemcollected(item):
     """Attach markers to each test which uses a fixture of one of the resources.
     """
+    if not hasattr(item, "fixturenames"):
+        return
+
     fixturenames = set(item.fixturenames)
     for resource_kind in _resource_kinds:
         resource_fixture = "_{}_container".format(resource_kind)
