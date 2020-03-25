@@ -1,21 +1,20 @@
 import csv
 import gzip
 import io
-import sys
 
 from pytest_mock_resources.compat import boto3
 from pytest_mock_resources.patch.redshift.mock_s3_copy import strip
 
 
-def execute_mock_s3_unload_command(statement, engine):
+def mock_s3_unload_command(statement, cursor):
     params = _parse_s3_command(statement)
 
-    _mock_s3_unload(
+    return _mock_s3_unload(
         select_statement=params["select_statement"],
         s3_uri=params["s3_uri"],
         aws_secret_access_key=params["aws_secret_access_key"],
         aws_access_key_id=params["aws_access_key_id"],
-        engine=engine,
+        cursor=cursor,
         delimiter=params.get("delimiter", "|"),
         is_gzipped=params["gzip"],
     )
@@ -136,7 +135,7 @@ def _mock_s3_unload(
     s3_uri,
     aws_secret_access_key,
     aws_access_key_id,
-    engine,
+    cursor,
     delimiter,
     is_gzipped,
 ):
@@ -146,8 +145,12 @@ def _mock_s3_unload(
     path_to_file = s3_uri[5:ending_index]
     bucket, key = path_to_file.split("/", 1)
 
-    result = engine.execute(select_statement)
-    buffer = get_data_csv(result, is_gzipped=is_gzipped, delimiter=delimiter)
+    cursor.execute(select_statement)
+    result = cursor.fetchall()
+    column_names = [desc[0] for desc in cursor.description]
+    buffer = get_data_csv(
+        result, column_names=column_names, is_gzipped=is_gzipped, delimiter=delimiter
+    )
 
     # Push the data to the S3 Bucket.
     conn = boto3.resource(
@@ -158,22 +161,17 @@ def _mock_s3_unload(
     obj.put(Body=buffer)
 
 
-def get_data_csv(rows, is_gzipped=False, delimiter="|", **additional_to_csv_options):
+def get_data_csv(rows, column_names, is_gzipped=False, delimiter="|", **additional_to_csv_options):
     result = io.BytesIO()
     buffer = result
     if is_gzipped:
         buffer = gzip.GzipFile(fileobj=buffer, mode="wb")
 
-    # FUCK you python 2. This is ridiculous!
-    wrapper = buffer
-    if sys.version_info.major >= 3:
-        wrapper = io.TextIOWrapper(buffer)
-    else:
-        delimiter = delimiter.encode("utf-8")
+    wrapper = io.TextIOWrapper(buffer)
 
     writer = csv.DictWriter(
         wrapper,
-        fieldnames=rows.keys(),
+        fieldnames=column_names,
         delimiter=delimiter,
         quoting=csv.QUOTE_MINIMAL,
         quotechar='"',
@@ -183,10 +181,9 @@ def get_data_csv(rows, is_gzipped=False, delimiter="|", **additional_to_csv_opti
     )
     writer.writeheader()
     for row in rows:
-        writer.writerow(dict(row.items()))
+        writer.writerow(dict(zip(column_names, row)))
 
-    if sys.version_info.major >= 3:
-        wrapper.detach()
+    wrapper.detach()
 
     if is_gzipped:
         buffer.close()

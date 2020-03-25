@@ -1,4 +1,4 @@
-from pytest_mock_resources import create_redshift_fixture
+from pytest_mock_resources import create_postgres_fixture, create_redshift_fixture
 from tests.fixture.database import (
     copy_fn_to_test_create_engine_patch,
     copy_fn_to_test_psycopg2_connect_patch,
@@ -9,6 +9,7 @@ from tests.fixture.database import (
 )
 
 redshift = create_redshift_fixture()
+postgres = create_postgres_fixture()
 
 
 def test_copy(redshift):
@@ -37,3 +38,8 @@ def test_unload_with_psycopg2(redshift):
 def test_unload_with_psycopg2_as_context_manager(redshift):
     config = redshift.pmr_credentials.as_psycopg2_kwargs()
     unload_fn_to_test_psycopg2_connect_patch_as_context_manager(config)
+
+
+def test_tightly_scoped_patch(redshift, postgres):
+    redshift.execute("select 1; select 1;")
+    postgres.execute("select 1; select 1;")
