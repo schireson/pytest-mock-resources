@@ -43,13 +43,11 @@ def create_redshift_fixture(*ordered_actions, scope="function", tables=None, ses
             password=pmr_postgres_config.password,
         )
 
-        engine = sqlalchemy.substitute_execute_with_custom_execute(engine)
-        engine_manager = EngineManager(
-            engine, ordered_actions, tables=tables, default_schema="public"
-        )
-
-        with psycopg2.patch_connect(pmr_postgres_config):
-            for engine in engine_manager.manage(session=session):
-                yield engine
+        sqlalchemy.register_redshift_behavior(engine)
+        with psycopg2.patch_connect(pmr_postgres_config, database_name):
+            engine_manager = EngineManager(
+                engine, ordered_actions, tables=tables, default_schema="public"
+            )
+            yield from engine_manager.manage(session=session)
 
     return _

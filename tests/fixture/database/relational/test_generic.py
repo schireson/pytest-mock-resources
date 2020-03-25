@@ -1,8 +1,7 @@
 import pytest
 import sqlalchemy
-from sqlalchemy import Column, Integer, MetaData, SmallInteger, Table, Unicode
+from sqlalchemy import Column, Integer, MetaData, select, SmallInteger, Table, Unicode
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.future import select
 from sqlalchemy.orm import sessionmaker
 
 from pytest_mock_resources import create_postgres_fixture, create_sqlite_fixture, Rows

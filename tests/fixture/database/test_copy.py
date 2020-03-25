@@ -1,6 +1,5 @@
 import time
 
-import pytest
 from sqlalchemy import Column, Integer, text
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -8,11 +7,11 @@ from pytest_mock_resources import create_redshift_fixture
 from pytest_mock_resources.compat import boto3, moto
 from tests.fixture.database import (
     COPY_TEMPLATE,
+    data_columns,
     fetch_values_from_table_and_assert,
     get_data_csv,
     original_data,
     randomcase,
-    ResultProxy,
     setup_table_and_bucket,
 )
 
@@ -38,13 +37,12 @@ def test_s3_copy_into_redshift(redshift):
         fetch_values_from_table_and_assert(redshift)
 
 
-@pytest.mark.xfail(strict=True, reason="Existing bug, we should reconsider our existing mechanism")
 def test_s3_copy_into_redshift_transaction(redshift):
     with moto.mock_s3():
         setup_table_and_bucket(redshift)
 
-        with redshift.begin() as redshift_connection:
-            redshift_connection.execute(
+        with redshift.begin() as conn:
+            conn.execute(
                 COPY_TEMPLATE.format(
                     COMMAND="COPY",
                     LOCATION="s3://mybucket/file.csv",
@@ -95,7 +93,9 @@ def test_s3_copy_from_gzip(redshift):
             time_in_mills=int(round(time.time() * 1000))
         )
 
-        file = get_data_csv(ResultProxy(original_data), is_gzipped=True, path_or_buf=temp_file_name)
+        file = get_data_csv(
+            original_data, data_columns, is_gzipped=True, path_or_buf=temp_file_name
+        )
 
         conn.Object("mybucket", "file.csv.gz").put(Body=file)
         redshift.execute(
@@ -218,7 +218,7 @@ def test_multiple_sql_statemts(redshift):
             aws_secret_access_key="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
         )
         conn.create_bucket(Bucket="mybucket")
-        conn.Object("mybucket", "file.csv").put(Body=get_data_csv(ResultProxy(original_data)))
+        conn.Object("mybucket", "file.csv").put(Body=get_data_csv(original_data, data_columns))
 
         redshift.execute(
             (
@@ -235,7 +235,7 @@ def test_multiple_sql_statemts(redshift):
                     CREDENTIALS="credentials",
                     OPTIONAL_ARGS="",
                 )
-            )
+            ),
         )
 
         fetch_values_from_table_and_assert(redshift)
@@ -263,7 +263,7 @@ def test_redshift_auto_schema_creation(redshift):
             aws_secret_access_key="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
         )
         conn.create_bucket(Bucket="mybucket")
-        conn.Object("mybucket", "file.csv").put(Body=get_data_csv(ResultProxy(original_data)))
+        conn.Object("mybucket", "file.csv").put(Body=get_data_csv(original_data, data_columns))
 
         redshift.execute(
             (

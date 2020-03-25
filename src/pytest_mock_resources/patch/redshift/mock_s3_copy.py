@@ -2,25 +2,28 @@ import binascii
 import csv
 import gzip
 import io
-import sys
 
-from sqlalchemy import MetaData, Table
+import attr
 
 from pytest_mock_resources.compat import boto3
 
 
-def execute_mock_s3_copy_command(statement, engine):
-    params = _parse_s3_command(statement)
+@attr.s
+class S3CopyCommand:
+    table_name = attr.ib()
+    delimiter = attr.ib()
+    s3_uri = attr.ib()
+    empty_as_null = attr.ib()
+    format = attr.ib(default="CSV")
+    aws_access_key_id = attr.ib(default=None)
+    aws_secret_access_key = attr.ib(default=None)
+    columns = attr.ib(default=None)
+    schema_name = attr.ib(default=None)
 
-    _mock_s3_copy(
-        table_name=params["table_name"],
-        schema_name=params["schema_name"],
-        s3_uri=params["s3_uri"],
-        aws_secret_access_key=params["aws_secret_access_key"],
-        aws_access_key_id=params["aws_access_key_id"],
-        columns=params.get("columns", None),
-        engine=engine,
-    )
+
+def mock_s3_copy_command(statement, cursor):
+    copy_command = _parse_s3_command(statement)
+    return _mock_s3_copy(cursor, copy_command)
 
 
 def _parse_s3_command(statement):
@@ -35,6 +38,7 @@ def _parse_s3_command(statement):
     params["schema_name"], params["table_name"] = _split_table_name(tokens.pop(0))
 
     # Checking for columns
+    params["columns"] = []
     if tokens[0][0] == "(":
         ending_index = 0
         for index, arg in enumerate(tokens):
@@ -64,7 +68,8 @@ def _parse_s3_command(statement):
             ).format(statement=statement)
         )
     params["s3_uri"] = strip(tokens.pop(0))
-
+    empty_as_null = False
+    delimiter = None
     # Fetching credentials
     for token in tokens:
         if "aws_access_key_id" in token.lower() or "aws_secret_access_key" in token.lower():
@@ -100,7 +105,14 @@ def _parse_s3_command(statement):
                             " No Support for additional credential formats, eg IAM roles, etc, yet."
                         ).format(statement=statement)
                     )
-    return params
+        if "emptyasnull" == token.lower():
+            empty_as_null = True
+        if "csv" == token.lower():
+            delimiter = ","
+
+    if delimiter is None:
+        delimiter = "|"
+    return S3CopyCommand(**params, empty_as_null=empty_as_null, delimiter=delimiter)
 
 
 def _split_table_name(table_name):
@@ -116,14 +128,17 @@ def _split_table_name(table_name):
 
 
 def _mock_s3_copy(
-    table_name, s3_uri, schema_name, aws_secret_access_key, aws_access_key_id, columns, engine
+    cursor,
+    copy_command,
 ):
     """Execute patched 'copy' command."""
     s3 = boto3.client(
-        "s3", aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key
+        "s3",
+        aws_access_key_id=copy_command.aws_access_key_id,
+        aws_secret_access_key=copy_command.aws_secret_access_key,
     )
-    ending_index = len(s3_uri)
-    path_to_file = s3_uri[5:ending_index]
+    ending_index = len(copy_command.s3_uri)
+    path_to_file = copy_command.s3_uri[5:ending_index]
     bucket, key = path_to_file.split("/", 1)
     response = s3.get_object(Bucket=bucket, Key=key)
 
@@ -134,25 +149,29 @@ def _mock_s3_copy(
     is_gzipped = binascii.hexlify(response["Body"].read(2)) == b"1f8b"
 
     response = s3.get_object(Bucket=bucket, Key=key)
-    data = read_data_csv(response["Body"].read(), is_gzipped, columns)
+    data = get_raw_file(response["Body"].read(), is_gzipped)
 
-    meta = MetaData()
-    table = Table(table_name, meta, autoload=True, schema=schema_name, autoload_with=engine)
-    engine.execute(table.insert(data))
+    cursor.copy_expert(
+        "COPY {cc.table_name} FROM STDIN WITH DELIMITER AS '{cc.delimiter}' {cc.format} HEADER {non_null_clause}".format(
+            cc=copy_command,
+            non_null_clause=("FORCE NOT NULL " + ", ".join(copy_command.columns))
+            if copy_command.columns
+            else "",
+        ),
+        data,
+    )
 
 
-def read_data_csv(file, is_gzipped=False, columns=None, delimiter="|"):
+def get_raw_file(file, is_gzipped=False):
     buffer = io.BytesIO(file)
     if is_gzipped:
         buffer = gzip.GzipFile(fileobj=buffer, mode="rb")
+    return buffer
 
-    # FUCK you python 2. This is ridiculous!
-    wrapper = buffer
-    if sys.version_info.major >= 3:
-        wrapper = io.TextIOWrapper(buffer)
-    else:
-        delimiter = delimiter.encode("utf-8")
 
+def read_data_csv(file, is_gzipped=False, columns=None, delimiter="|"):
+    buffer = get_raw_file(file, is_gzipped=is_gzipped)
+    wrapper = io.TextIOWrapper(buffer)
     reader = csv.DictReader(
         wrapper,
         delimiter=delimiter,
