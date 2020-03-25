@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-mock-resources"
-version = "1.2.0"
+version = "1.2.1"
 description = "A pytest plugin for easily instantiating reproducible mock resources."
 authors = [
     "Omar Khan <oakhan3@gmail.com>",
@@ -44,13 +44,6 @@ pymongo = {version = "*", optional = true}
 # extra [redis]
 redis = {version = "*", optional = true}
 
-# extra [docs]
-m2r = {version = "*", optional = true}
-sphinx = {version = "*", optional = true}
-sphinx-autobuild = {version = "*", optional = true}
-sphinx_autodoc_typehints = {version = "*", optional = true}
-sphinx_rtd_theme = {version = "*", optional = true}
-
 [tool.poetry.dev-dependencies]
 black = {version = "=>19.3b0", allow-prereleases = true, python = ">=3.6"}
 coverage = "*"
@@ -67,7 +60,6 @@ postgres-binary = ['psycopg2-binary']
 redshift = ['boto3', 'moto', 'sqlparse']
 mongo = ['pymongo']
 redis = ['redis']
-docs = ['sphinx', 'm2r', 'sphinx_rtd_theme', 'sphinx-autobuild']
 
 [tool.poetry.plugins.pytest11]
 pytest_mock_resources = "pytest_mock_resources"

@@ -9,7 +9,7 @@ install-base:
 	poetry install
 
 install: install-base
-	poetry install -E postgres -E redshift -E mongo -E redis -E docs
+	poetry install -E postgres -E redshift -E mongo -E redis
 
 ## Test
 test-base:

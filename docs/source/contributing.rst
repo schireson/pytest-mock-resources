@@ -34,6 +34,20 @@ In general, you can simply run `pytest`, or e.x. `pytest tests/fixture/database/
 run specific subsets of the tests.
 
 
+Docs
+~~~~
+
+First, install the docs requirements with :code:`pip install -r docs/requirements.txt`,
+then use :code:`sphinx` as normal. i.e.
+
+.. code-block:: bash
+
+   cd docs
+   make html  # one-time build of the docs
+   # or
+   make livehtml  # Starts a webserver with livereload of changes
+
+
 Need help
 ---------
 

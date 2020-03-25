@@ -12,16 +12,16 @@ import sys
 sys.path.insert(0, os.path.abspath(".."))
 
 project = "Pytest Mock Resources"
-release = "1.2.0"
-version = "1.2.0"
+release = "1.2.1"
+version = "1.2.1"
 
 extensions = [
     "m2r",
-    "sphinx.ext.autosectionlabel",
     "sphinx.ext.autodoc",
-    "sphinx.ext.napoleon",
-    "sphinx_autodoc_typehints",
+    "sphinx.ext.autodoc.typehints",
+    "sphinx.ext.autosectionlabel",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
 ]
 
 templates_path = ["_templates"]
@@ -34,3 +34,4 @@ html_sidebars = {"**": ["globaltoc.html", "relations.html", "sourcelink.html", "
 intersphinx_mapping = {"https://docs.python.org/": None}
 
 autoclass_content = "both"
+master_doc = "index"
