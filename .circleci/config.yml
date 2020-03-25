@@ -154,6 +154,18 @@ jobs:
       - run:
           command: poetry run make test
 
+  test-sqlalchemy13:
+    executor: python38
+    steps:
+      - setup-python
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run: pip install pytest==6.1.1
+      - run:
+          command: |
+            pip install 'sqlalchemy==1.3'
+            poetry run make test
+
   lint:
     executor: python36
     steps:
@@ -178,6 +190,7 @@ workflows:
       - test-python37
       - test-python38
       - test-pytest6
+      - test-sqlalchemy13
 
       - publish:
           requires:
@@ -186,6 +199,7 @@ workflows:
             - test-python37
             - test-python38
             - test-pytest6
+            - test-sqlalchemy13
           filters:
             branches:
               only:
