@@ -8,6 +8,9 @@ Fixture Functions
     :members: create_postgres_fixture, create_redshift_fixture, create_sqlite_fixture, create_mongo_fixture, create_redis_fixture, Rows, Statements
 
 
+.. automodule:: pytest_mock_resources.fixture.database.generic
+    :members: Credentials
+
 
 .. automodule:: pytest_mock_resources
     :members: patch_create_engine, patch_psycopg2_connect

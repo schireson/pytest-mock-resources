@@ -1,5 +1,6 @@
 import pytest
 from sqlalchemy import create_engine
+from sqlalchemy.engine.url import URL
 
 from pytest_mock_resources import (
     create_postgres_fixture,
@@ -61,6 +62,23 @@ def test_create_custom_connection(postgres_3):
         isolation_level="AUTOCOMMIT",
     )
 
+    engine.execute("select 1")
+
+
+def test_create_custom_connection_from_dict(postgres_3):
+    engine = create_engine(
+        "postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=disable".format(
+            **dict(postgres_3.pmr_credentials)
+        ),
+        isolation_level="AUTOCOMMIT",
+    )
+
+    engine.execute("select 1")
+
+
+def test_create_custom_connection_url(postgres_3):
+    url = URL(**postgres_3.pmr_credentials.as_sqlalchemy_url_kwargs())
+    engine = create_engine(url, isolation_level="AUTOCOMMIT")
     engine.execute("select 1")
 
 

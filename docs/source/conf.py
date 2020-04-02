@@ -12,8 +12,8 @@ import sys
 sys.path.insert(0, os.path.abspath(".."))
 
 project = "Pytest Mock Resources"
-release = "1.2.1"
-version = "1.2.1"
+release = "1.2.2"
+version = "1.2.2"
 
 extensions = [
     "m2r",
