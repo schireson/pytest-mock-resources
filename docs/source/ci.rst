@@ -76,3 +76,35 @@ Specifically for mongo, the :code:`- image: <SERVICE IMAGE>` portion should look
       command: "mongod --journal"
 
 You will receive a `ContainerCheckFailed: Unable to connect to [...] Mongo test container` error in CI if the above is not added to you job config.
+
+
+GitLab
+------
+For :code:`pytest-mock-resources` to work on GitLab use of :code:`dind` service is required.
+Below is a sample configuration:
+
+.. code-block:: yaml
+
+    services:
+      - docker:dind
+
+    variables:
+      DOCKER_TLS_CERTDIR: ''
+
+    stages:
+      - testing
+
+    testing-job:
+      image: python:3.6.8-slim # Use a python version that matches your project
+      stage: testing
+      variables:
+        DOCKER_HOST: tcp://docker:2375
+        PYTEST_MOCK_RESOURCES_HOST: docker
+      before_script:
+        - apt-get update && apt-get install -y wget libpq-dev gcc
+        - wget -O get-docker.sh https://get.docker.com
+        - chmod +x get-docker.sh && ./get-docker.sh
+      script:
+        - pip install -r requirements.txt
+        - pytest -x tests
+
