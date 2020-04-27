@@ -95,7 +95,7 @@ Below is a sample configuration:
       - testing
 
     testing-job:
-      image: python:3.6.8-slim # Use a python version that matches your project
+      image: python:3.6.8-slim  # Use a python version that matches your project
       stage: testing
       variables:
         DOCKER_HOST: tcp://docker:2375
