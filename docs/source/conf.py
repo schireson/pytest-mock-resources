@@ -18,7 +18,7 @@ version = "1.2.2"
 extensions = [
     "m2r",
     "sphinx.ext.autodoc",
-    "sphinx.ext.autodoc.typehints",
+    'sphinx_autodoc_typehints',
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
