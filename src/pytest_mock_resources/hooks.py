@@ -1,4 +1,4 @@
-_resource_kinds = ["postgres", "redshift", "mongo", "redis"]
+_resource_kinds = ["postgres", "redshift", "mongo", "redis", "mysql"]
 
 
 def pytest_configure(config):

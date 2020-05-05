@@ -18,5 +18,6 @@ from one test to another, see :ref:`internals-label` for more details.
    SQLite <sqlite>
    Mongo <mongo>
    Redis <redis>
+   MySQL <mysql>
 
    Internals <internals>

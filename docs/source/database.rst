@@ -2,7 +2,7 @@ Relational Database Fixtures
 ============================
 
 There is a page specifically for :ref:`redshift-label` , but all the relational database
-(sqlite, postgres, redshift, etc) fixtures have the same signatures, and therefore
+(sqlite, postgres, redshift, mysql etc) fixtures have the same signatures, and therefore
 support the same utilities for running DDL, setup, and whatnot.
 
 Basics
