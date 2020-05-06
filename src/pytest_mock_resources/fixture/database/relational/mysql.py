@@ -32,7 +32,7 @@ def create_mysql_fixture(*ordered_actions, **kwargs):
             host=get_docker_host(),
             port=config["port"],
             database=database_name,
-            username="user",
+            username="root",
             password="password",
         )
 
