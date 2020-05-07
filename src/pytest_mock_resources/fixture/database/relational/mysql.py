@@ -37,7 +37,7 @@ def create_mysql_fixture(*ordered_actions, **kwargs):
         )
 
         engine_manager = EngineManager(
-            engine, ordered_actions, tables=tables, default_schema="public"
+            engine, ordered_actions, tables=tables
         )
         for engine in engine_manager.manage(session=session):
             yield engine
