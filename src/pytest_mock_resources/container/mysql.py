@@ -7,6 +7,7 @@ from pytest_mock_resources.container import (
     get_docker_host,
     IN_CI,
 )
+from sqlalchemy.engine.url import URL
 
 config = {
     "username": "root",
@@ -18,16 +19,14 @@ config = {
 
 
 def get_sqlalchemy_engine(database_name, isolation_level=None):
-    URI_TEMPLATE = (
-        "mysql+pymysql://{username}:{password}@{host}:{port}/{database}"
-    )
-    DB_URI = URI_TEMPLATE.format(
-        database=database_name,
+    DB_URI = str(URL(
+        "mysql+pymysql",
         username=config["username"],
         password=config["password"],
         host=get_docker_host(),
         port=config["port"],
-    )
+        database=database_name
+    ))
 
     options = {}
     if isolation_level:
@@ -63,8 +62,6 @@ _mysql_container = pytest.fixture("session")(
         {3306: config["port"]},
         {
             "MYSQL_DATABASE": config["root_database"],
-            # "MYSQL_USER": config["username"],
-            # "MYSQL_PASSWORD": config["password"],
             "MYSQL_ROOT_PASSWORD": config["password"]
         },
         check_mysql_fn,
