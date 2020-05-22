@@ -32,6 +32,7 @@ def test_statements_mysql(mysql):
         SELECT table_name
         FROM INFORMATION_SCHEMA.views
         WHERE table_name in ('cool_view', 'cool_view_2')
+        AND table_schema = (select database())
         ORDER BY table_name
         """
     )
