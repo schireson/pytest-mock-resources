@@ -43,6 +43,13 @@ For Mongo:
     $ pmr mongo
     711f5d5a86896bb4eb76813af4fb6616aee0eff817cdec6ebaf4daa0e9995441
 
+For MySQL:
+
+.. code-block:: bash
+
+    $ pmr mysql
+    711f5d5a86896bb4eb76813af4fb6616aee0eff817cdec6ebaf4daa0e9995441
+
 You can check on the instance's state via:
 
 .. code-block:: bash

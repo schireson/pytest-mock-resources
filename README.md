@@ -103,6 +103,12 @@ def test_view_function_user_with_purchases(pg):
   ```python
   from pytest_mock_resources import create_redis_fixture
   ```
+  
+ * MySQL
+ 
+   ```python
+   from pytest_mock_resources import create_mysql_fixture
+   ```
 
 ## Installing
 
@@ -124,11 +130,13 @@ pip install "pytest-mock-resources[mongo]"
 
 # For redis
 pip install "pytest-mock-resources[redis]"
+
+# For mysql
+pip install "pytest-mock-resources[mysql]"
 ```
 
 ## Possible Future Resources
 
-* MySQL
 * Rabbit Broker
 * AWS Presto
 

@@ -2,20 +2,37 @@ from pytest_mock_resources import (
     create_postgres_fixture,
     create_redshift_fixture,
     create_sqlite_fixture,
+    create_mysql_fixture,
     Statements,
 )
 
 statements = Statements("CREATE VIEW cool_view as select 3", "CREATE VIEW cool_view_2 as select 1")
 postgres = create_postgres_fixture(statements)
 sqlite = create_sqlite_fixture(statements)
+mysql = create_mysql_fixture(statements)
 
 
-def test_statements(postgres):
+def test_statements_postgres(postgres):
     execute = postgres.execute(
         """
         SELECT table_name
         FROM INFORMATION_SCHEMA.views
         WHERE table_name in ('cool_view', 'cool_view_2')
+        ORDER BY table_name
+        """
+    )
+
+    result = [row[0] for row in execute]
+    assert ["cool_view", "cool_view_2"] == result
+
+
+def test_statements_mysql(mysql):
+    execute = mysql.execute(
+        """
+        SELECT table_name
+        FROM INFORMATION_SCHEMA.views
+        WHERE table_name in ('cool_view', 'cool_view_2')
+        AND table_schema = (select database())
         ORDER BY table_name
         """
     )

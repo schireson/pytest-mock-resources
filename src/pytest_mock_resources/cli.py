@@ -7,6 +7,7 @@ import subprocess  # nosec
 class FixtureBase(enum.Enum):
     POSTGRES = "postgres"
     MONGO = "mongo"
+    MYSQL = "mysql"
 
     @classmethod
     def options(cls):
@@ -30,9 +31,23 @@ class FixtureBase(enum.Enum):
             "postgres:9.6.10-alpine",
         ]
         mongo_command = ["docker", "run", "-d", "--rm", "-p", "28017:27017", "mongo:3.6"]
+        mysql_command = [
+            "docker",
+            "run",
+            "-d",
+            "--rm",
+            "-p",
+            "3406:3306",
+            "-e",
+            "MYSQL_DATABASE=dev",
+            "-e",
+            "MYSQL_ROOT_PASSWORD=password",
+            "mysql:5.6",
+        ]
         fixture_base_command_map = {
             FixtureBase.MONGO: mongo_command,
             FixtureBase.POSTGRES: postgres_command,
+            FixtureBase.MYSQL: mysql_command
         }
 
         return fixture_base_command_map[self]

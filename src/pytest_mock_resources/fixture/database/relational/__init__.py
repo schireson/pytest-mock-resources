@@ -3,3 +3,4 @@ from pytest_mock_resources.fixture.database.relational.generic import Rows, Stat
 from pytest_mock_resources.fixture.database.relational.postgresql import create_postgres_fixture
 from pytest_mock_resources.fixture.database.relational.redshift import create_redshift_fixture
 from pytest_mock_resources.fixture.database.relational.sqlite import create_sqlite_fixture
+from pytest_mock_resources.fixture.database.relational.mysql import create_mysql_fixture

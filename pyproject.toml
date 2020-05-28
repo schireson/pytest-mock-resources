@@ -44,6 +44,9 @@ pymongo = {version = "*", optional = true}
 # extra [redis]
 redis = {version = "*", optional = true}
 
+# extra [mysql]
+pymysql = {version = "*", optional = true}
+
 [tool.poetry.dev-dependencies]
 black = {version = "=>19.3b0", allow-prereleases = true, python = ">=3.6"}
 coverage = "*"
@@ -60,6 +63,7 @@ postgres-binary = ['psycopg2-binary']
 redshift = ['boto3', 'moto', 'sqlparse']
 mongo = ['pymongo']
 redis = ['redis']
+mysql = ['pymysql']
 
 [tool.poetry.plugins.pytest11]
 pytest_mock_resources = "pytest_mock_resources"

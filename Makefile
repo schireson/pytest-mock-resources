@@ -9,13 +9,13 @@ install-base:
 	poetry install
 
 install: install-base
-	poetry install -E postgres -E redshift -E mongo -E redis
+	poetry install -E postgres -E redshift -E mongo -E redis -E mysql
 
 ## Test
 test-base:
 	poetry run coverage run -a -m \
 		py.test src tests -vv \
-		-m 'not postgres and not redshift and not mongo and not redis'
+		-m 'not postgres and not redshift and not mongo and not redis and not mysql'
 
 test-parallel:
 	poetry run coverage run -a -m \

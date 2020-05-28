@@ -74,3 +74,8 @@ try:
     import redis
 except ImportError:
     redis = ImportAdaptor("redis", "redis")  # type: ignore
+
+try:
+    import pymysql
+except ImportError:
+    pymysql = ImportAdaptor('pymysql', 'mysql')
