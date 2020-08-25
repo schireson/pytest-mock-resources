@@ -311,9 +311,6 @@ This can be a great way to keep track of all the tables a given block of code in
    )
 
 
-As you can see, in the above example, tables accepts _any_ of: the string table name, the
-SQLAlchemy table object, or a SQLAlchemy model class.
-
 .. code-block:: python
 
    # tests/test_something.py:
@@ -324,6 +321,24 @@ SQLAlchemy table object, or a SQLAlchemy model class.
        # Confirm that the warehouse.warehouse_stacked_data table exists and the row was inserted
        result = sorted([row[0] for row in execute])
        assert ["ABCDE"] == result
+
+
+The :code:`tables` argument accepts any of:
+
+* SQLAlchemy declarative model class
+* SQLAlchemy table object
+* Exact string table name
+* Globbed table name
+
+  Globbing, in comparison to regular expressions, in this context tends to lead to shorter
+  and easier to read definitions. This is especially true when one uses schemas, leading
+  to :code:`.` literals in your fully qualified table names.
+
+  .. code-block:: python
+
+     create_<backend>_fixture(Base, tables=['schema.*'])  # Only tables for a specific schema
+     create_<backend>_fixture(Base, tables=['category_*'])  # Only tables with a specific suffix
+     create_<backend>_fixture(Base, tables=['*_category'])  # Only tables with a specific prefix
 
 
 Rows

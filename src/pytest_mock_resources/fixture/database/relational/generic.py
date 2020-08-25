@@ -1,4 +1,5 @@
 import abc
+import fnmatch
 
 import attr
 import six
@@ -114,24 +115,11 @@ class EngineManager(object):
             metadata.create_all(self.engine)
             return
 
-        table_objects = set()
-        for table in self.tables:
-            if isinstance(table, DeclarativeMeta):
-                table_objects.add(table.__table__)
-            elif isinstance(table, Table):
-                table_objects.add(table)
-            else:
-                table_name = table
-
-                if table_name not in metadata.tables:
-                    raise ValueError(
-                        'Could not identify table "{}" from: {}'.format(
-                            table_name, ", ".join(sorted(metadata.tables.keys()))
-                        )
-                    )
-
-                table = metadata.tables[table_name]
-                table_objects.add(table)
+        table_objects = {
+            table_object
+            for table in self.tables
+            for table_object in identify_matching_tables(metadata, table)
+        }
 
         metadata.create_all(self.engine, tables=list(table_objects))
 
@@ -167,3 +155,25 @@ class EngineManager(object):
                 yield self.engine
         finally:
             self.engine.dispose()
+
+
+def identify_matching_tables(metadata, table_specifier):
+    if isinstance(table_specifier, DeclarativeMeta):
+        return [table_specifier.__table__]
+
+    if isinstance(table_specifier, Table):
+        return [table_specifier]
+
+    tables = [
+        table
+        for table_name, table in metadata.tables.items()
+        if fnmatch.fnmatch(table_name, table_specifier)
+    ]
+
+    if tables:
+        return tables
+
+    table_names = ", ".join(sorted(metadata.tables.keys()))
+    raise ValueError(
+        'Could not identify any tables matching "{}" from: {}'.format(table_specifier, table_names)
+    )
