@@ -1,10 +1,11 @@
 import pytest
 import sqlalchemy
-from sqlalchemy import Column, Integer, SmallInteger, Unicode
+from sqlalchemy import Column, Integer, MetaData, SmallInteger, Table, Unicode
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 from pytest_mock_resources import create_postgres_fixture, create_sqlite_fixture, Rows
+from pytest_mock_resources.fixture.database.relational.generic import identify_matching_tables
 
 Base = declarative_base()
 
@@ -39,6 +40,7 @@ sqlite_name_bad_table = create_sqlite_fixture(Base, tables=["foo"])
 sqlite_duplicate = create_sqlite_fixture(
     Base, tables=[Thing, Other2.__table__, "thing", "other.other"]
 )
+sqlite_glob = create_sqlite_fixture(Base, tables=["*.other"])
 
 
 class TestTablesArg:
@@ -71,6 +73,13 @@ class TestTablesArg:
         sqlite_duplicate.execute("select * from other.other")
         with pytest.raises(sqlalchemy.exc.OperationalError):
             sqlite_duplicate.execute("select * from public.other")
+
+    def test_glob(self, sqlite_glob):
+        with pytest.raises(sqlalchemy.exc.OperationalError):
+            sqlite_glob.execute("select * from thing")
+
+        sqlite_glob.execute("select * from other.other")
+        sqlite_glob.execute("select * from public.other")
 
 
 PGBase = declarative_base()
@@ -135,3 +144,34 @@ class TestSessionArg:
     def test_session_pg(self, pg_session):
         result = pg_session.query(Quarter).one()
         assert result.id == 1
+
+
+class Test__identify_matching_tables:
+    @staticmethod
+    def by_tablename(table):
+        return table.schema + table.name
+
+    def setup(self):
+        self.metadata = metadata = MetaData()
+        self.base = declarative_base()
+
+        self.one_foo = Table("foo", metadata, schema="one")
+        self.one_foo_bar = Table("foo_bar", metadata, schema="one")
+        self.two_foo = Table("foo", metadata, schema="two")
+        self.two_far = Table("far", metadata, schema="two")
+
+    def test_no_glob(self):
+        result = identify_matching_tables(self.metadata, "one.foo")
+        assert sorted(result, key=self.by_tablename) == [self.one_foo]
+
+    def test_glob_table_on_schema(self):
+        result = identify_matching_tables(self.metadata, "one.*")
+        assert sorted(result, key=self.by_tablename) == [self.one_foo, self.one_foo_bar]
+
+    def test_glob_schema_on_table(self):
+        result = identify_matching_tables(self.metadata, "*.foo")
+        assert sorted(result, key=self.by_tablename) == [self.one_foo, self.two_foo]
+
+    def test_glob_optional_char(self):
+        result = identify_matching_tables(self.metadata, "two.f??")
+        assert sorted(result, key=self.by_tablename) == [self.two_far, self.two_foo]
