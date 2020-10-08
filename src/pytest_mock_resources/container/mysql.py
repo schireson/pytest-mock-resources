@@ -55,7 +55,7 @@ def check_mysql_fn():
         )
 
 
-_mysql_container = pytest.fixture("session")(
+_mysql_container = pytest.fixture(scope="session")(
     get_container_fn(
         "_mysql_container",
         config["image"],
