@@ -180,6 +180,16 @@ jobs:
       - run-make:
           command: test
 
+  test-pytest6:
+    executor: python38
+    steps:
+      - setup-python
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run: pip install pytest==6.1.1
+      - run-make:
+          command: test
+
   lint:
     executor: python36
     steps:
@@ -204,6 +214,7 @@ workflows:
             - test-without-extras
       - test-python37
       - test-python38
+      - test-pytest6
 
       - publish:
           requires:
@@ -212,6 +223,7 @@ workflows:
             - test-python36
             - test-python37
             - test-python38
+            - test-pytest6
           filters:
             branches:
               only:

@@ -35,7 +35,7 @@ def check_mongo_fn():
         )
 
 
-_mongo_container = pytest.fixture("session")(
+_mongo_container = pytest.fixture(scope="session")(
     get_container_fn(
         "_mongo_container", config["image"], {27017: config["port"]}, {}, check_mongo_fn
     )

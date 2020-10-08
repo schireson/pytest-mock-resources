@@ -58,7 +58,7 @@ def check_postgres_fn():
         )
 
 
-_postgres_container = pytest.fixture("session")(
+_postgres_container = pytest.fixture(scope="session")(
     get_container_fn(
         "_postgres_container",
         config["image"],
