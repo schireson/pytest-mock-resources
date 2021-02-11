@@ -26,13 +26,11 @@ class Credentials:
         return self.__dict__[item]
 
     def as_url(self):
-        """Return a stringified dbapi URL string.
-        """
+        """Return a stringified dbapi URL string."""
         return str(self.as_sqlalchemy_url())
 
     def as_sqlalchemy_url(self):
-        """Return a sqlalchemy :class:`sqlalchemy.engine.url.URL`.
-        """
+        """Return a sqlalchemy :class:`sqlalchemy.engine.url.URL`."""
         return URL(
             drivername=self.drivername,
             host=self.host,
@@ -43,13 +41,11 @@ class Credentials:
         )
 
     def as_sqlalchemy_url_kwargs(self):
-        """Return the valid arguments to sqlalchemy :class:`sqlalchemy.engine.url.URL`.
-        """
+        """Return the valid arguments to sqlalchemy :class:`sqlalchemy.engine.url.URL`."""
         return dict(self)
 
     def as_psycopg2_kwargs(self):
-        """Return the valid arguments to sqlalchemy :class:`psycopg2.connect`.
-        """
+        """Return the valid arguments to sqlalchemy :class:`psycopg2.connect`."""
         return {
             "host": self.host,
             "port": self.port,
@@ -59,8 +55,7 @@ class Credentials:
         }
 
     def as_mongo_kwargs(self):
-        """Return the valid arguments to a mongo client.
-        """
+        """Return the valid arguments to a mongo client."""
         return {
             "host": self.host,
             "port": self.port,
@@ -70,8 +65,7 @@ class Credentials:
         }
 
     def as_redis_kwargs(self):
-        """Return the valid arguments to a redis client.
-        """
+        """Return the valid arguments to a redis client."""
         return {
             "host": self.host,
             "port": self.port,

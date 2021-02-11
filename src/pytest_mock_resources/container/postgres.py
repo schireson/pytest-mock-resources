@@ -2,7 +2,7 @@ import pytest
 import sqlalchemy
 
 from pytest_mock_resources.config import DockerContainerConfig, fallback
-from pytest_mock_resources.container import ContainerCheckFailed, get_container
+from pytest_mock_resources.container.base import ContainerCheckFailed, get_container
 
 
 class PostgresConfig(DockerContainerConfig):
@@ -89,7 +89,7 @@ def check_postgres_fn(config):
         )
 
 
-@pytest.fixture("session")
+@pytest.fixture(scope="session")
 def _postgres_container(pmr_postgres_config):
     result = get_container(
         pmr_postgres_config,

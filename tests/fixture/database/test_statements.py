@@ -1,8 +1,8 @@
 from pytest_mock_resources import (
+    create_mysql_fixture,
     create_postgres_fixture,
     create_redshift_fixture,
     create_sqlite_fixture,
-    create_mysql_fixture,
     Statements,
 )
 

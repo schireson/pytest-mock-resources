@@ -14,8 +14,7 @@ from sqlalchemy.sql.schema import Table
 class AbstractAction(object):
     @abc.abstractmethod
     def run(self, engine_manager):
-        """Run an action on a database via the passed-in engine_manager instance.
-        """
+        """Run an action on a database via the passed-in engine_manager instance."""
 
 
 class Rows(AbstractAction):
@@ -34,8 +33,7 @@ class Rows(AbstractAction):
 
     @staticmethod
     def _get_stateless_rows(rows):
-        """Create rows that aren't associated with any other SQLAlchemy session.
-        """
+        """Create rows that aren't associated with any other SQLAlchemy session."""
         stateless_rows = []
         for row in rows:
             row_args = row.__dict__

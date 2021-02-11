@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, SmallInteger
 from sqlalchemy.ext.declarative import declarative_base
 
-from pytest_mock_resources import create_postgres_fixture, Rows, create_mysql_fixture
+from pytest_mock_resources import create_mysql_fixture, create_postgres_fixture, Rows
 
 Base = declarative_base()
 
@@ -61,11 +61,7 @@ base_2_postgres = create_postgres_fixture(rows)
 base_2_mysql = create_mysql_fixture(rows)
 
 
-<<<<<<< HEAD
 def test_2_bases_postgres(base_2_postgres):
-=======
-def test_2_bases(base_2_postgres):
->>>>>>> bbba342 (Register marks.)
     execute = base_2_postgres.execute(
         """
         SELECT *

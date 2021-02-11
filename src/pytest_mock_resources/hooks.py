@@ -2,8 +2,7 @@ _resource_kinds = ["postgres", "redshift", "mongo", "redis", "mysql"]
 
 
 def pytest_configure(config):
-    """Register markers for each resource kind.
-    """
+    """Register markers for each resource kind."""
     for resource_kind in _resource_kinds:
         config.addinivalue_line(
             "markers",
@@ -12,8 +11,7 @@ def pytest_configure(config):
 
 
 def pytest_itemcollected(item):
-    """Attach markers to each test which uses a fixture of one of the resources.
-    """
+    """Attach markers to each test which uses a fixture of one of the resources."""
     if not hasattr(item, "fixturenames"):
         return
 

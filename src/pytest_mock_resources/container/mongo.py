@@ -2,7 +2,7 @@ import pytest
 
 from pytest_mock_resources.compat import pymongo
 from pytest_mock_resources.config import DockerContainerConfig, fallback
-from pytest_mock_resources.container import ContainerCheckFailed, get_container
+from pytest_mock_resources.container.base import ContainerCheckFailed, get_container
 
 
 class MongoConfig(DockerContainerConfig):

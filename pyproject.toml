@@ -45,7 +45,10 @@ pymongo = {version = "*", optional = true}
 redis = {version = "*", optional = true}
 
 # extra [mysql]
-pymysql = {version = "*", optional = true}
+pymysql = [
+    {version = "<1.0", python = "<3.6", optional = true},
+    {version = ">=1.0", python = ">=3.6", optional = true}
+]
 
 [tool.poetry.dev-dependencies]
 black = {version = "=>19.3b0", allow-prereleases = true, python = ">=3.6"}
