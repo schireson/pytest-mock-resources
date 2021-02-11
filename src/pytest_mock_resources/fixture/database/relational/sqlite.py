@@ -109,8 +109,7 @@ class PMRDateTime(sqlite_base.DATETIME):
 
 
 class PMRSQLiteDialect(SQLiteDialect_pysqlite):
-    """Define the dialect that collects all postgres-like adapations.
-    """
+    """Define the dialect that collects all postgres-like adapations."""
 
     name = "pmrsqlite"
 
@@ -171,8 +170,7 @@ _database_names = _database_producer()
 
 
 def create_sqlite_fixture(*ordered_actions, **kwargs):
-    """Create a SQLite fixture.
-    """
+    """Create a SQLite fixture."""
     scope = kwargs.pop("scope", "function")
     tables = kwargs.pop("tables", None)
 

@@ -17,3 +17,10 @@ Fixture Config
 
 .. automodule:: pytest_mock_resources
     :members: pmr_postgres_config, PostgresConfig, pmr_mongo_config, MongoConfig, pmr_redis_config, RedisConfig
+
+
+Patch Functions
+---------------
+
+.. automodule:: pytest_mock_resources
+    :members: patch_create_engine, patch_psycopg2_connect

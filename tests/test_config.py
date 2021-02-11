@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from pytest_mock_resources.compat import mock
 
 from pytest_mock_resources.config import DockerContainerConfig, fallback, get_env_config
 
@@ -7,12 +7,12 @@ _DOCKER_HOST = "host.docker.internal"
 
 class Test_get_env_config:
     def test_it_is_missing_env_var(self):
-        with patch("os.environ", {}):
+        with mock.patch("os.environ", {}):
             value = get_env_config("postgres", "username")
             assert value is None
 
     def test_it_has_the_expected_env_var(self):
-        with patch("os.environ", {"PMR_POSTGRES_USERNAME": "foobar"}):
+        with mock.patch("os.environ", {"PMR_POSTGRES_USERNAME": "foobar"}):
             value = get_env_config("postgres", "username")
             assert value == "foobar"
 
@@ -45,7 +45,7 @@ class Test_FooConfig:
         assert foo.no_value_default == 4
 
     def test_gets_values_from_env(self):
-        with patch(
+        with mock.patch(
             "os.environ",
             {
                 "PMR_FOO_IMAGE": "bar",

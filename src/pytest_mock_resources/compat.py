@@ -63,7 +63,10 @@ except ImportError:
 try:
     import sqlparse
 except ImportError:
-    sqlparse = ImportAdaptor("sqlparse", "redshift",)
+    sqlparse = ImportAdaptor(
+        "sqlparse",
+        "redshift",
+    )
 
 try:
     import pymongo
@@ -78,4 +81,4 @@ except ImportError:
 try:
     import pymysql
 except ImportError:
-    pymysql = ImportAdaptor('pymysql', 'mysql')
+    pymysql = ImportAdaptor("pymysql", "mysql")

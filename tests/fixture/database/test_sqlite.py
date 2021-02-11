@@ -71,8 +71,7 @@ def test_json_column(sqlite):
 
 
 def test_json_column_pg(pg):
-    """Included here as a way of showing that this mimics postgres' behavior
-    """
+    """Included here as a way of showing that this mimics postgres' behavior"""
     pg.execute(column_types_table.insert().values(id=1, json={"foo": 2}))
     result = pg.execute(sqlalchemy.select([column_types_table.c.json])).scalar()
     assert result == {"foo": 2}
@@ -85,8 +84,7 @@ def test_jsonb_column(sqlite):
 
 
 def test_jsonb_column_pg(pg):
-    """Included here as a way of showing that this mimics postgres' behavior
-    """
+    """Included here as a way of showing that this mimics postgres' behavior"""
     pg.execute(column_types_table.insert().values(id=1, jsonb={"foo": "bar"}))
     result = pg.execute(sqlalchemy.select([column_types_table.c.jsonb])).scalar()
     assert result == {"foo": "bar"}
@@ -176,16 +174,14 @@ def test_dt_tz_column_tzaware_input(sqlite_dt):
 
 
 def test_dt_column_naive_input_pg(pg_dt):
-    """Included here as a way of showing that this mimics postgres' behavior
-    """
+    """Included here as a way of showing that this mimics postgres' behavior"""
     pg_dt.execute(DTTable.__table__.insert().values(id=1, dt=datetime(2018, 1, 1, 5, 0, 0)))
     result = pg_dt.execute(sqlalchemy.select([dt_table.c.dt])).scalar()
     assert result == datetime(2018, 1, 1, 5, 0, 0)
 
 
 def test_dt_column_tzaware_input_pg(pg_dt):
-    """Included here as a way of showing that this mimics postgres' behavior
-    """
+    """Included here as a way of showing that this mimics postgres' behavior"""
     pg_dt.execute(
         DTTable.__table__.insert().values(id=1, dt=datetime(2018, 1, 1, 5, 0, 0, tzinfo=Foo()))
     )
@@ -194,16 +190,14 @@ def test_dt_column_tzaware_input_pg(pg_dt):
 
 
 def test_dt_tz_column_naive_input_pg(pg_dt):
-    """Included here as a way of showing that this mimics postgres' behavior
-    """
+    """Included here as a way of showing that this mimics postgres' behavior"""
     pg_dt.execute(DTTable.__table__.insert().values(id=1, dt_tz=datetime(2018, 1, 1, 5, 0, 0)))
     result = pg_dt.execute(sqlalchemy.select([dt_table.c.dt_tz])).scalar()
     assert result == datetime(2018, 1, 1, 5, 0, 0, tzinfo=utc)
 
 
 def test_dt_tz_column_tzaware_input_pg(pg_dt):
-    """Included here as a way of showing that this mimics postgres' behavior
-    """
+    """Included here as a way of showing that this mimics postgres' behavior"""
     pg_dt.execute(
         DTTable.__table__.insert().values(id=1, dt_tz=datetime(2018, 1, 1, 5, 0, 0, tzinfo=Foo()))
     )

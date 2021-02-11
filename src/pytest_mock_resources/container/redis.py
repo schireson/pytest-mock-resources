@@ -2,7 +2,7 @@ import pytest
 
 from pytest_mock_resources.compat import redis
 from pytest_mock_resources.config import DockerContainerConfig
-from pytest_mock_resources.container import ContainerCheckFailed, get_container
+from pytest_mock_resources.container.base import ContainerCheckFailed, get_container
 
 
 class RedisConfig(DockerContainerConfig):

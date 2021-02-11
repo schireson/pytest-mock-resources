@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import time
 
+import pytest
 from sqlalchemy import text
 
 from pytest_mock_resources import create_redshift_fixture
@@ -142,7 +143,9 @@ def test_inverted_credentials_string(redshift):
                 "credentials 'aws_secret_access_key=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;"
                 "aws_access_key_id=AAAAAAAAAAAAAAAAAAAA'"
             ).format(
-                COMMAND="COPY", LOCATION="s3://mybucket/file.csv", COLUMNS="",
+                COMMAND="COPY",
+                LOCATION="s3://mybucket/file.csv",
+                COLUMNS="",
             )
         )
 
