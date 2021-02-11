@@ -21,7 +21,7 @@ def is_docker_host():
 
 
 def get_env_config(name, kind):
-    env_var = "PMR_{name}_{kind}".format(name=name, kind=kind.upper())
+    env_var = "PMR_{name}_{kind}".format(name=name.upper(), kind=kind.upper())
     return os.environ.get(env_var)
 
 
@@ -63,7 +63,8 @@ class DockerContainerConfig:
         return "{cls_name}({attrs})".format(
             cls_name=cls_name,
             attrs=", ".join(
-                "{}={}".format(attr, repr(getattr(self, attr))) for attr in self._fields
+                "{}={}".format(attr, repr(getattr(self, "_{}".format(attr))))
+                for attr in self._fields
             ),
         )
 
@@ -80,7 +81,7 @@ class DockerContainerConfig:
         if is_docker_host():
             return "host.external.docker"
 
-        return "localhost"
+        return os.environ.get("PYTEST_MOCK_RESOURCES_HOST", "localhost")
 
     @fallback
     def port(self):
