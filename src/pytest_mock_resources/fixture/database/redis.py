@@ -11,8 +11,8 @@ def pmr_redis_config():
 
     Examples:
         >>> @pytest.fixture(scope='session')
-        ... def pmr_mongo_config():
-        ...     return MongoConfig(image="mongo:3.4", root_database="foo")
+        ... def pmr_redis_config():
+        ...     return RedisConfig(image="redis:6.0")
     """
     return RedisConfig()
 

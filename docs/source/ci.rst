@@ -49,8 +49,8 @@ For 2.1+ jobs
         executor: foo
 
 
-Postgres/Redshift
-~~~~~~~~~~~~~~~~~
+Postgres/Redshift Container
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Specifically for postgres/redshift, the :code:`- image: <SERVICE IMAGE>` portion should look like
 
@@ -65,8 +65,8 @@ Specifically for postgres/redshift, the :code:`- image: <SERVICE IMAGE>` portion
 
 You will receive a `ContainerCheckFailed: Unable to connect to [...] Postgres test container` error in CI if the above is not added to you job config.
 
-Mongo
-~~~~~
+Mongo Container
+~~~~~~~~~~~~~~~
 
 Specifically for mongo, the :code:`- image: <SERVICE IMAGE>` portion should look like
 
