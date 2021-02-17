@@ -30,7 +30,7 @@ test: test-parallel
 ## Lint
 lint:
 	poetry run flake8 src tests
-	poetry run isort --check-only --recursive src tests
+	poetry run isort --check-only --diff --recursive src tests
 	poetry run pydocstyle src tests
 	poetry run black --check src tests
 	poetry run mypy src tests
