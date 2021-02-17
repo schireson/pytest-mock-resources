@@ -46,20 +46,6 @@ class PMRSQLiteDDLCompiler(sqlite_base.SQLiteDDLCompiler):
         return "DETACH DATABASE " + schema
 
 
-class PMRSQLiteTypeCompiler(sqlite_base.SQLiteTypeCompiler):
-    """Add features sqlite doesn't support by default.
-
-    Adds:
-     * Handling of postgres column types: JSON, JSONB
-    """
-
-    @compiles(JSON, "pmrsqlite")
-    @compiles(JSONB, "pmrsqlite")
-    @compiles(sqltypes.JSON, "pmrsqlite")
-    def compile_json(type_, compiler, **kwargs):
-        return "BLOB"
-
-
 class UTC(datetime.tzinfo):
     """UTC timezone.
 
@@ -108,24 +94,50 @@ class PMRDateTime(sqlite_base.DATETIME):
         return process
 
 
-class PMRSQLiteDialect(SQLiteDialect_pysqlite):
-    """Define the dialect that collects all postgres-like adapations."""
+PostgresLikeSQLitePDialect = None
 
-    name = "pmrsqlite"
 
-    ddl_compiler = PMRSQLiteDDLCompiler
-    type_compiler = PMRSQLiteTypeCompiler
-    colspecs = {
-        sqltypes.Date: sqlite_base.DATE,
-        sqltypes.DateTime: PMRDateTime,
-        sqltypes.JSON: sqlite_base.JSON,
-        sqltypes.JSON.JSONIndexType: sqlite_base.JSONIndexType,
-        sqltypes.JSON.JSONPathType: sqlite_base.JSONPathType,
-        sqltypes.Time: sqlite_base.TIME,
-    }
+def make_postgres_like_sqlite_dialect():
+    if not hasattr(sqlite_base, "JSON"):
+        raise RuntimeError(
+            "Must have sqlalchemy>=1.3.0 in order to make use of the postgres-like sqlite dialect."
+        )
 
-    def _json_serializer(self, value):
-        return json.dumps(value, sort_keys=True)
+    class PostgresLikeTypeCompiler(sqlite_base.SQLiteTypeCompiler):
+        """Add features sqlite doesn't support by default.
+
+        Adds:
+         * Handling of postgres column types: JSON, JSONB
+        """
+
+        @compiles(JSON, "pmrsqlite")
+        @compiles(JSONB, "pmrsqlite")
+        @compiles(sqltypes.JSON, "pmrsqlite")
+        def compile_json(type_, compiler, **kwargs):
+            return "BLOB"
+
+    class PostgresLikeDialect(SQLiteDialect_pysqlite):
+        """Define the dialect that collects all postgres-like adapations."""
+
+        name = "pmrsqlite"
+
+        ddl_compiler = PMRSQLiteDDLCompiler
+        type_compiler = PostgresLikeTypeCompiler
+        colspecs = {
+            sqltypes.Date: sqlite_base.DATE,
+            sqltypes.DateTime: PMRDateTime,
+            sqltypes.JSON: sqlite_base.JSON,
+            sqltypes.JSON.JSONIndexType: sqlite_base.JSONIndexType,
+            sqltypes.JSON.JSONPathType: sqlite_base.JSONPathType,
+            sqltypes.Time: sqlite_base.TIME,
+        }
+
+        def _json_serializer(self, value):
+            return json.dumps(value, sort_keys=True)
+
+    global PostgresLikeSQLitePDialect
+    PostgresLikeSQLitePDialect = PostgresLikeDialect
+    return PostgresLikeSQLitePDialect
 
 
 def enable_foreign_key_checks(dbapi_connection, connection_record):
@@ -177,10 +189,19 @@ def create_sqlite_fixture(*ordered_actions, **kwargs):
     session = kwargs.pop("session", None)
     decimal_warnings = kwargs.pop("decimal_warnings", False)
 
+    postgres_like = kwargs.pop('postgres_like', True)
+
     if len(kwargs):
         raise KeyError("Unsupported Arguments: {}".format(kwargs))
 
-    registry.register("sqlite.pmrsqlite", __name__, "PMRSQLiteDialect")
+    dialect_name = "sqlite"
+
+    if postgres_like:
+        dialect = make_postgres_like_sqlite_dialect()
+        dialect_name = dialect.name
+        registry.register("sqlite.{}".format(dialect_name), __name__, "PostgresLikeSQLitePDialect")
+
+    driver_name = "sqlite+{}".format(dialect_name)
 
     @pytest.fixture(scope=scope)
     def _():
@@ -189,7 +210,7 @@ def create_sqlite_fixture(*ordered_actions, **kwargs):
         # database_name = "file:{}?mode=memory&cache=shared".format(next(_database_names))
         database_name = ""
 
-        raw_engine = create_engine("sqlite+pmrsqlite:///{}".format(database_name))
+        raw_engine = create_engine("{}:///{}".format(driver_name, database_name))
 
         # This *must* happen before the connection occurs (implicitly in `EngineManager`).
         event.listen(raw_engine, "connect", enable_foreign_key_checks)
@@ -199,7 +220,7 @@ def create_sqlite_fixture(*ordered_actions, **kwargs):
             with filter_sqlalchemy_warnings(decimal_warnings_enabled=(not decimal_warnings)):
                 assign_fixture_credentials(
                     raw_engine,
-                    drivername="sqlite+pmrsqlite",
+                    drivername=driver_name,
                     host="",
                     port=None,
                     database=database_name,
