@@ -1,5 +1,5 @@
-m2r
-sphinx
+m2r2==0.2.7
+sphinx==3.3.0
 sphinx_rtd_theme
 sphinx_autodoc_typehints
 sphinx-autobuild

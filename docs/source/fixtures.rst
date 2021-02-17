@@ -19,6 +19,5 @@ See :ref:`docker-config-label` for information on customizing the configuration 
    SQLite <sqlite>
    Mongo <mongo>
    Redis <redis>
-   MySQL <mysql>
 
    Internals <internals>

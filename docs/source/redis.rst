@@ -38,10 +38,10 @@ A user can test this as follows:
         assert friends_paul == {b"gurney", b"duncan"}
 
 
-Custom Connections
-------------------
+Manual Engine Creation
+----------------------
 
-Custom connections can also be generated via the fixture's yielded attributes/REDIS_* fixtures:
+Engines can be created manually via the fixture's yielded attributes/REDIS_* fixtures:
 
 .. code-block:: python
 
