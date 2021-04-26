@@ -79,7 +79,7 @@ class DockerContainerConfig:
     @fallback
     def host(self):
         if is_docker_host():
-            return "host.external.docker"
+            return _DOCKER_HOST
 
         return os.environ.get("PYTEST_MOCK_RESOURCES_HOST", "localhost")
 
