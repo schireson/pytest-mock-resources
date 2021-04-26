@@ -18,8 +18,8 @@ class Test_get_env_config:
 
 class FooConfig(DockerContainerConfig):
     name = "foo"
-    _fields = {"image", "host", "port", "ci_port", "extra_config", "no_value_default"}
-    _fields_defaults = {"image": "test", "extra_config": "bar"}
+    _fields = ("image", "host", "port", "ci_port", "extra_config", "no_value_default")
+    _fields_defaults = {"image": "test", "extra_config": "bar", "port": 555}
 
     @fallback
     def extra_config(self):
@@ -57,3 +57,17 @@ class Test_FooConfig:
             assert foo.image == "bar"
             assert foo.extra_config == "meow"
             assert foo.no_value_default == "4"
+
+    def test_repr(self):
+        with mock.patch(
+            "os.environ",
+            {
+                "PMR_FOO_EXTRA_CONFIG": "bar",
+            },
+        ):
+            foo = FooConfig(image="foo")
+            result = repr(foo)
+            assert (
+                result
+                == "FooConfig(image='foo', host='localhost', port=555, ci_port=None, extra_config='bar', no_value_default=None)"
+            )
