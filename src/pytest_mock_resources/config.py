@@ -44,6 +44,7 @@ def fallback(fn):
         except NotImplementedError:
             if attr in self._fields_defaults:
                 return self._fields_defaults[attr]
+            return None
 
     return wrapper
 
@@ -63,8 +64,7 @@ class DockerContainerConfig:
         return "{cls_name}({attrs})".format(
             cls_name=cls_name,
             attrs=", ".join(
-                "{}={}".format(attr, repr(getattr(self, "_{}".format(attr))))
-                for attr in self._fields
+                "{}={}".format(attr, repr(getattr(self, attr))) for attr in self._fields
             ),
         )
 
