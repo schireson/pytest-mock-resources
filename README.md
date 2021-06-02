@@ -145,5 +145,5 @@ Feel free to file an [issue](https://github.com/schireson/pytest-mock-resources/
 
 ## Python 2
 Releases in the 1.x series were supportive of python 2. However starting from 2.0.0,
-support for python 2 was dropped. We may accept bugfix PRs for in the 1.x series,
+support for python 2 was dropped. We may accept bugfix PRs for the 1.x series,
 however new development and features will not be backported.
