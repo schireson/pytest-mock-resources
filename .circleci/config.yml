@@ -1,23 +1,6 @@
 version: 2.1
 
 executors:
-  python2:
-    docker:
-      - image: circleci/python:2.7.14
-      - image: postgres:9.6.10-alpine
-        environment:
-          POSTGRES_DB: dev
-          POSTGRES_USER: user
-          POSTGRES_PASSWORD: password
-      - image: circleci/mongo:3.6.12
-        command: "mongod --journal"
-      - image: redis:5.0.7
-      - image: mysql:5.6
-        environment:
-          MYSQL_DATABASE: dev
-          MYSQL_ROOT_PASSWORD: password
-
-
   python36:
     docker:
       - image: circleci/python:3.6
@@ -141,15 +124,6 @@ jobs:
           command: test-base
       - persist-coverage
 
-  test-python2:
-    executor: python2
-    steps:
-      - setup-python
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run-make:
-          command: test
-
   test-python36:
     executor: python36
     steps:
@@ -208,7 +182,6 @@ workflows:
   build_all:
     jobs:
       - test-without-extras
-      - test-python2
       - test-python36:
           requires:
             - test-without-extras
@@ -219,7 +192,6 @@ workflows:
       - publish:
           requires:
             - test-without-extras
-            - test-python2
             - test-python36
             - test-python37
             - test-python38

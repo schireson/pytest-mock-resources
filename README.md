@@ -141,3 +141,9 @@ pip install "pytest-mock-resources[mysql]"
 * AWS Presto
 
 Feel free to file an [issue](https://github.com/schireson/pytest-mock-resources/issues) if you find any bugs or want to start a conversation around a mock resource you want implemented!
+
+
+## Python 2
+Releases in the 1.x series were supportive of python 2. However starting from 2.0.0,
+support for python 2 was dropped. We may accept bugfix PRs for in the 1.x series,
+however new development and features will not be backported.
