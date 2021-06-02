@@ -165,7 +165,6 @@ def filter_sqlalchemy_warnings(decimal_warnings_enabled=True):
                     r"lossless storage\.$"
                 ),
                 SAWarning,
-                r"^sqlalchemy\.sql\.sqltypes$",
             )
 
         yield
@@ -189,7 +188,7 @@ def create_sqlite_fixture(*ordered_actions, **kwargs):
     session = kwargs.pop("session", None)
     decimal_warnings = kwargs.pop("decimal_warnings", False)
 
-    postgres_like = kwargs.pop('postgres_like', True)
+    postgres_like = kwargs.pop("postgres_like", True)
 
     if len(kwargs):
         raise KeyError("Unsupported Arguments: {}".format(kwargs))
