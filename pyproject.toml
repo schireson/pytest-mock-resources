@@ -32,6 +32,7 @@ sqlalchemy = "*"
 # extra [postgres]
 psycopg2 = {version = "*", optional = true}
 psycopg2-binary = {version = "*", optional = true}
+asyncpg = {version = "*", optional = true}
 
 # extra [redshift]
 moto = {version = "*", optional = true}
@@ -56,10 +57,12 @@ mypy = {version = "*", python = ">=3.5"}
 pydocstyle = {version = "*", python = ">=3.5"}
 sqlalchemy-stubs = {version = "*", python = ">=3.5"}
 pytest-xdist = "*"
+pytest-asyncio = "^0.15.1"
 
 [tool.poetry.extras]
 postgres = ['psycopg2']
 postgres-binary = ['psycopg2-binary']
+postgres-async = ['asyncpg']
 redshift = ['boto3', 'moto', 'sqlparse']
 mongo = ['pymongo']
 redis = ['redis']

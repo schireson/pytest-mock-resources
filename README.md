@@ -110,6 +110,20 @@ def test_view_function_user_with_purchases(pg):
    from pytest_mock_resources import create_mysql_fixture
    ```
 
+## Async
+It's also possible to create and use async engines (postgres only, sqlalchemy >= 1.4, python >= 3.6):
+```python
+import pytest
+from sqlalchemy import text
+from pytest_mock_resources import create_postgres_fixture
+
+postgres_async = create_postgres_fixture(async_=True)
+
+@pytest.mark.asyncio  # pytest-asyncio needs to be installed
+async def test_basic_postgres_fixture_async(postgres_async):
+    async with postgres_async.connect() as conn:
+        await conn.execute(text("select 1"))
+```
 ## Installing
 
 ```bash
@@ -119,6 +133,8 @@ pip install "pytest-mock-resources"
 # For postgres install EITHER of the following:
 pip install "pytest-mock-resources[postgres-binary]"
 pip install "pytest-mock-resources[postgres]"
+# For postgres async
+pip install "pytest-mock-resources[postgres-async]"
 
 # For redshift install EITHER of the following:
 # (redshift fixtures require postgres dependencies...)

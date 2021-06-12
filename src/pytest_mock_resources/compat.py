@@ -51,6 +51,22 @@ except ImportError:
     )
 
 try:
+    import asyncpg
+except ImportError:
+    fail_message = (
+        "Cannot use postgres async fixtures without asyncpg.\n"
+        "pip install pytest-mock-resources[postgres-async].\n"
+    )
+    asyncpg = ImportAdaptor(
+        "asyncpg",
+        "postgres",
+        fail_message=fail_message,
+        extensions=ImportAdaptor(
+            "asyncpg", "asyncpg", fail_message=fail_message, cursor=ImportAdaptor
+        ),
+    )
+
+try:
     import boto3
 except ImportError:
     boto3 = ImportAdaptor("boto3", "redshift")

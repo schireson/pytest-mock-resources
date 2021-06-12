@@ -10,4 +10,6 @@ from pytest_mock_resources.fixture.database.relational import (
     pmr_postgres_config,
     Rows,
     Statements,
+    AsyncRows,
+    AsyncStatements
 )

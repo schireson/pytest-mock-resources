@@ -1,9 +1,12 @@
 import pytest
 import sqlalchemy
+from pytest_mock_resources.container.async_.postgres import get_sqlalchemy_async_engine
 
 from pytest_mock_resources.container.postgres import get_sqlalchemy_engine, PostgresConfig
 from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
 from pytest_mock_resources.fixture.database.relational.generic import EngineManager
+from pytest_mock_resources.fixture.database.relational.async_.generic import EngineManager as EngineManagerAsync
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.fixture(scope="session")
@@ -29,17 +32,25 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
 
     session = kwargs.pop("session", None)
 
+    async_ = kwargs.pop("async_", False)
+
+    if async_ and session and not isinstance(session, AsyncSession):
+        raise ValueError("When async_ is `True`, session must be an instance of `AsyncSession`")
+
     if len(kwargs):
         raise KeyError("Unsupported Arguments: {}".format(kwargs))
 
     @pytest.fixture(scope=scope)
     def _(_postgres_container, pmr_postgres_config):
         database_name = _create_clean_database(pmr_postgres_config)
-        engine = get_sqlalchemy_engine(pmr_postgres_config, database_name)
+        if async_:
+            engine = get_sqlalchemy_async_engine(pmr_postgres_config, database_name)
+        else:
+            engine = get_sqlalchemy_engine(pmr_postgres_config, database_name)
 
         assign_fixture_credentials(
             engine,
-            drivername="postgresql+psycopg2",
+            drivername="postgresql+psycopg2" if not async_ else "postgresql+asyncpg",
             host=pmr_postgres_config.host,
             port=pmr_postgres_config.port,
             database=database_name,
@@ -47,9 +58,14 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
             password=pmr_postgres_config.password,
         )
 
-        engine_manager = EngineManager(
-            engine, ordered_actions, tables=tables, default_schema="public"
-        )
+        if async_:
+            engine_manager = EngineManagerAsync(
+                engine, ordered_actions, tables=tables, default_schema="public"
+            )
+        else:
+            engine_manager = EngineManager(
+                engine, ordered_actions, tables=tables, default_schema="public"
+            )
         for engine in engine_manager.manage(session=session):
             yield engine
 
