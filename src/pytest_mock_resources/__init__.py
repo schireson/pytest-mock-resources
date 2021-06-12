@@ -23,5 +23,7 @@ from pytest_mock_resources.fixture.database import (
     pmr_redis_config,
     Rows,
     Statements,
+    AsyncRows,
+    AsyncStatements,
 )
 from pytest_mock_resources.hooks import pytest_configure, pytest_itemcollected

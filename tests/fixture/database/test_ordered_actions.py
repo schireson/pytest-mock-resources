@@ -1,9 +1,9 @@
 import pytest
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Column, ForeignKey, Integer, String, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
-from pytest_mock_resources import create_postgres_fixture, Rows, Statements
+from pytest_mock_resources import create_postgres_fixture, Rows, Statements, AsyncRows, AsyncStatements
 
 Base = declarative_base()
 
@@ -73,3 +73,43 @@ def test_metadata_only(postgres_metadata_only):
 
     result = sorted([row[0] for row in execute])
     assert [] == result
+
+
+rows = AsyncRows(User(name="Harold"), User(name="Gump"))
+
+row_dependant_statements = AsyncStatements(
+    "CREATE TEMP TABLE user1 as SELECT DISTINCT CONCAT(name, 1) as name FROM stuffs.user"
+)
+
+additional_rows = AsyncRows(User(name="Perrier"), User(name="Mug"))
+
+async def session_function_async(session):
+    session.add(User(name="Fake Name", objects=[Object(name="Boots")]))
+
+postgres_ordered_actions_async = create_postgres_fixture(rows, row_dependant_statements, additional_rows, async_=True)
+
+postgres_session_function_async = create_postgres_fixture(Base, session_function_async, async_=True)
+
+
+# Run the test 5 times to ensure fixture is stateless
+@pytest.mark.asyncio
+@pytest.mark.parametrize("run", range(5))
+async def test_ordered_actions_aysnc(postgres_ordered_actions_async, run):
+    async with postgres_ordered_actions_async.connect() as conn:
+        execute = await conn.execute(text("SELECT * FROM user1"))
+        result = sorted([row[0] for row in execute])
+        assert ["Gump1", "Harold1"] == result
+
+
+# Run the test 5 times to ensure fixture is stateless
+@pytest.mark.asyncio
+@pytest.mark.parametrize("run", range(5))
+async def test_session_function_async(postgres_session_function_async, run):
+    async with postgres_session_function_async.connect() as conn:
+        execute = await conn.execute(text("SELECT * FROM stuffs.object"))
+        owner_id = sorted([row[2] for row in execute])[0]
+        execute = await conn.execute(
+            text("SELECT * FROM stuffs.user where id = {id}".format(id=owner_id))
+        )
+        result = [row[1] for row in execute]
+        assert result == ["Fake Name"]
