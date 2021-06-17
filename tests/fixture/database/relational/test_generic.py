@@ -2,6 +2,7 @@ import pytest
 import sqlalchemy
 from sqlalchemy import Column, Integer, MetaData, SmallInteger, Table, Unicode
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.future import select
 from sqlalchemy.orm import sessionmaker
 
 from pytest_mock_resources import create_postgres_fixture, create_sqlite_fixture, Rows
@@ -123,6 +124,10 @@ pg_session = create_postgres_fixture(
     PGBase, rows, session=True, tables=["report", "public.quarter"]
 )
 
+pg_session_async = create_postgres_fixture(
+    PGBase, rows, session=True, tables=["report", "public.quarter"], async_=True
+)
+
 
 class TestSessionArg:
     def test_session(self, sqlite):
@@ -144,6 +149,12 @@ class TestSessionArg:
     def test_session_pg(self, pg_session):
         result = pg_session.query(Quarter).one()
         assert result.id == 1
+
+    @pytest.mark.asyncio
+    async def test_session_pg_async(self, pg_session_async):
+        async with pg_session_async() as session:
+            result = (await session.execute(select(Quarter))).scalars().one()
+            assert result.id == 1
 
 
 class Test__identify_matching_tables:
