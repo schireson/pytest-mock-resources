@@ -65,7 +65,6 @@ class Statements(AbstractAction):
         self.statements = statements
 
     def run(self, engine_manager):
-        print('ttttttttt')
         for statement in self.statements:
             engine_manager.engine.execute(statement)
 
@@ -183,12 +182,11 @@ class EngineManager(object):
 
             if session:
                 if isinstance(session, sessionmaker):
-                    async_session = sessionmaker(
+                    yield session
+                else:
+                    yield sessionmaker(
                         engine, expire_on_commit=False, class_=AsyncSession
                     )
-                    yield async_session
-                else:
-                    yield session
             else:
                 yield engine
         finally:

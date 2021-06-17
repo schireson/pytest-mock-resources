@@ -47,9 +47,6 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
 
     async_ = kwargs.pop("async_", False)
 
-    if async_ and session and not isinstance(session, AsyncSession):
-        raise ValueError("When async_ is `True`, session must be an instance of `AsyncSession`")
-
     if len(kwargs):
         raise KeyError("Unsupported Arguments: {}".format(kwargs))
 
