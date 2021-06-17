@@ -1,11 +1,9 @@
 import pytest
 import sqlalchemy
-from pytest_mock_resources.container.async_.postgres import get_sqlalchemy_async_engine
 
 from pytest_mock_resources.container.postgres import get_sqlalchemy_engine, PostgresConfig
 from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
 from pytest_mock_resources.fixture.database.relational.generic import EngineManager
-from pytest_mock_resources.fixture.database.relational.async_.generic import EngineManager as EngineManagerAsync
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -19,6 +17,21 @@ def pmr_postgres_config():
         ...     return PostgresConfig(image="postgres:9.6.10", root_database="foo")
     """
     return PostgresConfig()
+
+
+def create_engine_manager(pmr_postgres_config, ordered_actions, tables):
+    database_name = _create_clean_database(pmr_postgres_config)
+    engine = get_sqlalchemy_engine(pmr_postgres_config, database_name)
+    assign_fixture_credentials(
+        engine,
+        drivername="postgresql+psycopg2",
+        host=pmr_postgres_config.host,
+        port=pmr_postgres_config.port,
+        database=database_name,
+        username=pmr_postgres_config.username,
+        password=pmr_postgres_config.password,
+    )
+    return EngineManager(engine, ordered_actions, tables=tables, default_schema="public")
 
 
 def create_postgres_fixture(*ordered_actions, **kwargs):
@@ -41,35 +54,19 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
         raise KeyError("Unsupported Arguments: {}".format(kwargs))
 
     @pytest.fixture(scope=scope)
-    def _(_postgres_container, pmr_postgres_config):
-        database_name = _create_clean_database(pmr_postgres_config)
-        if async_:
-            engine = get_sqlalchemy_async_engine(pmr_postgres_config, database_name)
-        else:
-            engine = get_sqlalchemy_engine(pmr_postgres_config, database_name)
+    def _sync(_postgres_container, pmr_postgres_config):
+        engine_manager = create_engine_manager(pmr_postgres_config, ordered_actions, tables)
+        yield from engine_manager.manage_sync(session=session)
 
-        assign_fixture_credentials(
-            engine,
-            drivername="postgresql+psycopg2" if not async_ else "postgresql+asyncpg",
-            host=pmr_postgres_config.host,
-            port=pmr_postgres_config.port,
-            database=database_name,
-            username=pmr_postgres_config.username,
-            password=pmr_postgres_config.password,
-        )
+    @pytest.fixture(scope=scope)
+    def _async(_postgres_container, pmr_postgres_config):
+        engine_manager = create_engine_manager(pmr_postgres_config, ordered_actions, tables)
+        yield from engine_manager.manage_async(session=session)
 
-        if async_:
-            engine_manager = EngineManagerAsync(
-                engine, ordered_actions, tables=tables, default_schema="public"
-            )
-        else:
-            engine_manager = EngineManager(
-                engine, ordered_actions, tables=tables, default_schema="public"
-            )
-        for engine in engine_manager.manage(session=session):
-            yield engine
-
-    return _
+    if async_:
+        return _async
+    else:
+        return _sync
 
 
 def _create_clean_database(config):

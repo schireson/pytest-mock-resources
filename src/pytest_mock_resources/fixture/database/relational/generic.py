@@ -4,6 +4,7 @@ import fnmatch
 import attr
 import six
 from sqlalchemy import MetaData
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql.ddl import CreateSchema
@@ -64,6 +65,7 @@ class Statements(AbstractAction):
         self.statements = statements
 
     def run(self, engine_manager):
+        print('ttttttttt')
         for statement in self.statements:
             engine_manager.engine.execute(statement)
 
@@ -153,6 +155,60 @@ class EngineManager(object):
                 yield self.engine
         finally:
             self.engine.dispose()
+
+    def manage_sync(self, session=None):
+        try:
+            self._run_actions()
+
+            if session:
+                if isinstance(session, sessionmaker):
+                    session_factory = session
+                else:
+                    session_factory = sessionmaker(bind=self.engine)
+
+                Session = scoped_session(session_factory)
+                session = Session(bind=self.engine)
+                yield session
+                session.close()
+            else:
+                yield self.engine
+        finally:
+            self.engine.dispose()
+
+    def manage_async(self, session=None):
+        try:
+            self._run_actions()
+
+            engine = self._get_async_engine()
+
+            if session:
+                if isinstance(session, sessionmaker):
+                    async_session = sessionmaker(
+                        engine, expire_on_commit=False, class_=AsyncSession
+                    )
+                    yield async_session
+                else:
+                    yield session
+            else:
+                yield engine
+        finally:
+            self.engine.dispose()
+
+    def _get_async_engine(self, isolation_level=None):
+        URI_TEMPLATE = (
+            "postgresql+asyncpg://{username}:{password}@{host}:{port}/{database}?ssl=disable"
+        )
+        DB_URI = URI_TEMPLATE.format(
+            host=self.engine.pmr_credentials.host,
+            port=self.engine.pmr_credentials.port,
+            username=self.engine.pmr_credentials.username,
+            password=self.engine.pmr_credentials.password,
+            database=self.engine.pmr_credentials.database,
+        )
+        options = {}
+        if isolation_level:
+            options["isolation_level"] = isolation_level
+        return create_async_engine(DB_URI, **options)
 
 
 def identify_matching_tables(metadata, table_specifier):

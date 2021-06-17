@@ -1,9 +1,10 @@
 import pytest
 from sqlalchemy import Column, ForeignKey, Integer, String, text
+from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
-from pytest_mock_resources import create_postgres_fixture, Rows, Statements, AsyncRows, AsyncStatements
+from pytest_mock_resources import create_postgres_fixture, Rows, Statements
 
 Base = declarative_base()
 
@@ -75,20 +76,9 @@ def test_metadata_only(postgres_metadata_only):
     assert [] == result
 
 
-rows = AsyncRows(User(name="Harold"), User(name="Gump"))
-
-row_dependant_statements = AsyncStatements(
-    "CREATE TEMP TABLE user1 as SELECT DISTINCT CONCAT(name, 1) as name FROM stuffs.user"
-)
-
-additional_rows = AsyncRows(User(name="Perrier"), User(name="Mug"))
-
-async def session_function_async(session):
-    session.add(User(name="Fake Name", objects=[Object(name="Boots")]))
-
 postgres_ordered_actions_async = create_postgres_fixture(rows, row_dependant_statements, additional_rows, async_=True)
 
-postgres_session_function_async = create_postgres_fixture(Base, session_function_async, async_=True)
+postgres_session_function_async = create_postgres_fixture(Base, session_function, async_=True)
 
 
 # Run the test 5 times to ensure fixture is stateless
@@ -96,9 +86,10 @@ postgres_session_function_async = create_postgres_fixture(Base, session_function
 @pytest.mark.parametrize("run", range(5))
 async def test_ordered_actions_aysnc(postgres_ordered_actions_async, run):
     async with postgres_ordered_actions_async.connect() as conn:
-        execute = await conn.execute(text("SELECT * FROM user1"))
-        result = sorted([row[0] for row in execute])
-        assert ["Gump1", "Harold1"] == result
+        # user1 should not exist since table was created using the sync session
+        with pytest.raises(ProgrammingError):
+            await conn.execute(text("SELECT * FROM user1"))
+
 
 
 # Run the test 5 times to ensure fixture is stateless
