@@ -174,21 +174,23 @@ class EngineManager(object):
         finally:
             self.engine.dispose()
 
-    def manage_async(self, session=None):
+    async def manage_async(self, session=None):
         try:
             self._run_actions()
 
-            engine = self._get_async_engine()
+            async_engine = self._get_async_engine()
 
             if session:
                 if isinstance(session, sessionmaker):
-                    yield session
+                    session_factory = session
                 else:
-                    yield sessionmaker(
-                        engine, expire_on_commit=False, class_=AsyncSession
+                    session_factory = sessionmaker(
+                        async_engine, expire_on_commit=False, class_=AsyncSession
                     )
+                async with session_factory() as session:
+                    yield session
             else:
-                yield engine
+                yield async_engine
         finally:
             self.engine.dispose()
 
