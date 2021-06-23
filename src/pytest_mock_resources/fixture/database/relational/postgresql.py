@@ -56,9 +56,9 @@ def create_postgres_fixture(*ordered_actions, **kwargs):
         yield from engine_manager.manage_sync(session=session)
 
     @pytest.fixture(scope=scope)
-    def _async(_postgres_container, pmr_postgres_config):
+    async def _async(_postgres_container, pmr_postgres_config):
         engine_manager = create_engine_manager(pmr_postgres_config, ordered_actions, tables)
-        yield from engine_manager.manage_async(session=session)
+        yield engine_manager.manage_async(session=session)
 
     if async_:
         return _async

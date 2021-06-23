@@ -85,10 +85,11 @@ postgres_session_function_async = create_postgres_fixture(Base, session_function
 @pytest.mark.asyncio
 @pytest.mark.parametrize("run", range(5))
 async def test_ordered_actions_aysnc(postgres_ordered_actions_async, run):
-    async with postgres_ordered_actions_async.connect() as conn:
-        # user1 should not exist since table was created using the sync session
-        with pytest.raises(ProgrammingError):
-            await conn.execute(text("SELECT * FROM user1"))
+    async for engine in postgres_ordered_actions_async:
+        async with engine.connect() as conn:
+            # user1 should not exist since table was created using the sync session
+            with pytest.raises(ProgrammingError):
+                await conn.execute(text("SELECT * FROM user1"))
 
 
 
@@ -96,11 +97,12 @@ async def test_ordered_actions_aysnc(postgres_ordered_actions_async, run):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("run", range(5))
 async def test_session_function_async(postgres_session_function_async, run):
-    async with postgres_session_function_async.connect() as conn:
-        execute = await conn.execute(text("SELECT * FROM stuffs.object"))
-        owner_id = sorted([row[2] for row in execute])[0]
-        execute = await conn.execute(
-            text("SELECT * FROM stuffs.user where id = {id}".format(id=owner_id))
-        )
-        result = [row[1] for row in execute]
-        assert result == ["Fake Name"]
+    async for engine in postgres_session_function_async:
+        async with engine.connect() as conn:
+            execute = await conn.execute(text("SELECT * FROM stuffs.object"))
+            owner_id = sorted([row[2] for row in execute])[0]
+            execute = await conn.execute(
+                text("SELECT * FROM stuffs.user where id = {id}".format(id=owner_id))
+            )
+            result = [row[1] for row in execute]
+            assert result == ["Fake Name"]
