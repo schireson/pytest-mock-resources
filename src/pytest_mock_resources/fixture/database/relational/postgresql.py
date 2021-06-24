@@ -4,7 +4,6 @@ import sqlalchemy
 from pytest_mock_resources.container.postgres import get_sqlalchemy_engine, PostgresConfig
 from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
 from pytest_mock_resources.fixture.database.relational.generic import EngineManager
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.fixture(scope="session")

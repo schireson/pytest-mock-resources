@@ -98,3 +98,20 @@ try:
     import pymysql
 except ImportError:
     pymysql = ImportAdaptor("pymysql", "mysql")
+
+try:
+    from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+except ImportError:
+    fail_message = (
+        "Cannot use sqlalchemy async features with SQLAlchemy < 1.4.\n"
+    )
+    create_async_engine = ImportAdaptor(
+        "SQLAlchemy",
+        "SQLAlchemy >= 1.4",
+        fail_message=fail_message
+    )
+    AsyncSession = ImportAdaptor(
+        "SQLAlchemy",
+        "SQLAlchemy >= 1.4",
+        fail_message=fail_message
+    )

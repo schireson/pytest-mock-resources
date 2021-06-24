@@ -4,11 +4,13 @@ import fnmatch
 import attr
 import six
 from sqlalchemy import MetaData
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.engine import URL
 from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql.ddl import CreateSchema
 from sqlalchemy.sql.schema import Table
+
+from pytest_mock_resources.compat import create_async_engine, AsyncSession
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -195,20 +197,19 @@ class EngineManager(object):
             self.engine.dispose()
 
     def _get_async_engine(self, isolation_level=None):
-        URI_TEMPLATE = (
-            "postgresql+asyncpg://{username}:{password}@{host}:{port}/{database}?ssl=disable"
-        )
-        DB_URI = URI_TEMPLATE.format(
-            host=self.engine.pmr_credentials.host,
-            port=self.engine.pmr_credentials.port,
+        url = URL(
+            drivername='postgresql+asyncpg',
             username=self.engine.pmr_credentials.username,
             password=self.engine.pmr_credentials.password,
+            host=self.engine.pmr_credentials.host,
+            port=self.engine.pmr_credentials.port,
             database=self.engine.pmr_credentials.database,
+            query=dict(ssl='disable')
         )
         options = {}
         if isolation_level:
             options["isolation_level"] = isolation_level
-        return create_async_engine(DB_URI, **options)
+        return create_async_engine(url, **options)
 
 
 def identify_matching_tables(metadata, table_specifier):
