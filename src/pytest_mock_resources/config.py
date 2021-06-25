@@ -1,7 +1,7 @@
 import os
 import socket
 
-from pytest_mock_resources.compat import functools
+import functools
 
 _DOCKER_HOST = "host.docker.internal"
 
