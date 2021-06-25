@@ -152,9 +152,8 @@ class TestSessionArg:
 
     @pytest.mark.asyncio
     async def test_session_pg_async(self, pg_session_async):
-        async for session in pg_session_async:
-            result = (await session.execute(select(Quarter))).scalars().one()
-            assert result.id == 1
+        result = (await pg_session_async.execute(select(Quarter))).scalars().one()
+        assert result.id == 1
 
 
 class Test__identify_matching_tables:

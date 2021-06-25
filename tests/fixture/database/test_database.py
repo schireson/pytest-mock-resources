@@ -108,6 +108,5 @@ postgres_async = create_postgres_fixture(async_=True)
 
 @pytest.mark.asyncio
 async def test_basic_postgres_fixture_async(postgres_async):
-    async for engine in postgres_async:
-        async with engine.connect() as conn:
-            await conn.execute(text("select 1"))
+    async with postgres_async.connect() as conn:
+        await conn.execute(text("select 1"))
