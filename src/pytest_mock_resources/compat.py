@@ -24,16 +24,6 @@ class ImportAdaptor(object):
 
 
 try:
-    from unittest import mock
-except ImportError:
-    import mock  # type: ignore # noqa
-
-try:
-    import functools32 as functools
-except ImportError:
-    import functools  # type: ignore # noqa
-
-try:
     import psycopg2
 except ImportError:
     fail_message = (

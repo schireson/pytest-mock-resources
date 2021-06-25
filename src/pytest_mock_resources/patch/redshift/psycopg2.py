@@ -5,7 +5,8 @@ import contextlib
 from sqlalchemy import create_engine
 from sqlalchemy.sql.elements import TextClause
 
-from pytest_mock_resources.compat import mock, psycopg2
+from unittest import mock
+from pytest_mock_resources.compat import psycopg2
 from pytest_mock_resources.patch.redshift.mock_s3_copy import strip
 from pytest_mock_resources.patch.redshift.sqlalchemy import (
     execute_mock_s3_copy_command,

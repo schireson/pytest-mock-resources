@@ -24,7 +24,6 @@ include = [
 python = ">=3.6, <4"
 
 docker = {version = ">= 2.5.1"}
-functools32 = {version = "*", python = "~2.7"}
 pytest = {version = ">=1.0"}
 responses = "*"
 sqlalchemy = "*"
