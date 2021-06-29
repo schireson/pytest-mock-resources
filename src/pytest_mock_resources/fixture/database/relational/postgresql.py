@@ -33,21 +33,23 @@ def create_engine_manager(pmr_postgres_config, ordered_actions, tables):
     return EngineManager(engine, ordered_actions, tables=tables, default_schema="public")
 
 
-def create_postgres_fixture(*ordered_actions, **kwargs):
-    """Create a Postgres fixture.
+def create_postgres_fixture(
+    *ordered_actions, scope="function", tables=None, session=None, async_=False
+):
+    """Produce a Postgres fixture.
 
     Any number of fixture functions can be created. Under the hood they will all share the same
     database server.
+
+    Arguments:
+        ordered_actions: Any number of ordered actions to be run on test setup.
+        scope: Passthrough pytest's fixture scope.
+        tables: Subsets the tables created by `ordered_actions`. This is generally
+            most useful when a model-base was specified in `ordered_actions`.
+        session: Whether to return a session instead of an engine directly. This can
+            either be a bool or a callable capable of producing a session.
+        async_: Whether to return an async fixture/client.
     """
-    scope = kwargs.pop("scope", "function")
-    tables = kwargs.pop("tables", None)
-
-    session = kwargs.pop("session", None)
-
-    async_ = kwargs.pop("async_", False)
-
-    if len(kwargs):
-        raise KeyError("Unsupported Arguments: {}".format(kwargs))
 
     @pytest.fixture(scope=scope)
     def _sync(_postgres_container, pmr_postgres_config):
