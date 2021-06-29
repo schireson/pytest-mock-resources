@@ -63,24 +63,14 @@ commands:
             curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
             echo 'export PATH="$HOME/.poetry/bin:$PATH"' >> $BASH_ENV
 
-  run-make:
-    parameters:
-      command:
-        type: string
-    steps:
-      - run:
-          name: Run a make command
-          command: |
-            make << parameters.command >>
-
   setup-python-base:
     description: Install python dependencies
     steps:
       - setup
       - restore_cache:
           key: v1-{{ checksum "pyproject.toml" }}-{{ checksum "poetry.lock" }}
-      - run-make:
-          command: install-base
+      - run:
+          command: make install-base
       - save_cache:
           paths:
             - /home/circleci/.cache/pypoetry/virtualenvs
@@ -92,8 +82,8 @@ commands:
       - setup
       - restore_cache:
           key: v1-{{ checksum "pyproject.toml" }}-{{ checksum "poetry.lock" }}
-      - run-make:
-          command: install
+      - run:
+          command: make install
       - save_cache:
           paths:
             - /home/circleci/.cache/pypoetry/virtualenvs
@@ -120,8 +110,8 @@ jobs:
       - setup-python-base
       - setup_remote_docker:
           docker_layer_caching: true
-      - run-make:
-          command: test-base
+      - run:
+          command: poetry run make test-base
       - persist-coverage
 
   test-python36:
@@ -132,8 +122,8 @@ jobs:
           docker_layer_caching: true
       - attach_workspace:
           at: .
-      - run-make:
-          command: test
+      - run:
+          command: poetry run make test
       - persist-coverage
 
   test-python37:
@@ -142,8 +132,8 @@ jobs:
       - setup-python
       - setup_remote_docker:
           docker_layer_caching: true
-      - run-make:
-          command: test
+      - run:
+          command: poetry run make test
 
   test-python38:
     executor: python38
@@ -151,8 +141,8 @@ jobs:
       - setup-python
       - setup_remote_docker:
           docker_layer_caching: true
-      - run-make:
-          command: test
+      - run:
+          command: poetry run make test
 
   test-pytest6:
     executor: python38
@@ -161,15 +151,15 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - run: pip install pytest==6.1.1
-      - run-make:
-          command: test
+      - run:
+          command: poetry run make test
 
   lint:
     executor: python36
     steps:
       - setup-python
-      - run-make:
-          command: lint
+      - run:
+          command: poetry run make lint
 
   publish:
     executor: publish
