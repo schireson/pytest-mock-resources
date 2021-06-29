@@ -49,11 +49,11 @@ pymysql = {version = ">=1.0", optional = true}
 
 [tool.poetry.dev-dependencies]
 black = {version = "=>19.3b0", allow-prereleases = true}
-coverage = "*"
-flake8 = "*"
-isort = "*"
-mypy = {version = "*", python = ">=3.5"}
-pydocstyle = {version = "*", python = ">=3.5"}
+coverage = {version = ">=5.5", extras = ["toml"]}
+flake8 = "^3.7.9"
+isort = ">=5"
+mypy = "^0.902"
+pydocstyle = "^6.1.1"
 sqlalchemy-stubs = {version = "*", python = ">=3.5"}
 pytest-xdist = "*"
 pytest-asyncio = "^0.15.1"
@@ -74,15 +74,25 @@ pytest_mock_resources = "pytest_mock_resources"
 pmr = "pytest_mock_resources.cli:main"
 
 [tool.isort]
-default_section = 'FIRSTPARTY'
-include_trailing_comma = true
-indent = '    '
-length_sort = false
+profile = 'black'
+known_first_party = 'pytest_mock_resources,tests'
 line_length = 100
 float_to_top = true
 order_by_type = false
-known_first_party = 'tests'
 use_parentheses = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "if __name__ == .__main__.:",
+]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
 
 [tool.black]
 line_length = 100

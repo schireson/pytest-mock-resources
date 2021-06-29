@@ -27,11 +27,11 @@ test: test-parallel
 
 ## Lint
 lint:
-	flake8 src tests
-	isort --check-only --diff src tests
-	pydocstyle src tests
-	black --check src tests
-	mypy src tests
+	flake8 src tests || exit 1
+	isort --check-only --diff src tests || exit 1
+	pydocstyle src tests || exit 1
+	black --check src tests || exit 1
+	mypy src tests || exit 1
 
 format:
 	isort --recursive src tests
