@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import pytest
 
 from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials

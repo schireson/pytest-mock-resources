@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import sqlalchemy
 from sqlalchemy.sql import text
 
