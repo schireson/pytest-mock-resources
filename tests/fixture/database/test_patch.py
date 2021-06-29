@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 from pytest_mock_resources import create_redshift_fixture
 from tests.fixture.database import (
     copy_fn_to_test_create_engine_patch,

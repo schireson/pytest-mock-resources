@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from sqlalchemy.sql.elements import TextClause
 from sqlalchemy.sql.expression import Insert, Select, Update
 

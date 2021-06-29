@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import contextlib
 
 from sqlalchemy import create_engine
