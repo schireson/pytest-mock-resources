@@ -4,7 +4,7 @@ import fnmatch
 import attr
 import six
 from sqlalchemy import MetaData
-from sqlalchemy.engine import URL
+from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql.ddl import CreateSchema
@@ -198,13 +198,13 @@ class EngineManager(object):
 
     def _get_async_engine(self, isolation_level=None):
         url = URL(
-            drivername='postgresql+asyncpg',
+            drivername="postgresql+asyncpg",
             username=self.engine.pmr_credentials.username,
             password=self.engine.pmr_credentials.password,
             host=self.engine.pmr_credentials.host,
             port=self.engine.pmr_credentials.port,
             database=self.engine.pmr_credentials.database,
-            query=dict(ssl='disable')
+            query=dict(ssl="disable"),
         )
         options = {}
         if isolation_level:
