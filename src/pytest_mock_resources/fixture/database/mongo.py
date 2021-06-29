@@ -17,11 +17,15 @@ def pmr_mongo_config():
     return MongoConfig()
 
 
-def create_mongo_fixture(**kwargs):
-    scope = kwargs.pop("scope", "function")
+def create_mongo_fixture(scope="function"):
+    """Produce a mongo fixture.
 
-    if len(kwargs):
-        raise KeyError("Unsupported Arguments: {}".format(kwargs))
+    Any number of fixture functions can be created. Under the hood they will all share the same
+    database server.
+
+    Arguments:
+        scope: Passthrough pytest's fixture scope.
+    """
 
     @pytest.fixture(scope=scope)
     def _(_mongo_container, pmr_mongo_config):

@@ -18,19 +18,20 @@ def pmr_mysql_config():
     return MysqlConfig()
 
 
-def create_mysql_fixture(*ordered_actions, **kwargs):
-    """Create a Postgres fixture.
+def create_mysql_fixture(*ordered_actions, scope="function", tables=None, session=None):
+    """Produce a MySQL fixture.
 
     Any number of fixture functions can be created. Under the hood they will all share the same
     database server.
+
+    Arguments:
+        ordered_actions: Any number of ordered actions to be run on test setup.
+        scope: Passthrough pytest's fixture scope.
+        tables: Subsets the tables created by `ordered_actions`. This is generally
+            most useful when a model-base was specified in `ordered_actions`.
+        session: Whether to return a session instead of an engine directly. This can
+            either be a bool or a callable capable of producing a session.
     """
-    scope = kwargs.pop("scope", "function")
-    tables = kwargs.pop("tables", None)
-
-    session = kwargs.pop("session", None)
-
-    if len(kwargs):
-        raise KeyError("Unsupported Arguments: {}".format(kwargs))
 
     @pytest.fixture(scope=scope)
     def _(_mysql_container, pmr_mysql_config):

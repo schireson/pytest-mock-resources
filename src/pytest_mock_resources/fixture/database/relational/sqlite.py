@@ -180,18 +180,31 @@ def _database_producer():
 _database_names = _database_producer()
 
 
-def create_sqlite_fixture(*ordered_actions, **kwargs):
-    """Create a SQLite fixture."""
-    scope = kwargs.pop("scope", "function")
-    tables = kwargs.pop("tables", None)
+def create_sqlite_fixture(
+    *ordered_actions,
+    scope="function",
+    tables=None,
+    session=None,
+    decimal_warnings=False,
+    postgres_like=True
+):
+    """Produce a SQLite fixture.
 
-    session = kwargs.pop("session", None)
-    decimal_warnings = kwargs.pop("decimal_warnings", False)
+    Any number of fixture functions can be created. Under the hood they will all share the same
+    database server.
 
-    postgres_like = kwargs.pop("postgres_like", True)
-
-    if len(kwargs):
-        raise KeyError("Unsupported Arguments: {}".format(kwargs))
+    Arguments:
+        ordered_actions: Any number of ordered actions to be run on test setup.
+        scope: Passthrough pytest's fixture scope.
+        tables: Subsets the tables created by `ordered_actions`. This is generally
+            most useful when a model-base was specified in `ordered_actions`.
+        session: Whether to return a session instead of an engine directly. This can
+            either be a bool or a callable capable of producing a session.
+        decimal_warnings: Whether to show sqlalchemy decimal warnings related to precision loss. The
+            default `False` suppresses these warnings.
+        postgres_like: Whether to add extra SQLite features which attempt to mimic postgres
+            enough to stand in for it for testing.
+    """
 
     dialect_name = "sqlite"
 
