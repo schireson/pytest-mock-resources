@@ -76,7 +76,9 @@ def test_metadata_only(postgres_metadata_only):
     assert [] == result
 
 
-postgres_ordered_actions_async = create_postgres_fixture(rows, row_dependant_statements, additional_rows, async_=True)
+postgres_ordered_actions_async = create_postgres_fixture(
+    rows, row_dependant_statements, additional_rows, async_=True
+)
 
 postgres_session_function_async = create_postgres_fixture(Base, session_function, async_=True)
 
@@ -89,7 +91,6 @@ async def test_ordered_actions_aysnc(postgres_ordered_actions_async, run):
         # user1 should not exist since table was created using the sync session
         with pytest.raises(ProgrammingError):
             await conn.execute(text("SELECT * FROM user1"))
-
 
 
 # Run the test 5 times to ensure fixture is stateless

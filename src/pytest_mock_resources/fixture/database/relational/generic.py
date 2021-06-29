@@ -1,8 +1,8 @@
 import abc
 import fnmatch
+from typing import Iterable
 
 import attr
-import six
 from sqlalchemy import MetaData
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta
@@ -10,11 +10,10 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql.ddl import CreateSchema
 from sqlalchemy.sql.schema import Table
 
-from pytest_mock_resources.compat import create_async_engine, AsyncSession
+from pytest_mock_resources.compat import AsyncSession, create_async_engine
 
 
-@six.add_metaclass(abc.ABCMeta)
-class AbstractAction(object):
+class AbstractAction(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def run(self, engine_manager):
         """Run an action on a database via the passed-in engine_manager instance."""
@@ -72,10 +71,10 @@ class Statements(AbstractAction):
 
 
 @attr.s
-class EngineManager(object):
+class EngineManager:
     engine = attr.ib()
     ordered_actions = attr.ib(default=attr.Factory(tuple))
-    tables = attr.ib(default=None, converter=attr.converters.optional(tuple))
+    tables: Iterable = attr.ib(default=None, converter=attr.converters.optional(tuple))
     session = attr.ib(default=False)
     default_schema = attr.ib(default=None)
 

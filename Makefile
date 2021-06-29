@@ -34,7 +34,7 @@ lint:
 	mypy src tests || exit 1
 
 format:
-	isort --recursive src tests
+	isort src tests
 	black src tests
 
 ## Build

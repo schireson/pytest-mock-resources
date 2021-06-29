@@ -52,11 +52,13 @@ black = {version = "=>19.3b0", allow-prereleases = true}
 coverage = {version = ">=5.5", extras = ["toml"]}
 flake8 = "^3.7.9"
 isort = ">=5"
-mypy = "^0.902"
+mypy = "^0.910"
 pydocstyle = "^6.1.1"
 sqlalchemy-stubs = {version = "*", python = ">=3.5"}
 pytest-xdist = "*"
 pytest-asyncio = "^0.15.1"
+types-redis = "^3.5.4"
+types-PyMySQL = "^1.0.0"
 
 [tool.poetry.extras]
 postgres = ['psycopg2']

@@ -1,4 +1,5 @@
 from unittest import mock
+
 from pytest_mock_resources.config import DockerContainerConfig, fallback, get_env_config
 
 _DOCKER_HOST = "host.docker.internal"
@@ -18,7 +19,7 @@ class Test_get_env_config:
 
 class FooConfig(DockerContainerConfig):
     name = "foo"
-    _fields = ("image", "host", "port", "ci_port", "extra_config", "no_value_default")
+    _fields = {"image", "host", "port", "ci_port", "extra_config", "no_value_default"}
     _fields_defaults = {"image": "test", "extra_config": "bar", "port": 555}
 
     @fallback
