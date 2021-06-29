@@ -8,6 +8,7 @@ Welcome to Pytest Mock Resource's documentation!
    Quickstart <quickstart>
    Docker <docker>
    Fixtures <fixtures>
+   Async <async>
    CI Service Support <ci>
    Contributing <contributing>
    API <api>
