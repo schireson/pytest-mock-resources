@@ -1,7 +1,8 @@
 import time
 
 import pytest
-from sqlalchemy import text
+from sqlalchemy import Column, Integer, text
+from sqlalchemy.ext.declarative import declarative_base
 
 from pytest_mock_resources import create_redshift_fixture
 from pytest_mock_resources.compat import boto3, moto
@@ -209,6 +210,51 @@ def test_ignores_sqlalchmey_text_obj(redshift):
 
 
 def test_multiple_sql_statemts(redshift):
+    with moto.mock_s3():
+        conn = boto3.resource(
+            "s3",
+            region_name="us-east-1",
+            aws_access_key_id="AAAAAAAAAAAAAAAAAAAA",
+            aws_secret_access_key="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        )
+        conn.create_bucket(Bucket="mybucket")
+        conn.Object("mybucket", "file.csv").put(Body=get_data_csv(ResultProxy(original_data)))
+
+        redshift.execute(
+            (
+                "CREATE TEMP TABLE test_s3_copy_into_redshift "
+                "(i INT, f FLOAT, c CHAR(1), v VARCHAR(16));"
+                "{COMMAND} test_s3_copy_into_redshift {COLUMNS} {FROM} '{LOCATION}' "
+                "{CREDENTIALS} 'aws_access_key_id=AAAAAAAAAAAAAAAAAAAA;"
+                "aws_secret_access_key=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'"
+                "{OPTIONAL_ARGS};".format(
+                    COMMAND="COPY",
+                    LOCATION="s3://mybucket/file.csv",
+                    COLUMNS="(i, f, c, v)",
+                    FROM="from",
+                    CREDENTIALS="credentials",
+                    OPTIONAL_ARGS="",
+                )
+            )
+        )
+
+        fetch_values_from_table_and_assert(redshift)
+
+
+Base = declarative_base()
+
+
+class Example(Base):
+    __tablename__ = "quarter"
+    __table_args__ = {"schema": "foo"}
+
+    id = Column(Integer, primary_key=True)
+
+
+redshift = create_redshift_fixture(Base)
+
+
+def test_redshift_auto_schema_creation(redshift):
     with moto.mock_s3():
         conn = boto3.resource(
             "s3",
