@@ -1,7 +1,7 @@
+import functools
 import os
 import socket
-
-import functools
+from typing import Dict, Iterable
 
 _DOCKER_HOST = "host.docker.internal"
 
@@ -50,8 +50,8 @@ def fallback(fn):
 
 
 class DockerContainerConfig:
-    _fields = {"image", "host", "port", "ci_port"}
-    _fields_defaults = {}
+    _fields: Iterable = {"image", "host", "port", "ci_port"}
+    _fields_defaults: Dict = {}
 
     def __init__(self, **kwargs):
         for field in self._fields:
