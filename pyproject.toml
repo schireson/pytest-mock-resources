@@ -51,12 +51,15 @@ pymysql = {version = ">=1.0", optional = true}
 black = {version = "=>19.3b0", allow-prereleases = true}
 coverage = "*"
 flake8 = "*"
-isort = "*"
-mypy = {version = "*", python = ">=3.5"}
+isort = ">=5.0"
+mypy = {version = "0.910", python = ">=3.5"}
 pydocstyle = {version = "*", python = ">=3.5"}
 sqlalchemy-stubs = {version = "*", python = ">=3.5"}
 pytest-xdist = "*"
 pytest-asyncio = "^0.15.1"
+types-six = "^1.16.0"
+types-PyMySQL = "^1.0.2"
+types-redis = "^3.5.6"
 
 [tool.poetry.extras]
 postgres = ['psycopg2']
@@ -74,14 +77,11 @@ pytest_mock_resources = "pytest_mock_resources"
 pmr = "pytest_mock_resources.cli:main"
 
 [tool.isort]
-default_section = 'FIRSTPARTY'
-include_trailing_comma = true
-indent = '    '
-length_sort = false
+profile = 'black'
+known_first_party = 'app,tests'
 line_length = 100
-float_to_top = true
+float_to_top=true
 order_by_type = false
-known_first_party = 'tests'
 use_parentheses = true
 
 [tool.black]

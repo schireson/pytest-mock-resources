@@ -1,4 +1,5 @@
 from unittest import mock
+
 from pytest_mock_resources.config import DockerContainerConfig, fallback, get_env_config
 
 _DOCKER_HOST = "host.docker.internal"

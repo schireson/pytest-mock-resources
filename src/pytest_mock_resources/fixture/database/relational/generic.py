@@ -1,5 +1,6 @@
 import abc
 import fnmatch
+from typing import Tuple
 
 import attr
 import six
@@ -10,7 +11,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql.ddl import CreateSchema
 from sqlalchemy.sql.schema import Table
 
-from pytest_mock_resources.compat import create_async_engine, AsyncSession
+from pytest_mock_resources.compat import AsyncSession, create_async_engine
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -75,7 +76,7 @@ class Statements(AbstractAction):
 class EngineManager(object):
     engine = attr.ib()
     ordered_actions = attr.ib(default=attr.Factory(tuple))
-    tables = attr.ib(default=None, converter=attr.converters.optional(tuple))
+    tables: Tuple = attr.ib(default=None, converter=attr.converters.optional(tuple))
     session = attr.ib(default=False)
     default_schema = attr.ib(default=None)
 
