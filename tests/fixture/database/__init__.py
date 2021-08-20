@@ -1,10 +1,9 @@
 import random
 
-from sqlalchemy import create_engine
-
 from pytest_mock_resources.compat import boto3, moto, psycopg2
 from pytest_mock_resources.patch.redshift.mock_s3_copy import read_data_csv
 from pytest_mock_resources.patch.redshift.mock_s3_unload import get_data_csv
+from sqlalchemy import create_engine
 
 original_data = [
     (3342, 32434.0, "a", "gfhsdgaf"),
@@ -66,7 +65,7 @@ def fetch_and_assert_psycopg2(cursor):
         assert result == expected_result
 
 
-def setup_table_and_bucket(redshift, file_name="file.csv"):
+def setup_table_and_bucket(redshift, file_name="file.csv", create_bucket=True):
     redshift.execute(
         "CREATE TABLE test_s3_copy_into_redshift (i INT, f FLOAT, c CHAR(1), v VARCHAR(16));"
     )
@@ -78,7 +77,9 @@ def setup_table_and_bucket(redshift, file_name="file.csv"):
         aws_access_key_id="AAAAAAAAAAAAAAAAAAAA",
         aws_secret_access_key="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
     )
-    conn.create_bucket(Bucket="mybucket")
+    if create_bucket:
+        conn.create_bucket(Bucket="mybucket")
+
     conn.Object("mybucket", file_name).put(Body=get_data_csv(original_data, data_columns))
 
 

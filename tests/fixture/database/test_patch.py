@@ -1,8 +1,13 @@
+import pytest
+import sqlalchemy.exc
+
 from pytest_mock_resources import create_postgres_fixture, create_redshift_fixture
 from tests.fixture.database import (
     copy_fn_to_test_create_engine_patch,
     copy_fn_to_test_psycopg2_connect_patch,
     copy_fn_to_test_psycopg2_connect_patch_as_context_manager,
+    COPY_TEMPLATE,
+    setup_table_and_bucket,
     unload_fn_to_test_create_engine_patch,
     unload_fn_to_test_psycopg2_connect_patch,
     unload_fn_to_test_psycopg2_connect_patch_as_context_manager,
@@ -41,5 +46,27 @@ def test_unload_with_psycopg2_as_context_manager(redshift):
 
 
 def test_tightly_scoped_patch(redshift, postgres):
-    redshift.execute("select 1; select 1;")
-    postgres.execute("select 1; select 1;")
+    """Assert psycopg2's patch is tightly scoped
+
+    Redshift combined with a 2nd non-redshift fixture in the same test should not
+    add redshift-specific features to the other engine.
+    """
+    import moto
+
+    copy_command = COPY_TEMPLATE.format(
+        COMMAND="COPY",
+        LOCATION="s3://mybucket/file.csv",
+        COLUMNS="",
+        FROM="from",
+        CREDENTIALS="credentials",
+        OPTIONAL_ARGS="",
+    )
+    with moto.mock_s3():
+        setup_table_and_bucket(redshift)
+        setup_table_and_bucket(postgres, create_bucket=False)
+        redshift.execute(copy_command)
+
+        with pytest.raises(sqlalchemy.exc.ProgrammingError) as e:
+            postgres.execute(copy_command)
+
+        assert 'syntax error at or near "credentials"' in str(e.value)
