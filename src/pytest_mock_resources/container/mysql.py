@@ -10,19 +10,19 @@ class MysqlConfig(DockerContainerConfig):
     """Define the configuration object for MySql.
 
     Args:
-        image (str): The docker image:tag specifier to use for postgres containers.
-            Defaults to :code:`"postgres:9.6.10-alpine"`.
+        image (str): The docker image:tag specifier to use for mysql containers.
+            Defaults to :code:`"mysql:5.6"`.
         host (str): The hostname under which a mounted port will be available.
             Defaults to :code:`"localhost"`.
         port (int): The port to bind the container to.
             Defaults to :code:`5532`.
         ci_port (int): The port to bind the container to when a CI environment is detected.
             Defaults to :code:`5432`.
-        username (str): The username of the root postgres user
+        username (str): The username of the root user
             Defaults to :code:`"user"`.
-        password (str): The password of the root postgres password
+        password (str): The password of the root password
             Defaults to :code:`"password"`.
-        root_database (str): The name of the root postgres database to create.
+        root_database (str): The name of the root database to create.
             Defaults to :code:`"dev"`.
     """
 
@@ -96,7 +96,7 @@ def _mysql_container(pmr_mysql_config):
         {3306: pmr_mysql_config.port},
         {
             "MYSQL_DATABASE": pmr_mysql_config.root_database,
-            "POSTGRES_USER": pmr_mysql_config.username,
+            "MYSQL_USER": pmr_mysql_config.username,
             "MYSQL_ROOT_PASSWORD": pmr_mysql_config.password,
         },
         check_mysql_fn,
