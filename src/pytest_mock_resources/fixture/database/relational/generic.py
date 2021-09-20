@@ -5,7 +5,6 @@ from typing import Tuple
 import attr
 import six
 from sqlalchemy import MetaData
-from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql.ddl import CreateSchema
@@ -200,7 +199,7 @@ class EngineManager(object):
             self.engine.dispose()
 
     def _get_async_engine(self, isolation_level=None):
-        url = URL(
+        url = compat.sqlalchemy.URL(
             drivername="postgresql+asyncpg",
             username=self.engine.pmr_credentials.username,
             password=self.engine.pmr_credentials.password,

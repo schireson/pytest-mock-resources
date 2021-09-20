@@ -1,8 +1,8 @@
 import pytest
 from sqlalchemy import create_engine, text
-from sqlalchemy.engine.url import URL
 
 from pytest_mock_resources import (
+    compat,
     create_mysql_fixture,
     create_postgres_fixture,
     create_redshift_fixture,
@@ -89,7 +89,7 @@ def test_create_custom_connection_from_dict(postgres_3):
 
 
 def test_create_custom_connection_url(postgres_3):
-    url = URL(**postgres_3.pmr_credentials.as_sqlalchemy_url_kwargs())
+    url = compat.sqlalchemy.URL(**postgres_3.pmr_credentials.as_sqlalchemy_url_kwargs())
     engine = create_engine(url, isolation_level="AUTOCOMMIT")
     engine.execute("select 1")
 

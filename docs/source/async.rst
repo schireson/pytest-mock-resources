@@ -16,6 +16,7 @@ For example:
 
    @pytest.fixture
    def async_pg(pmr_postgres_config):
+       # or `URL.create` in sqlalchemy 1.4+
        create_async_engine(URL(host=pmr_postgres_config.host, database=pmr_postgres_config.database, ...))
 
 
