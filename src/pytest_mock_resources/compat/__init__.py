@@ -1,27 +1,7 @@
-class ImportAdaptor(object):
-    __wrapped__ = False
+from pytest_mock_resources.compat.import_ import ImportAdaptor
 
-    def __init__(self, package, recommended_extra, fail_message=None, **attrs):
-        self.package = package
-        self.recommended_extra = recommended_extra
-        self.fail_message = fail_message
-
-        for key, value in attrs.items():
-            setattr(self, key, value)
-
-    def fail(self):
-        if self.fail_message:
-            fail_message = self.fail_message
-        else:
-            fail_message = "Cannot use {recommended_extra} fixtures without {package}. pip install pytest-mock-resources[{recommended_extra}]".format(
-                package=self.package, recommended_extra=self.recommended_extra
-            )
-
-        raise RuntimeError(fail_message)
-
-    def __getattr__(self, attr):
-        self.fail()
-
+# isort: split
+from pytest_mock_resources.compat import import_, sqlalchemy  # flake8: ignore
 
 try:
     import psycopg2
@@ -88,12 +68,3 @@ try:
     import pymysql
 except ImportError:
     pymysql = ImportAdaptor("pymysql", "mysql")  # type: ignore
-
-try:
-    from sqlalchemy.ext import asyncio as sqlalchemy_asyncio  # type: ignore
-except ImportError:
-    sqlalchemy_asyncio = ImportAdaptor(  # type: ignore
-        "SQLAlchemy",
-        "SQLAlchemy >= 1.4",
-        fail_message="Cannot use sqlalchemy async features with SQLAlchemy < 1.4.\n",
-    )
