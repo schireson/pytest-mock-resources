@@ -11,7 +11,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql.ddl import CreateSchema
 from sqlalchemy.sql.schema import Table
 
-from pytest_mock_resources.compat import sqlalchemy_asyncio
+from pytest_mock_resources import compat
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -188,7 +188,9 @@ class EngineManager(object):
                     session_factory = session
                 else:
                     session_factory = sessionmaker(
-                        async_engine, expire_on_commit=False, class_=sqlalchemy_asyncio.AsyncSession
+                        async_engine,
+                        expire_on_commit=False,
+                        class_=compat.sqlalchemy.asyncio.AsyncSession,
                     )
                 async with session_factory() as session:
                     yield session
@@ -210,7 +212,7 @@ class EngineManager(object):
         options = {}
         if isolation_level:
             options["isolation_level"] = isolation_level
-        return sqlalchemy_asyncio.create_async_engine(url, **options)
+        return compat.sqlalchemy.asyncio.create_async_engine(url, **options)
 
 
 def identify_matching_tables(metadata, table_specifier):
