@@ -1,6 +1,6 @@
 import pytest
 import sqlalchemy
-from sqlalchemy.engine.url import URL
+from pytest_mock_resources import compat
 
 from pytest_mock_resources.config import DockerContainerConfig, fallback
 from pytest_mock_resources.container.base import ContainerCheckFailed, get_container
@@ -52,7 +52,7 @@ class MysqlConfig(DockerContainerConfig):
 
 def get_sqlalchemy_engine(config, database_name, isolation_level=None):
     DB_URI = str(
-        URL(
+        compat.sqlalchemy.URL(
             "mysql+pymysql",
             username=config.username,
             password=config.password,

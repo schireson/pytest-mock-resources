@@ -1,4 +1,4 @@
-from sqlalchemy.engine.url import URL
+from pytest_mock_resources import compat
 
 
 class Credentials:
@@ -31,7 +31,7 @@ class Credentials:
 
     def as_sqlalchemy_url(self):
         """Return a sqlalchemy :class:`sqlalchemy.engine.url.URL`."""
-        return URL(
+        return compat.sqlalchemy.URL(
             drivername=self.drivername,
             host=self.host,
             port=self.port,
