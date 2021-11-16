@@ -905,7 +905,7 @@ redshift = ["boto3", "moto", "sqlparse"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.6, <4"
-content-hash = "217d190ee345197183a81bed964b7e0e7544e1d304eadbab1bd52c093b343660"
+content-hash = "0baf43f0b4eacbe5892ffaae4f268f315b23d7174edc64c66eb9563f418f1a50"
 
 [metadata.files]
 appdirs = [
