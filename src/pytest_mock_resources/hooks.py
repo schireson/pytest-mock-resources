@@ -6,7 +6,7 @@ def pytest_configure(config):
     for resource_kind in _resource_kinds:
         config.addinivalue_line(
             "markers",
-            "postgres: Tests which make use of {kind} fixtures".format(kind=resource_kind),
+            "{kind}: Tests which make use of {kind} fixtures".format(kind=resource_kind),
         )
 
 
