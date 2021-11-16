@@ -42,6 +42,7 @@ build-package:
 	poetry build
 
 build-docs:
+	pip install -r docs/requirments.txt
 	make -C docs html
 
 build: build-package build-docs
