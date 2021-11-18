@@ -1,8 +1,11 @@
 import pytest
 import sqlalchemy
 
-from pytest_mock_resources.config import DockerContainerConfig, fallback
+from pytest_mock_resources.config import DockerContainerConfig, fallback, get_env_config
 from pytest_mock_resources.container.base import ContainerCheckFailed, get_container
+
+
+postgres_image = get_env_config("postgres", "image") or "postgres:9.6.10-alpine"
 
 
 class PostgresConfig(DockerContainerConfig):
@@ -28,7 +31,7 @@ class PostgresConfig(DockerContainerConfig):
     name = "postgres"
     _fields = {"image", "host", "port", "ci_port", "username", "password", "root_database"}
     _fields_defaults = {
-        "image": "postgres:9.6.10-alpine",
+        "image": postgres_image,
         "port": 5532,
         "ci_port": 5432,
         "username": "user",
