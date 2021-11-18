@@ -35,6 +35,9 @@ For Redshift and Postgres:
 
     $ pmr postgres
     711f5d5a86896bb4eb76813af4fb6616aee0eff817cdec6ebaf4daa0e9995441
+    # or specify the image
+    PMR_POSTGRES_IMAGE=postgres:11 pmr postgres
+    711f5d5a86896bb4eb76813af4fb6616aee0eff817cdec6ebaf4daa0e9995441
 
 For Mongo:
 
@@ -42,12 +45,18 @@ For Mongo:
 
     $ pmr mongo
     711f5d5a86896bb4eb76813af4fb6616aee0eff817cdec6ebaf4daa0e9995441
+    # or specify the image
+    PMR_MONGO_IMAGE=mongo:5.0 pmr mongo
+    711f5d5a86896bb4eb76813af4fb6616aee0eff817cdec6ebaf4daa0e9995441
 
 For MySQL:
 
 .. code-block:: bash
 
     $ pmr mysql
+    711f5d5a86896bb4eb76813af4fb6616aee0eff817cdec6ebaf4daa0e9995441
+    # or specify the image
+    PMR_MYSQL_IMAGE=postgres:8.0 pmr mysql
     711f5d5a86896bb4eb76813af4fb6616aee0eff817cdec6ebaf4daa0e9995441
 
 You can check on the instance's state via:
