@@ -2,6 +2,12 @@ import argparse
 import enum
 import subprocess  # nosec
 
+from pytest_mock_resources.config import get_env_config
+
+postgres_image = get_env_config("postgres", "image") or "postgres:9.6.10-alpine"
+mysql_image = get_env_config("mysql", "image") or "mysql:5.6"
+mongo_image = get_env_config("mongo", "image") or "mongo:3.6"
+
 
 @enum.unique
 class FixtureBase(enum.Enum):
@@ -28,9 +34,9 @@ class FixtureBase(enum.Enum):
             "POSTGRES_USER=user",
             "-e",
             "POSTGRES_PASSWORD=password",
-            "postgres:9.6.10-alpine",
+            postgres_image,
         ]
-        mongo_command = ["docker", "run", "-d", "--rm", "-p", "28017:27017", "mongo:3.6"]
+        mongo_command = ["docker", "run", "-d", "--rm", "-p", "28017:27017", mongo_image]
         mysql_command = [
             "docker",
             "run",
@@ -42,7 +48,7 @@ class FixtureBase(enum.Enum):
             "MYSQL_DATABASE=dev",
             "-e",
             "MYSQL_ROOT_PASSWORD=password",
-            "mysql:5.6",
+            mysql_image,
         ]
         fixture_base_command_map = {
             FixtureBase.MONGO: mongo_command,
