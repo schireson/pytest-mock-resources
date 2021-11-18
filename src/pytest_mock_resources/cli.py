@@ -2,11 +2,11 @@ import argparse
 import enum
 import subprocess  # nosec
 
-from pytest_mock_resources.config import get_env_config
+from pytest_mock_resources import PostgresConfig, MysqlConfig, MongoConfig
 
-postgres_image = get_env_config("postgres", "image") or "postgres:9.6.10-alpine"
-mysql_image = get_env_config("mysql", "image") or "mysql:5.6"
-mongo_image = get_env_config("mongo", "image") or "mongo:3.6"
+postgres_image = PostgresConfig().image
+mysql_image = MysqlConfig().image
+mongo_image = MongoConfig().image
 
 
 @enum.unique
