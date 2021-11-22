@@ -1,11 +1,8 @@
 import pytest
 
 from pytest_mock_resources.compat import pymongo
-from pytest_mock_resources.config import DockerContainerConfig, fallback, get_env_config
+from pytest_mock_resources.config import DockerContainerConfig, fallback
 from pytest_mock_resources.container.base import ContainerCheckFailed, get_container
-
-
-mongo_image = get_env_config("mongo", "image") or "mongo:3.6"
 
 
 class MongoConfig(DockerContainerConfig):
@@ -28,7 +25,7 @@ class MongoConfig(DockerContainerConfig):
 
     _fields = {"image", "host", "port", "ci_port", "root_database"}
     _fields_defaults = {
-        "image": mongo_image,
+        "image": "mongo:3.6",
         "port": 28017,
         "ci_port": 27017,
         "root_database": "dev-mongo",

@@ -2,11 +2,8 @@ import pytest
 import sqlalchemy
 from pytest_mock_resources import compat
 
-from pytest_mock_resources.config import DockerContainerConfig, fallback, get_env_config
+from pytest_mock_resources.config import DockerContainerConfig, fallback
 from pytest_mock_resources.container.base import ContainerCheckFailed, get_container
-
-
-mysql_image = get_env_config("mysql", "image") or "mysql:5.6"
 
 
 class MysqlConfig(DockerContainerConfig):
@@ -32,7 +29,7 @@ class MysqlConfig(DockerContainerConfig):
     name = "mysql"
     _fields = {"image", "host", "port", "ci_port", "username", "password", "root_database"}
     _fields_defaults = {
-        "image": mysql_image,
+        "image": "mysql:5.6",
         "port": 3406,
         "ci_port": 3306,
         "username": "root",
