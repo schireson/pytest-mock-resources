@@ -23,13 +23,18 @@ def get_container(config, ports, environment, check_fn):
                     raise
                 time.sleep(0.5)
 
+    client = docker.from_env(version="auto")
+
+    # The creation of container can fail and leave us in a situation where it's
+    # we will need to know whether it's been created already or not.
+    container = None
+
     try:
-        container = None
+
         try:
             retriable_check_fn(1)
         except ContainerCheckFailed:
             try:
-                client = docker.from_env(version="auto")
                 container = client.containers.run(
                     config.image, ports=ports, environment=environment, detach=True, remove=True
                 )
@@ -46,3 +51,5 @@ def get_container(config, ports, environment, check_fn):
     finally:
         if container:
             container.kill()
+
+        client.close()

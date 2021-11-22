@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-mock-resources"
-version = "2.1.5"
+version = "2.1.6"
 description = "A pytest plugin for easily instantiating reproducible mock resources."
 authors = [
     "Omar Khan <oakhan3@gmail.com>",
@@ -88,5 +88,5 @@ use_parentheses = true
 line_length = 100
 
 [build-system]
-requires = ["poetry_core>=1.0.0"]
-build-backend = "poetry.masonry.api"
+requires = ["poetry_core==1.0.4"]
+build-backend = "poetry.core.masonry.api"
