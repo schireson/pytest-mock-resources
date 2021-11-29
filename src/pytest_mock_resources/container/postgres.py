@@ -83,15 +83,13 @@ def check_postgres_fn(config):
 
 @pytest.fixture(scope="session")
 def _postgres_container(pmr_postgres_config):
-    result = get_container(
+    yield from get_container(
         pmr_postgres_config,
-        {5432: pmr_postgres_config.port},
-        {
+        ports={5432: pmr_postgres_config.port},
+        environment={
             "POSTGRES_DB": pmr_postgres_config.root_database,
             "POSTGRES_USER": pmr_postgres_config.username,
             "POSTGRES_PASSWORD": pmr_postgres_config.password,
         },
-        check_postgres_fn,
+        check_fn=check_postgres_fn,
     )
-
-    yield next(iter(result))

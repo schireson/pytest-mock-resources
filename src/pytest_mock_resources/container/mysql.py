@@ -93,14 +93,12 @@ def check_mysql_fn(config):
 
 @pytest.fixture(scope="session")
 def _mysql_container(pmr_mysql_config):
-    result = get_container(
+    yield from get_container(
         pmr_mysql_config,
-        {3306: pmr_mysql_config.port},
-        {
+        ports={3306: pmr_mysql_config.port},
+        environment={
             "MYSQL_DATABASE": pmr_mysql_config.root_database,
             "MYSQL_ROOT_PASSWORD": pmr_mysql_config.password,
         },
-        check_mysql_fn,
+        check_fn=check_mysql_fn,
     )
-
-    yield next(iter(result))

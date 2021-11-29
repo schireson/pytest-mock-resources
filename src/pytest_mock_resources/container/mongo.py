@@ -51,5 +51,9 @@ def check_mongo_fn(config):
 
 @pytest.fixture(scope="session")
 def _mongo_container(pmr_mongo_config):
-    result = get_container(pmr_mongo_config, {27017: pmr_mongo_config.port}, {}, check_mongo_fn)
-    yield next(iter(result))
+    yield from get_container(
+        pmr_mongo_config,
+        ports={27017: pmr_mongo_config.port},
+        environment={},
+        check_fn=check_mongo_fn,
+    )

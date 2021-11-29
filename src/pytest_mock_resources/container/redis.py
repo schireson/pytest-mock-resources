@@ -43,10 +43,9 @@ def check_redis_fn(config):
 
 @pytest.fixture(scope="session")
 def _redis_container(pmr_redis_config):
-    result = get_container(
+    yield from get_container(
         pmr_redis_config,
         ports={6379: pmr_redis_config.port},
         environment={},
         check_fn=check_redis_fn,
     )
-    yield next(iter(result))

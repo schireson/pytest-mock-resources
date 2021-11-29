@@ -20,9 +20,9 @@ def is_docker_host():
         return True
 
 
-def get_env_config(name, kind):
+def get_env_config(name, kind, default=None):
     env_var = "PMR_{name}_{kind}".format(name=name.upper(), kind=kind.upper())
-    return os.environ.get(env_var)
+    return os.environ.get(env_var, default)
 
 
 def fallback(fn):
