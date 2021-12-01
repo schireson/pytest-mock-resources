@@ -1,8 +1,36 @@
 # Changelog
 
-## [Unreleased](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.1.2...HEAD) (2021-09-20)
+### [v2.1.7](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.1.6...v2.1.7) (2021-12-01)
 
-### Fixes
+#### Fixes
+
+* breaking changes required to support pymongo 4.0.
+
+
+### [v2.1.6](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.1.5...v2.1.6) (2021-11-22)
+
+#### Fixes
+
+* Preempt socket warnings produced by the client not being closed manually. 4b3d9e0
+* readthedocs poetry error. 6369064
+
+
+### [v2.1.5](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.1.3...v2.1.5) (2021-11-22)
+
+#### Features
+
+* Add ability to change image when running pmr c8679ec
+* Use sqlalchemy's event system to apply redshift behavior. 2455620
+
+#### Fixes
+
+* Create pytest markers for all resources 1c7c449
+* Avoid mocking all of psycopg2 in the name of redshift. 6f38823
+
+
+### [v2.1.3](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.1.2...v2.1.3) (2021-09-20)
+
+#### Fixes
 
 * Avoid deprecated sqlalchemy URL constructor. 3fa64d3
 

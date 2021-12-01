@@ -121,7 +121,7 @@ def test_create_custom_connection(mongo):
     from pymongo import MongoClient
 
     client = MongoClient(**mongo.pmr_credentials.as_mongo_kwargs())
-    db = client[mongo.config["database"]]
+    db = client[mongo.pmr_credentials.database]
 
     collection = db["customers"]
     to_insert = [
