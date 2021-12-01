@@ -1,7 +1,7 @@
 import pytest
 
 from pytest_mock_resources.compat import pymongo
-from pytest_mock_resources.container.mongo import get_pymongo_client, MongoConfig
+from pytest_mock_resources.container.mongo import MongoConfig
 from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
 
 
@@ -35,32 +35,29 @@ def create_mongo_fixture(scope="function"):
 
 
 def _create_clean_database(config):
-    client = get_pymongo_client(config)
-    db = client[config.root_database]
+    root_client = pymongo.MongoClient(config.host, config.port)
+    root_db = root_client[config.root_database]
 
-    # Create a collection called `pytestMockResourceDbs' in the admin tab if it hasnt already been
-    # created.
-    db_collection = db["pytestMockResourcesDbs"]
+    # Create a collection called `pytestMockResourceDbs' in the admin tab if not already created.
+    db_collection = root_db["pytestMockResourcesDbs"]
 
-    #  create a Document in the `pytestMockResourcesDbs` collection:
+    # Create a Document in the `pytestMockResourcesDbs` collection.
     result = db_collection.insert_one({})
-    db_id = str(result.inserted_id)
 
-    #  Create a database where the name is equal to that ID:
-    create_db = client[db_id]
+    #  Create a database where the name is equal to that ID.
+    db_id = str(result.inserted_id)
+    new_database = root_client[db_id]
 
     #  Create a user as that databases owner
-    create_db.command("createUser", db_id, pwd="password", roles=["dbOwner"])  # nosec
+    password = "password"  # nosec
+    new_database.command("createUser", db_id, pwd=password, roles=["dbOwner"])
 
     #  pass back an authenticated db connection
-    limited_client = pymongo.MongoClient(config.host, config.port)
-    db = limited_client[db_id]
-    db.authenticate(db_id, "password")
-
-    db.config = {"username": db_id, "password": "password", "database": db_id}
+    limited_client = pymongo.MongoClient(config.host, config.port, username=db_id, password=password, authSource=db_id)
+    limited_db = limited_client[db_id]
 
     assign_fixture_credentials(
-        db,
+        limited_db,
         drivername="mongodb",
         host=config.host,
         port=config.port,
@@ -69,4 +66,4 @@ def _create_clean_database(config):
         password="password",
     )
 
-    return db
+    return limited_db

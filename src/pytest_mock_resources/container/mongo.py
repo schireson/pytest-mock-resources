@@ -36,15 +36,9 @@ class MongoConfig(DockerContainerConfig):
         raise NotImplementedError()
 
 
-def get_pymongo_client(config):
-    uri = "mongodb://{}:{}".format(config.host, config.port)
-
-    return pymongo.MongoClient(uri)
-
-
 def check_mongo_fn(config):
     try:
-        client = get_pymongo_client(config)
+        client = pymongo.MongoClient(config.host, config.port)
         db = client[config.root_database]
         db.command("ismaster")
     except pymongo.errors.ConnectionFailure:
