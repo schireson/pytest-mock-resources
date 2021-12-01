@@ -50,8 +50,9 @@ def check_mongo_fn(config):
 
 
 @pytest.fixture(scope="session")
-def _mongo_container(pmr_mongo_config):
+def _mongo_container(pytestconfig, pmr_mongo_config):
     yield from get_container(
+        pytestconfig,
         pmr_mongo_config,
         ports={27017: pmr_mongo_config.port},
         environment={},

@@ -92,8 +92,9 @@ def check_mysql_fn(config):
 
 
 @pytest.fixture(scope="session")
-def _mysql_container(pmr_mysql_config):
+def _mysql_container(pytestconfig, pmr_mysql_config):
     yield from get_container(
+        pytestconfig,
         pmr_mysql_config,
         ports={3306: pmr_mysql_config.port},
         environment={

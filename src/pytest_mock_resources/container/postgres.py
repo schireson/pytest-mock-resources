@@ -82,8 +82,9 @@ def check_postgres_fn(config):
 
 
 @pytest.fixture(scope="session")
-def _postgres_container(pmr_postgres_config):
+def _postgres_container(pytestconfig, pmr_postgres_config):
     yield from get_container(
+        pytestconfig,
         pmr_postgres_config,
         ports={5432: pmr_postgres_config.port},
         environment={
