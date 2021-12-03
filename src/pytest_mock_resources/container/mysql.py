@@ -1,7 +1,7 @@
 import pytest
 import sqlalchemy
-from pytest_mock_resources import compat
 
+from pytest_mock_resources import compat
 from pytest_mock_resources.config import DockerContainerConfig, fallback
 from pytest_mock_resources.container.base import ContainerCheckFailed, get_container
 
@@ -32,6 +32,8 @@ class MysqlConfig(DockerContainerConfig):
         "image": "mysql:5.6",
         "port": 3406,
         "ci_port": 3306,
+        # XXX: For now, username is disabled/ignored. We need root access for PMR
+        #      internals.
         "username": "root",
         "password": "password",
         "root_database": "dev",
@@ -96,7 +98,6 @@ def _mysql_container(pmr_mysql_config):
         {3306: pmr_mysql_config.port},
         {
             "MYSQL_DATABASE": pmr_mysql_config.root_database,
-            "MYSQL_USER": pmr_mysql_config.username,
             "MYSQL_ROOT_PASSWORD": pmr_mysql_config.password,
         },
         check_mysql_fn,
