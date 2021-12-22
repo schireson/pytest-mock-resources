@@ -9,9 +9,9 @@ Code which depends on external resources such a databases (postgres, redshift, e
 to write automated tests for. Conventional wisdom might be to mock or stub out the actual database
 calls and assert that the code works correctly before/after the calls.
 
-However take the following, *simple* example:
+However take the following, _simple_ example:
 
-``` python
+```python
 def serialize(users):
     return [
         {
@@ -27,7 +27,7 @@ def view_function(session):
     return serialize(users)
 ```
 
-Sure, you can test `serialize`, but whether the actual **query** did the correct thing *truly*
+Sure, you can test `serialize`, but whether the actual **query** did the correct thing _truly_
 requires that you execute the query.
 
 ## The Pitch
@@ -49,7 +49,7 @@ documentation](https://docs.pytest.org/en/latest/fixture.html).
 
 In the above example, your test file could look something like
 
-``` python
+```python
 from pytest_mock_resources import create_postgres_fixture
 from models import ModelBase
 
@@ -78,13 +78,13 @@ def test_view_function_user_with_purchases(pg):
 
 - SQLite
 
-  ``` python
+  ```python
   from pytest_mock_resources import create_sqlite_fixture
   ```
 
 - Postgres
 
-  ``` python
+  ```python
   from pytest_mock_resources import create_postgres_fixture
   ```
 
@@ -93,25 +93,25 @@ def test_view_function_user_with_purchases(pg):
   **note** Uses postgres under the hood, but the fixture tries to support as much redshift
   functionality as possible (including redshift's `COPY`/`UNLOAD` commands).
 
-  ``` python
+  ```python
   from pytest_mock_resources import create_redshift_fixture
   ```
 
 - Mongo
 
-  ``` python
+  ```python
   from pytest_mock_resources import create_mongo_fixture
   ```
 
 - Redis
 
-  ``` python
+  ```python
   from pytest_mock_resources import create_redis_fixture
   ```
 
 - MySQL
 
-  ``` python
+  ```python
   from pytest_mock_resources import create_mysql_fixture
   ```
 
@@ -125,7 +125,7 @@ General features include:
 
 ## Installing
 
-``` bash
+```bash
 # Basic fixture support
 pip install "pytest-mock-resources"
 
