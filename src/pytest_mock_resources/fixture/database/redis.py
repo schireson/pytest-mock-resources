@@ -23,6 +23,19 @@ def create_redis_fixture(scope="function"):
     Any number of fixture functions can be created. Under the hood they will all share the same
     database server.
 
+    .. note::
+
+       If running tests in parallel, the implementation fans out to different redis "database"s,
+       up to a 16 (which is the default container fixed limite). This means you can only run
+       up to 16 simultaneous tests.
+
+       Additionally, any calls to `flushall` or any other cross-database calls **will** still
+       represent cross-test state.
+
+       Finally, the above notes are purely describing the current implementation, and should not
+       be assumed. In the future, the current database selection mechanism may change, or
+       databases may not be used altogether.
+
     Args:
         scope (str): The scope of the fixture can be specified by the user, defaults to "function".
 
@@ -31,15 +44,25 @@ def create_redis_fixture(scope="function"):
     """
 
     @pytest.fixture(scope=scope)
-    def _(_redis_container, pmr_redis_config):
-        db = redis.Redis(host=pmr_redis_config.host, port=pmr_redis_config.port)
-        db.flushall()
+    def _(request, _redis_container, pmr_redis_config):
+        database_number = 0
+        if hasattr(request.config, 'workerinput'):
+            worker_input = request.config.workerinput
+            worker_id = worker_input['workerid']  # For example "gw0".
+            database_number = int(worker_id[2:])
+
+        if database_number >= 16:
+            raise ValueError("The redis fixture currently only supports up to 16 parallel executions")
+
+        db = redis.Redis(host=pmr_redis_config.host, port=pmr_redis_config.port, db=database_number)
+        db.flushdb()
+
         assign_fixture_credentials(
             db,
             drivername="redis",
             host=pmr_redis_config.host,
             port=pmr_redis_config.port,
-            database=None,
+            database=database_number,
             username=None,
             password=None,
         )

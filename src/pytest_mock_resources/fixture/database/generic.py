@@ -14,7 +14,7 @@ class Credentials:
         self.drivername = drivername
         self.host = host
         self.port = port
-        self.database = database
+        self.database = str(database)
         self.username = username
         self.password = password
 
@@ -69,7 +69,7 @@ class Credentials:
         return {
             "host": self.host,
             "port": self.port,
-            "db": self.database,
+            "db": int(self.database),
             "username": self.username,
             "password": self.password,
         }
