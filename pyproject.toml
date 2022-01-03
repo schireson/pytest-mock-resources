@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-mock-resources"
-version = "2.2.6"
+version = "2.2.7"
 description = "A pytest plugin for easily instantiating reproducible mock resources."
 authors = [
     "Omar Khan <oakhan3@gmail.com>",
@@ -99,6 +99,27 @@ warn_unused_ignores = true
 incremental = true
 plugins = 'sqlalchemy.ext.mypy.plugin'
 exclude = 'tests/examples'
+
+[tool.pytest.ini_options]
+doctest_optionflags = "NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL ELLIPSIS"
+addopts = "--doctest-modules -vv --ff --strict-markers"
+norecursedirs = ".* build dist *.egg tests/examples"
+pytester_example_dir = "tests/examples"
+pmr_multiprocess_safe = true
+markers = [
+    "postgres",
+    "redshift",
+    "mongo",
+    "redis",
+    "mysql",
+]
+filterwarnings = [
+  "error",
+  "ignore:invalid escape sequence.*",
+  "ignore:urllib.parse.splitnport.*:DeprecationWarning",
+  "ignore:distutils Version classes are deprecated. Use packaging.version instead.:DeprecationWarning",
+  "ignore::ResourceWarning",
+]
 
 [build-system]
 requires = ["poetry_core==1.0.4"]

@@ -1,4 +1,7 @@
-class ImportAdaptor(object):
+from types import ModuleType
+
+
+class ImportAdaptor(ModuleType):
     __wrapped__ = False
 
     def __init__(self, package, recommended_extra, fail_message=None, **attrs):

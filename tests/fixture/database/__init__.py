@@ -1,6 +1,6 @@
 import random
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 from pytest_mock_resources.compat import boto3, moto, psycopg2
 from pytest_mock_resources.patch.redshift.mock_s3_copy import read_data_csv
@@ -47,7 +47,8 @@ UNLOAD_TEMPLATE = (
 
 
 def fetch_values_from_table_and_assert(engine):
-    execute = engine.execute("SELECT * from test_s3_copy_into_redshift")
+    with engine.connect() as conn:
+        execute = conn.execute(text("SELECT * from test_s3_copy_into_redshift"))
     results = [row for row in execute]
     assert len(results) == len(original_data)
     for index, val in enumerate(results):
@@ -66,11 +67,15 @@ def fetch_and_assert_psycopg2(cursor):
         assert result == expected_result
 
 
-def setup_table_and_bucket(redshift, file_name="file.csv", create_bucket=True):
-    redshift.execute(
+def setup_table_and_bucket(redshift, file_name="file.csv", create_bucket=True, cursor=False):
+    statement = (
         "CREATE TABLE test_s3_copy_into_redshift (i INT, f FLOAT, c CHAR(1), v VARCHAR(16));"
     )
-    redshift.execute("COMMIT;")
+    if cursor:
+        redshift.execute(statement)
+    else:
+        with redshift.begin() as conn:
+            conn.execute(text(statement))
 
     conn = boto3.resource(
         "s3",
@@ -84,19 +89,22 @@ def setup_table_and_bucket(redshift, file_name="file.csv", create_bucket=True):
     conn.Object("mybucket", file_name).put(Body=get_data_csv(original_data, data_columns))
 
 
-def setup_table_and_insert_data(engine):
-    engine.execute(
-        "CREATE TABLE test_s3_unload_from_redshift (i INT, f FLOAT, c CHAR(1), v VARCHAR(16));"
+def setup_table_and_insert_data(engine, cursor=False):
+    create = "CREATE TABLE test_s3_unload_from_redshift (i INT, f FLOAT, c CHAR(1), v VARCHAR(16))"
+    insert = (
+        "INSERT INTO test_s3_unload_from_redshift(i, f, c, v)"
+        " values(3342, 32434.0, 'a', 'gfhsdgaf'), (3343, 0, 'b', NULL), "
+        "(0, 32434.0, NULL, 'gfhsdgaf')"
     )
-    engine.execute("COMMIT;")
 
-    engine.execute(
-        (
-            "INSERT INTO test_s3_unload_from_redshift(i, f, c, v)"
-            " values(3342, 32434.0, 'a', 'gfhsdgaf'), (3343, 0, 'b', NULL), "
-            "(0, 32434.0, NULL, 'gfhsdgaf')"
-        )
-    )
+    if cursor:
+        engine.execute(create)
+        engine.execute(insert)
+        engine.execute("COMMIT;")
+    else:
+        with engine.begin() as conn:
+            conn.execute(text(create))
+            conn.execute(text(insert))
 
 
 def fetch_values_from_s3_and_assert(
@@ -119,18 +127,21 @@ def randomcase(s):
 def copy_fn_to_test_create_engine_patch(redshift):
     with moto.mock_s3():
         engine = create_engine(redshift.url)
-        setup_table_and_bucket(engine)
+        setup_table_and_bucket(redshift)
 
-        engine.execute(
-            COPY_TEMPLATE.format(
-                COMMAND="COPY",
-                LOCATION="s3://mybucket/file.csv",
-                COLUMNS="",
-                FROM="from",
-                CREDENTIALS="credentials",
-                OPTIONAL_ARGS="",
+        with engine.begin() as conn:
+            conn.execute(
+                text(
+                    COPY_TEMPLATE.format(
+                        COMMAND="COPY",
+                        LOCATION="s3://mybucket/file.csv",
+                        COLUMNS="",
+                        FROM="from",
+                        CREDENTIALS="credentials",
+                        OPTIONAL_ARGS="",
+                    )
+                )
             )
-        )
 
         fetch_values_from_table_and_assert(engine)
 
@@ -139,7 +150,7 @@ def copy_fn_to_test_psycopg2_connect_patch(config):
     with moto.mock_s3():
         conn = psycopg2.connect(**config)
         cursor = conn.cursor()
-        setup_table_and_bucket(cursor)
+        setup_table_and_bucket(cursor, cursor=True)
 
         cursor.execute(
             COPY_TEMPLATE.format(
@@ -159,7 +170,7 @@ def copy_fn_to_test_psycopg2_connect_patch_as_context_manager(config):
     with moto.mock_s3():
         with psycopg2.connect(**config) as conn:
             with conn.cursor() as cursor:
-                setup_table_and_bucket(cursor)
+                setup_table_and_bucket(cursor, cursor=True)
 
                 cursor.execute(
                     COPY_TEMPLATE.format(
@@ -179,16 +190,19 @@ def unload_fn_to_test_create_engine_patch(redshift):
     with moto.mock_s3():
         engine = create_engine(redshift.url)
         setup_table_and_insert_data(engine)
-        engine.execute(
-            UNLOAD_TEMPLATE.format(
-                COMMAND="UNLOAD",
-                SELECT_STATEMENT="select * from test_s3_unload_from_redshift",
-                TO="TO",
-                LOCATION="s3://mybucket/myfile.csv",
-                AUTHORIZATION="AUTHORIZATION",
-                OPTIONAL_ARGS="",
+        with engine.begin() as conn:
+            conn.execute(
+                text(
+                    UNLOAD_TEMPLATE.format(
+                        COMMAND="UNLOAD",
+                        SELECT_STATEMENT="select * from test_s3_unload_from_redshift",
+                        TO="TO",
+                        LOCATION="s3://mybucket/myfile.csv",
+                        AUTHORIZATION="AUTHORIZATION",
+                        OPTIONAL_ARGS="",
+                    )
+                )
             )
-        )
 
         fetch_values_from_s3_and_assert(engine, is_gzipped=False)
 
@@ -197,7 +211,7 @@ def unload_fn_to_test_psycopg2_connect_patch(config):
     with moto.mock_s3():
         conn = psycopg2.connect(**config)
         cursor = conn.cursor()
-        setup_table_and_insert_data(cursor)
+        setup_table_and_insert_data(cursor, cursor=True)
 
         cursor.execute(
             UNLOAD_TEMPLATE.format(
@@ -217,7 +231,7 @@ def unload_fn_to_test_psycopg2_connect_patch_as_context_manager(config):
     with moto.mock_s3():
         with psycopg2.connect(**config) as conn:
             with conn.cursor() as cursor:
-                setup_table_and_insert_data(cursor)
+                setup_table_and_insert_data(cursor, cursor=True)
 
                 cursor.execute(
                     UNLOAD_TEMPLATE.format(

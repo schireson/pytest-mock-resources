@@ -1,7 +1,7 @@
 from sqlalchemy import Column, event, Integer
-from sqlalchemy.ext.declarative import declarative_base
 
 from pytest_mock_resources import create_postgres_fixture
+from pytest_mock_resources.compat.sqlalchemy import declarative_base
 from pytest_mock_resources.container.postgres import get_sqlalchemy_engine
 from pytest_mock_resources.fixture.database.relational.postgresql import _create_clean_database
 
@@ -27,9 +27,9 @@ def test_create_clean_database_createdb_template(pmr_postgres_config, createdb_t
 
     def before_execute(conn, clauseelement, multiparams, params, execution_options):
         # Search for our create database statement, so we can assert against it.
-        if "CREATE DATABASE" in clauseelement:
+        if "CREATE DATABASE" in clauseelement.text:
             nonlocal statement
-            statement = clauseelement
+            statement = clauseelement.text
         return clauseelement, multiparams, params
 
     # Use the event system to hook into the statements being executed by sqlalchemy.
@@ -43,4 +43,5 @@ def test_create_clean_database_createdb_template(pmr_postgres_config, createdb_t
 
 def test_createdb_template(createdb_template_pg):
     """Assert successful usage of a fixture which sets the `createdb_template` argument."""
-    createdb_template_pg.execute(Thing.__table__.insert().values({"id": 1}))
+    with createdb_template_pg.begin() as conn:
+        conn.execute(Thing.__table__.insert().values({"id": 1}))

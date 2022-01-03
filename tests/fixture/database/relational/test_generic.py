@@ -1,11 +1,12 @@
 import pytest
 import sqlalchemy
-from sqlalchemy import Column, Integer, MetaData, select, SmallInteger, Table, Unicode
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, MetaData, SmallInteger, Table, text, Unicode
 from sqlalchemy.orm import sessionmaker
 
 from pytest_mock_resources import create_postgres_fixture, create_sqlite_fixture, Rows
+from pytest_mock_resources.compat.sqlalchemy import declarative_base, select
 from pytest_mock_resources.fixture.database.relational.generic import identify_matching_tables
+from tests import skip_if_sqlalchemy2
 
 Base = declarative_base()
 
@@ -32,54 +33,54 @@ class Other2(Base):
     id = Column(Integer, autoincrement=True, primary_key=True)
 
 
-sqlite_model = create_sqlite_fixture(Base, tables=[Thing])
-sqlite_table = create_sqlite_fixture(Base, tables=[Thing.__table__])
-sqlite_name_implicit_schema = create_sqlite_fixture(Base, tables=["thing"])
-sqlite_name_explicit_schema = create_sqlite_fixture(Base, tables=["other.other"])
-sqlite_name_bad_table = create_sqlite_fixture(Base, tables=["foo"])
+sqlite_model = create_sqlite_fixture(Base, tables=[Thing], session=True)
+sqlite_table = create_sqlite_fixture(Base, tables=[Thing.__table__], session=True)
+sqlite_name_implicit_schema = create_sqlite_fixture(Base, tables=["thing"], session=True)
+sqlite_name_explicit_schema = create_sqlite_fixture(Base, tables=["other.other"], session=True)
+sqlite_name_bad_table = create_sqlite_fixture(Base, tables=["foo"], session=True)
 sqlite_duplicate = create_sqlite_fixture(
-    Base, tables=[Thing, Other2.__table__, "thing", "other.other"]
+    Base, tables=[Thing, Other2.__table__, "thing", "other.other"], session=True
 )
-sqlite_glob = create_sqlite_fixture(Base, tables=["*.other"])
+sqlite_glob = create_sqlite_fixture(Base, tables=["*.other"], session=True)
 
 
 class TestTablesArg:
     def test_model_object(self, sqlite_model):
-        sqlite_model.execute("select * from thing")
+        sqlite_model.execute(text("select * from thing"))
         with pytest.raises(sqlalchemy.exc.OperationalError):
-            sqlite_model.execute("select * from other.other")
+            sqlite_model.execute(text("select * from other.other"))
 
     def test_table_object(self, sqlite_table):
-        sqlite_table.execute("select * from thing")
+        sqlite_table.execute(text("select * from thing"))
         with pytest.raises(sqlalchemy.exc.OperationalError):
-            sqlite_table.execute("select * from other.other")
+            sqlite_table.execute(text("select * from other.other"))
 
     def test_table_name_implicit_schema(self, sqlite_name_implicit_schema):
-        sqlite_name_implicit_schema.execute("select * from thing")
+        sqlite_name_implicit_schema.execute(text("select * from thing"))
         with pytest.raises(sqlalchemy.exc.OperationalError):
-            sqlite_name_implicit_schema.execute("select * from other.other")
+            sqlite_name_implicit_schema.execute(text("select * from other.other"))
 
     def test_table_name_explicit_schema(self, sqlite_name_explicit_schema):
-        sqlite_name_explicit_schema.execute("select * from other.other")
+        sqlite_name_explicit_schema.execute(text("select * from other.other"))
         with pytest.raises(sqlalchemy.exc.OperationalError):
-            sqlite_name_explicit_schema.execute("select * from public.other")
+            sqlite_name_explicit_schema.execute(text("select * from public.other"))
 
     @pytest.mark.xfail(strict=True, raises=ValueError)
     def test_table_name_bad_name(self, sqlite_name_bad_table):
         pass
 
     def test_table_duplicate(self, sqlite_duplicate):
-        sqlite_duplicate.execute("select * from thing")
-        sqlite_duplicate.execute("select * from other.other")
+        sqlite_duplicate.execute(text("select * from thing"))
+        sqlite_duplicate.execute(text("select * from other.other"))
         with pytest.raises(sqlalchemy.exc.OperationalError):
-            sqlite_duplicate.execute("select * from public.other")
+            sqlite_duplicate.execute(text("select * from public.other"))
 
     def test_glob(self, sqlite_glob):
         with pytest.raises(sqlalchemy.exc.OperationalError):
-            sqlite_glob.execute("select * from thing")
+            sqlite_glob.execute(text("select * from thing"))
 
-        sqlite_glob.execute("select * from other.other")
-        sqlite_glob.execute("select * from public.other")
+        sqlite_glob.execute(text("select * from other.other"))
+        sqlite_glob.execute(text("select * from public.other"))
 
 
 PGBase = declarative_base()
@@ -106,14 +107,16 @@ pg_explicit_schema = create_postgres_fixture(PGBase, tables=["public.quarter"])
 
 class TestPg:
     def test_implicit_schema(self, pg_implicit_schema):
-        pg_implicit_schema.execute("select * from report")
-        with pytest.raises(sqlalchemy.exc.ProgrammingError):
-            pg_implicit_schema.execute("select * from public.quarter")
+        with pg_implicit_schema.begin() as conn:
+            conn.execute(text("select * from report"))
+            with pytest.raises(sqlalchemy.exc.ProgrammingError):
+                conn.execute(text("select * from public.quarter"))
 
     def test_explicit_schema(self, pg_explicit_schema):
-        pg_explicit_schema.execute("select * from quarter")
-        with pytest.raises(sqlalchemy.exc.ProgrammingError):
-            pg_explicit_schema.execute("select * from report")
+        with pg_explicit_schema.begin() as conn:
+            conn.execute(text("select * from quarter"))
+            with pytest.raises(sqlalchemy.exc.ProgrammingError):
+                conn.execute(text("select * from report"))
 
 
 rows = Rows(Quarter(id=1, year=1, quarter=1))
@@ -133,15 +136,17 @@ class TestSessionArg:
         result = sqlite.query(Quarter).one()
         assert result.id == 1
 
-        sqlite.execute("INSERT INTO report (id) VALUES (1)")
+        sqlite.execute(text("INSERT INTO report (id) VALUES (1)"))
 
         sqlite.rollback()
         result = sqlite.query(Report).all()
         assert len(result) == 0
 
+    @skip_if_sqlalchemy2
     def test_session2(self, sqlite2):
-        sqlite2.execute("INSERT INTO report (id) VALUES (1)")
-        sqlite2.rollback()
+        with sqlite2.begin() as conn:
+            conn.execute(text("INSERT INTO report (id) VALUES (1)"))
+            conn.rollback()
         result = sqlite2.query(Report).all()
         assert len(result) == 1
 

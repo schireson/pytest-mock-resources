@@ -1,5 +1,6 @@
 import pytest
 import sqlalchemy
+from sqlalchemy import text
 
 from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.mysql import get_sqlalchemy_engine, MysqlConfig
@@ -64,27 +65,30 @@ def create_mysql_fixture(*ordered_actions, scope="function", tables=None, sessio
 def _create_clean_database(config):
     root_engine = get_sqlalchemy_engine(config, config.root_database, isolation_level="AUTOCOMMIT")
 
-    try:
-        root_engine.execute(
-            """
-            CREATE TABLE IF NOT EXISTS pytest_mock_resource_db(
-                id serial
-            );
-            """
-        )
-    except (sqlalchemy.exc.IntegrityError, sqlalchemy.exc.ProgrammingError):
-        # A race condition may occur during table creation if:
-        #  - another process has already created the table
-        #  - the current process begins creating the table
-        #  - the other process commits the table creation
-        #  - the current process tries to commit the table creation
-        pass
+    with root_engine.begin() as conn:
+        try:
+            conn.execute(
+                text(
+                    """
+                CREATE TABLE IF NOT EXISTS pytest_mock_resource_db(
+                    id serial
+                );
+                """
+                )
+            )
+        except (sqlalchemy.exc.IntegrityError, sqlalchemy.exc.ProgrammingError):
+            # A race condition may occur during table creation if:
+            #  - another process has already created the table
+            #  - the current process begins creating the table
+            #  - the other process commits the table creation
+            #  - the current process tries to commit the table creation
+            pass
 
-    root_engine.execute("INSERT INTO pytest_mock_resource_db VALUES (DEFAULT)")
-    result = root_engine.execute("SELECT LAST_INSERT_ID()")
-    id_ = tuple(result)[0][0]
-    database_name = "pytest_mock_resource_db_{}".format(id_)
+        conn.execute(text("INSERT INTO pytest_mock_resource_db VALUES (DEFAULT)"))
+        result = conn.execute(text("SELECT LAST_INSERT_ID()"))
+        id_ = tuple(result)[0][0]
+        database_name = "pytest_mock_resource_db_{}".format(id_)
 
-    root_engine.execute("CREATE DATABASE {}".format(database_name))
+        conn.execute(text(f"CREATE DATABASE {database_name}"))
 
     return database_name

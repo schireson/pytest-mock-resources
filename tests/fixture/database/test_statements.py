@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 from pytest_mock_resources import (
     create_mysql_fixture,
     create_postgres_fixture,
@@ -13,36 +15,43 @@ mysql = create_mysql_fixture(statements)
 
 
 def test_statements_postgres(postgres):
-    execute = postgres.execute(
-        """
-        SELECT table_name
-        FROM INFORMATION_SCHEMA.views
-        WHERE table_name in ('cool_view', 'cool_view_2')
-        ORDER BY table_name
-        """
-    )
+    with postgres.connect() as conn:
+        execute = conn.execute(
+            text(
+                """
+            SELECT table_name
+            FROM INFORMATION_SCHEMA.views
+            WHERE table_name in ('cool_view', 'cool_view_2')
+            ORDER BY table_name
+            """
+            )
+        )
 
     result = [row[0] for row in execute]
     assert ["cool_view", "cool_view_2"] == result
 
 
 def test_statements_mysql(mysql):
-    execute = mysql.execute(
-        """
-        SELECT table_name
-        FROM INFORMATION_SCHEMA.views
-        WHERE table_name in ('cool_view', 'cool_view_2')
-        AND table_schema = (select database())
-        ORDER BY table_name
-        """
-    )
+    with mysql.connect() as conn:
+        execute = conn.execute(
+            text(
+                """
+            SELECT table_name
+            FROM INFORMATION_SCHEMA.views
+            WHERE table_name in ('cool_view', 'cool_view_2')
+            AND table_schema = (select database())
+            ORDER BY table_name
+            """
+            )
+        )
 
     result = [row[0] for row in execute]
     assert ["cool_view", "cool_view_2"] == result
 
 
 statements = Statements(
-    """
+    text(
+        """
     CREATE TABLE account(
      user_id serial PRIMARY KEY,
      username VARCHAR (50) UNIQUE NOT NULL,
@@ -50,12 +59,14 @@ statements = Statements(
     );
     INSERT INTO account VALUES (1, 'user1', 'password1')
     """
+    )
 )
 redshift = create_redshift_fixture(statements)
 
 
 def test_multi_statement_statements(redshift):
-    execute = redshift.execute("SELECT password FROM account")
+    with redshift.begin() as conn:
+        execute = conn.execute(text("SELECT password FROM account"))
 
     result = sorted([row[0] for row in execute])
     assert ["password1"] == result

@@ -1,13 +1,12 @@
 from datetime import datetime, timedelta, tzinfo
 
 import pytest
-import sqlalchemy
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, Unicode
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, text, Unicode
 from sqlalchemy.dialects.postgresql import JSON, JSONB
-from sqlalchemy.exc import SAWarning
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.exc import IntegrityError, SAWarning
 
 from pytest_mock_resources import create_postgres_fixture, create_sqlite_fixture, Rows
+from pytest_mock_resources.compat.sqlalchemy import declarative_base, select
 from pytest_mock_resources.fixture.database.relational.sqlite import utc
 
 Base = declarative_base()
@@ -44,50 +43,57 @@ sqlite = create_sqlite_fixture(Base, Rows(Thing(id=1, name="foo")))
 
 
 def test_create_schema(sqlite):
-    result = list(sqlite.execute("select * from other.thing"))
+    with sqlite.begin() as conn:
+        result = list(conn.execute(text("select * from other.thing")))
     assert result == [(1, "foo")]
 
 
 def test_create_all(sqlite):
     Base.metadata.create_all(bind=sqlite)
 
-    result = list(sqlite.execute("select * from other.thing"))
+    with sqlite.begin() as conn:
+        result = list(conn.execute(text("select * from other.thing")))
     assert result == [(1, "foo")]
 
 
 def test_foreign_keys(sqlite):
-    sqlite.execute("INSERT INTO other.fk (id, thing_id) VALUES (1, 1)")
-    with pytest.raises(sqlalchemy.exc.IntegrityError):
-        sqlite.execute("INSERT INTO other.fk (id, thing_id) VALUES (2, 2)")
+    with sqlite.begin() as conn:
+        conn.execute(text("INSERT INTO other.fk (id, thing_id) VALUES (1, 1)"))
+        with pytest.raises(IntegrityError):
+            conn.execute(text("INSERT INTO other.fk (id, thing_id) VALUES (2, 2)"))
 
 
 pg = create_postgres_fixture(Base, Rows(Thing(id=1, name="foo")))
 
 
 def test_json_column(sqlite):
-    sqlite.execute(column_types_table.insert().values(id=1, json={"foo": 2}))
-    result = sqlite.execute(sqlalchemy.select([column_types_table.c.json])).scalar()
-    assert result == {"foo": 2}
+    with sqlite.begin() as conn:
+        conn.execute(column_types_table.insert().values(id=1, json={"foo": 2}))
+        result = conn.execute(select(column_types_table.c.json)).scalar()
+        assert result == {"foo": 2}
 
 
 def test_json_column_pg(pg):
     """Included here as a way of showing that this mimics postgres' behavior"""
-    pg.execute(column_types_table.insert().values(id=1, json={"foo": 2}))
-    result = pg.execute(sqlalchemy.select([column_types_table.c.json])).scalar()
-    assert result == {"foo": 2}
+    with pg.begin() as conn:
+        conn.execute(column_types_table.insert().values(id=1, json={"foo": 2}))
+        result = conn.execute(select(column_types_table.c.json)).scalar()
+        assert result == {"foo": 2}
 
 
 def test_jsonb_column(sqlite):
-    sqlite.execute(column_types_table.insert().values(id=1, jsonb={"foo": "bar"}))
-    result = sqlite.execute(sqlalchemy.select([column_types_table.c.jsonb])).scalar()
-    assert result == {"foo": "bar"}
+    with sqlite.begin() as conn:
+        conn.execute(column_types_table.insert().values(id=1, jsonb={"foo": "bar"}))
+        result = conn.execute(select(column_types_table.c.jsonb)).scalar()
+        assert result == {"foo": "bar"}
 
 
 def test_jsonb_column_pg(pg):
     """Included here as a way of showing that this mimics postgres' behavior"""
-    pg.execute(column_types_table.insert().values(id=1, jsonb={"foo": "bar"}))
-    result = pg.execute(sqlalchemy.select([column_types_table.c.jsonb])).scalar()
-    assert result == {"foo": "bar"}
+    with pg.begin() as conn:
+        conn.execute(column_types_table.insert().values(id=1, jsonb={"foo": "bar"}))
+        result = conn.execute(select(column_types_table.c.jsonb)).scalar()
+        assert result == {"foo": "bar"}
 
 
 NumericBase = declarative_base()
@@ -105,15 +111,17 @@ sqlite_without_warnings = create_sqlite_fixture(NumericBase)
 
 
 def test_decimal_warnings_enabled(sqlite_with_warnings):
-    sqlite_with_warnings.execute("INSERT INTO numeric (id, value) VALUES (1, 1)")
-    with pytest.warns(SAWarning):
-        sqlite_with_warnings.execute(sqlalchemy.select([NumericTable.__table__.c.value])).scalar()
+    with sqlite_with_warnings.begin() as conn:
+        conn.execute(text("INSERT INTO numeric (id, value) VALUES (1, 1)"))
+        with pytest.warns(SAWarning):
+            conn.execute(select(NumericTable.__table__.c.value)).scalar()
 
 
 @pytest.mark.filterwarnings("error")
 def test_decimal_warnings_disabled(sqlite_without_warnings):
-    sqlite_without_warnings.execute("INSERT INTO numeric (id, value) VALUES (1, 1)")
-    sqlite_without_warnings.execute(sqlalchemy.select([NumericTable.__table__.c.value])).scalar()
+    with sqlite_without_warnings.begin() as conn:
+        conn.execute(text("INSERT INTO numeric (id, value) VALUES (1, 1)"))
+        conn.execute(select(NumericTable.__table__.c.value)).scalar()
 
 
 DateTimeBase = declarative_base()
@@ -146,60 +154,72 @@ class Foo(tzinfo):
 
 
 def test_dt_column_naive_input(sqlite_dt):
-    sqlite_dt.execute(DTTable.__table__.insert().values(id=1, dt=datetime(2018, 1, 1, 5, 0, 0)))
-    result = sqlite_dt.execute(sqlalchemy.select([dt_table.c.dt])).scalar()
+    with sqlite_dt.begin() as conn:
+        conn.execute(DTTable.__table__.insert().values(id=1, dt=datetime(2018, 1, 1, 5, 0, 0)))
+        result = conn.execute(select(dt_table.c.dt)).scalar()
     assert result == datetime(2018, 1, 1, 5, 0, 0)
 
 
 def test_dt_column_tzaware_input(sqlite_dt):
-    sqlite_dt.execute(
-        DTTable.__table__.insert().values(id=1, dt=datetime(2018, 1, 1, 5, 0, 0, tzinfo=Foo()))
-    )
-    result = sqlite_dt.execute(sqlalchemy.select([dt_table.c.dt])).scalar()
+    with sqlite_dt.begin() as conn:
+        conn.execute(
+            DTTable.__table__.insert().values(id=1, dt=datetime(2018, 1, 1, 5, 0, 0, tzinfo=Foo()))
+        )
+        result = conn.execute(select(dt_table.c.dt)).scalar()
     assert result == datetime(2018, 1, 1, 9, 0, 0)
 
 
 def test_dt_tz_column_naive_input(sqlite_dt):
-    sqlite_dt.execute(DTTable.__table__.insert().values(id=1, dt_tz=datetime(2018, 1, 1, 5, 0, 0)))
-    result = sqlite_dt.execute(sqlalchemy.select([dt_table.c.dt_tz])).scalar()
+    with sqlite_dt.begin() as conn:
+        conn.execute(DTTable.__table__.insert().values(id=1, dt_tz=datetime(2018, 1, 1, 5, 0, 0)))
+        result = conn.execute(select(dt_table.c.dt_tz)).scalar()
     assert result == datetime(2018, 1, 1, 5, 0, 0, tzinfo=utc)
 
 
 def test_dt_tz_column_tzaware_input(sqlite_dt):
-    sqlite_dt.execute(
-        DTTable.__table__.insert().values(id=1, dt_tz=datetime(2018, 1, 1, 5, 0, 0, tzinfo=Foo()))
-    )
-    result = sqlite_dt.execute(sqlalchemy.select([dt_table.c.dt_tz])).scalar()
+    with sqlite_dt.begin() as conn:
+        conn.execute(
+            DTTable.__table__.insert().values(
+                id=1, dt_tz=datetime(2018, 1, 1, 5, 0, 0, tzinfo=Foo())
+            )
+        )
+        result = conn.execute(select(dt_table.c.dt_tz)).scalar()
     assert result == datetime(2018, 1, 1, 9, 0, 0, tzinfo=utc)
 
 
 def test_dt_column_naive_input_pg(pg_dt):
     """Included here as a way of showing that this mimics postgres' behavior"""
-    pg_dt.execute(DTTable.__table__.insert().values(id=1, dt=datetime(2018, 1, 1, 5, 0, 0)))
-    result = pg_dt.execute(sqlalchemy.select([dt_table.c.dt])).scalar()
+    with pg_dt.begin() as conn:
+        conn.execute(DTTable.__table__.insert().values(id=1, dt=datetime(2018, 1, 1, 5, 0, 0)))
+        result = conn.execute(select(dt_table.c.dt)).scalar()
     assert result == datetime(2018, 1, 1, 5, 0, 0)
 
 
 def test_dt_column_tzaware_input_pg(pg_dt):
     """Included here as a way of showing that this mimics postgres' behavior"""
-    pg_dt.execute(
-        DTTable.__table__.insert().values(id=1, dt=datetime(2018, 1, 1, 5, 0, 0, tzinfo=Foo()))
-    )
-    result = pg_dt.execute(sqlalchemy.select([dt_table.c.dt])).scalar()
+    with pg_dt.begin() as conn:
+        conn.execute(
+            DTTable.__table__.insert().values(id=1, dt=datetime(2018, 1, 1, 5, 0, 0, tzinfo=Foo()))
+        )
+        result = conn.execute(select(dt_table.c.dt)).scalar()
     assert result == datetime(2018, 1, 1, 9, 0, 0)
 
 
 def test_dt_tz_column_naive_input_pg(pg_dt):
     """Included here as a way of showing that this mimics postgres' behavior"""
-    pg_dt.execute(DTTable.__table__.insert().values(id=1, dt_tz=datetime(2018, 1, 1, 5, 0, 0)))
-    result = pg_dt.execute(sqlalchemy.select([dt_table.c.dt_tz])).scalar()
+    with pg_dt.begin() as conn:
+        conn.execute(DTTable.__table__.insert().values(id=1, dt_tz=datetime(2018, 1, 1, 5, 0, 0)))
+        result = conn.execute(select(dt_table.c.dt_tz)).scalar()
     assert result == datetime(2018, 1, 1, 5, 0, 0, tzinfo=utc)
 
 
 def test_dt_tz_column_tzaware_input_pg(pg_dt):
     """Included here as a way of showing that this mimics postgres' behavior"""
-    pg_dt.execute(
-        DTTable.__table__.insert().values(id=1, dt_tz=datetime(2018, 1, 1, 5, 0, 0, tzinfo=Foo()))
-    )
-    result = pg_dt.execute(sqlalchemy.select([dt_table.c.dt_tz])).scalar()
+    with pg_dt.begin() as conn:
+        conn.execute(
+            DTTable.__table__.insert().values(
+                id=1, dt_tz=datetime(2018, 1, 1, 5, 0, 0, tzinfo=Foo())
+            )
+        )
+        result = conn.execute(select(dt_table.c.dt_tz)).scalar()
     assert result == datetime(2018, 1, 1, 9, 0, 0, tzinfo=utc)
