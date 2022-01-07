@@ -18,7 +18,7 @@ import warnings
 
 import pytest
 from sqlalchemy import create_engine, event
-from sqlalchemy.dialects import registry
+from sqlalchemy.dialects import registry  # type: ignore
 from sqlalchemy.dialects.postgresql import JSON, JSONB
 from sqlalchemy.dialects.sqlite import base as sqlite_base
 from sqlalchemy.dialects.sqlite.pysqlite import SQLiteDialect_pysqlite

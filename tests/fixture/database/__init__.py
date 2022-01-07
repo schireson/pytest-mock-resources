@@ -1,9 +1,10 @@
 import random
 
+from sqlalchemy import create_engine
+
 from pytest_mock_resources.compat import boto3, moto, psycopg2
 from pytest_mock_resources.patch.redshift.mock_s3_copy import read_data_csv
 from pytest_mock_resources.patch.redshift.mock_s3_unload import get_data_csv
-from sqlalchemy import create_engine
 
 original_data = [
     (3342, 32434.0, "a", "gfhsdgaf"),

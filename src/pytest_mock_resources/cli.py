@@ -2,7 +2,7 @@ import argparse
 import enum
 import subprocess  # nosec
 
-from pytest_mock_resources import PostgresConfig, MysqlConfig, MongoConfig
+from pytest_mock_resources import MongoConfig, MysqlConfig, PostgresConfig
 
 postgres_image = PostgresConfig().image
 mysql_image = MysqlConfig().image

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-mock-resources"
-version = "2.1.9"
+version = "2.1.10"
 description = "A pytest plugin for easily instantiating reproducible mock resources."
 authors = [
     "Omar Khan <oakhan3@gmail.com>",
@@ -60,6 +60,7 @@ pytest-asyncio = "^0.15.1"
 types-six = "^1.16.0"
 types-PyMySQL = "^1.0.2"
 types-redis = "^3.5.6"
+sqlalchemy2-stubs = "^0.0.2-alpha.19"
 
 [tool.poetry.extras]
 postgres = ['psycopg2']
@@ -86,6 +87,13 @@ use_parentheses = true
 
 [tool.black]
 line_length = 100
+
+[tool.mypy]
+strict_optional = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+incremental = true
+plugins = 'sqlalchemy.ext.mypy.plugin'
 
 [build-system]
 requires = ["poetry_core==1.0.4"]

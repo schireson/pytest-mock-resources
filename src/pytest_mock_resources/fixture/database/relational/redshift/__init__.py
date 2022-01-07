@@ -3,8 +3,8 @@ import pytest
 from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
 from pytest_mock_resources.fixture.database.relational.generic import EngineManager
 from pytest_mock_resources.fixture.database.relational.postgresql import (
-    _create_clean_database,
     get_sqlalchemy_engine,
+    produce_clean_database,
 )
 from pytest_mock_resources.patch.redshift import psycopg2, sqlalchemy
 
@@ -30,7 +30,7 @@ def create_redshift_fixture(*ordered_actions, scope="function", tables=None, ses
 
     @pytest.fixture(scope=scope)
     def _(_redshift_container, pmr_postgres_config):
-        database_name = _create_clean_database(pmr_postgres_config)
+        database_name = produce_clean_database(pmr_postgres_config)
         engine = get_sqlalchemy_engine(pmr_postgres_config, database_name)
 
         assign_fixture_credentials(
