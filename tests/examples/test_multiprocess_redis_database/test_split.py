@@ -10,8 +10,6 @@ tests.
 A correct implementation would use some mechanism to avoid this inter-parallel-test
 key conflict problem.
 """
-# import random
-# import time
 
 
 def test_node_one(redis, pytestconfig):

@@ -21,7 +21,8 @@ def pmr_postgres_config():
 def create_engine_manager(
     pmr_postgres_config, ordered_actions, tables, createdb_template="template1"
 ):
-    database_name = _create_clean_database(pmr_postgres_config, createdb_template=createdb_template)
+    database_name = produce_clean_database(pmr_postgres_config, createdb_template=createdb_template)
+
     engine = get_sqlalchemy_engine(pmr_postgres_config, database_name)
     assign_fixture_credentials(
         engine,
@@ -82,11 +83,17 @@ def create_postgres_fixture(
         return _sync
 
 
-def _create_clean_database(config, createdb_template="template1"):
+def produce_clean_database(config, createdb_template="template1"):
     root_engine = get_sqlalchemy_engine(config, config.root_database, isolation_level="AUTOCOMMIT")
+    with root_engine.connect() as conn:
+        database_name = _create_clean_database(conn, createdb_template=createdb_template)
 
+    return database_name
+
+
+def _create_clean_database(conn, createdb_template="template1"):
     try:
-        root_engine.execute(
+        conn.execute(
             """
             CREATE TABLE IF NOT EXISTS pytest_mock_resource_db(
                 id serial
@@ -101,15 +108,11 @@ def _create_clean_database(config, createdb_template="template1"):
         #  - the current process tries to commit the table creation
         pass
 
-    result = root_engine.execute(
-        "INSERT INTO pytest_mock_resource_db VALUES (DEFAULT) RETURNING id"
-    )
+    result = conn.execute("INSERT INTO pytest_mock_resource_db VALUES (DEFAULT) RETURNING id")
     id_ = tuple(result)[0][0]
     database_name = "pytest_mock_resource_db_{}".format(id_)
 
-    root_engine.execute('CREATE DATABASE "{}" template={}'.format(database_name, createdb_template))
-    root_engine.execute(
-        'GRANT ALL PRIVILEGES ON DATABASE "{}" TO CURRENT_USER'.format(database_name)
-    )
+    conn.execute('CREATE DATABASE "{}" template={}'.format(database_name, createdb_template))
+    conn.execute('GRANT ALL PRIVILEGES ON DATABASE "{}" TO CURRENT_USER'.format(database_name))
 
     return database_name
