@@ -46,13 +46,15 @@ def create_redis_fixture(scope="function"):
     @pytest.fixture(scope=scope)
     def _(request, _redis_container, pmr_redis_config):
         database_number = 0
-        if hasattr(request.config, 'workerinput'):
+        if hasattr(request.config, "workerinput"):
             worker_input = request.config.workerinput
-            worker_id = worker_input['workerid']  # For example "gw0".
+            worker_id = worker_input["workerid"]  # For example "gw0".
             database_number = int(worker_id[2:])
 
         if database_number >= 16:
-            raise ValueError("The redis fixture currently only supports up to 16 parallel executions")
+            raise ValueError(
+                "The redis fixture currently only supports up to 16 parallel executions"
+            )
 
         db = redis.Redis(host=pmr_redis_config.host, port=pmr_redis_config.port, db=database_number)
         db.flushdb()

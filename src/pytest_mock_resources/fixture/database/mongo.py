@@ -53,7 +53,9 @@ def _create_clean_database(config):
     new_database.command("createUser", db_id, pwd=password, roles=["dbOwner"])
 
     #  pass back an authenticated db connection
-    limited_client = pymongo.MongoClient(config.host, config.port, username=db_id, password=password, authSource=db_id)
+    limited_client = pymongo.MongoClient(
+        config.host, config.port, username=db_id, password=password, authSource=db_id
+    )
     limited_db = limited_client[db_id]
 
     assign_fixture_credentials(
