@@ -49,10 +49,8 @@ class PostgresConfig(DockerContainerConfig):
         raise NotImplementedError()
 
 
-def get_sqlalchemy_engine(config, database_name, isolation_level=None):
-    URI_TEMPLATE = (
-        "postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}?sslmode=disable"
-    )
+def get_sqlalchemy_engine(config, database_name, **engine_kwargs):
+    URI_TEMPLATE = "postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}?sslmode=disable"
     DB_URI = URI_TEMPLATE.format(
         host=config.host,
         port=config.port,
@@ -61,16 +59,12 @@ def get_sqlalchemy_engine(config, database_name, isolation_level=None):
         database=database_name,
     )
 
-    options = {}
-    if isolation_level:
-        options["isolation_level"] = isolation_level
-
     # Trigger any psycopg2-based import failures
     from pytest_mock_resources.compat import psycopg2
 
     psycopg2.connect
 
-    engine = sqlalchemy.create_engine(DB_URI, **options)
+    engine = sqlalchemy.create_engine(DB_URI, **engine_kwargs)
 
     # Verify engine is connected
     engine.connect()
@@ -83,9 +77,7 @@ def check_postgres_fn(config):
         get_sqlalchemy_engine(config, config.root_database)
     except sqlalchemy.exc.OperationalError:
         raise ContainerCheckFailed(
-            "Unable to connect to a presumed Postgres test container via given config: {}".format(
-                config
-            )
+            "Unable to connect to a presumed Postgres test container via given config: {}".format(config)
         )
 
 

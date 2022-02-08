@@ -19,11 +19,11 @@ def pmr_postgres_config():
 
 
 def create_engine_manager(
-    pmr_postgres_config, ordered_actions, tables, createdb_template="template1"
+    pmr_postgres_config, ordered_actions, tables, createdb_template="template1", engine_kwargs=None
 ):
     database_name = produce_clean_database(pmr_postgres_config, createdb_template=createdb_template)
 
-    engine = get_sqlalchemy_engine(pmr_postgres_config, database_name)
+    engine = get_sqlalchemy_engine(pmr_postgres_config, database_name, **(engine_kwargs or {}))
     assign_fixture_credentials(
         engine,
         drivername="postgresql+psycopg2",
@@ -42,7 +42,8 @@ def create_postgres_fixture(
     tables=None,
     session=None,
     async_=False,
-    createdb_template="template1"
+    createdb_template="template1",
+    engine_kwargs=None,
 ):
     """Produce a Postgres fixture.
 
@@ -59,11 +60,13 @@ def create_postgres_fixture(
         async_: Whether to return an async fixture/client.
         createdb_template: The template database used to create sub-databases. "template1" is the
             default chosen when no template is specified.
+        engine_kwargs: Optional set of kwargs to send into the engine on creation.
     """
     engine_manager_kwargs = dict(
         ordered_actions=ordered_actions,
         tables=tables,
         createdb_template=createdb_template,
+        engine_kwargs=engine_kwargs,
     )
 
     @pytest.fixture(scope=scope)
