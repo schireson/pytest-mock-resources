@@ -138,25 +138,6 @@ class EngineManager(object):
         self._create_tables(metadata)
         self._ddl_created = True
 
-    def manage(self, session=None):
-        try:
-            self._run_actions()
-
-            if session:
-                if isinstance(session, sessionmaker):
-                    session_factory = session
-                else:
-                    session_factory = sessionmaker(bind=self.engine)
-
-                Session = scoped_session(session_factory)
-                session = Session(bind=self.engine)
-                yield session
-                session.close()
-            else:
-                yield self.engine
-        finally:
-            self.engine.dispose()
-
     def manage_sync(self, session=None):
         try:
             self._run_actions()

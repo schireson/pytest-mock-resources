@@ -229,7 +229,7 @@ def create_sqlite_fixture(
         event.listen(raw_engine, "connect", enable_foreign_key_checks)
 
         engine_manager = EngineManager(raw_engine, ordered_actions, tables=tables)
-        for engine in engine_manager.manage(session=session):
+        for engine in engine_manager.manage_sync(session=session):
             with filter_sqlalchemy_warnings(decimal_warnings_enabled=(not decimal_warnings)):
                 assign_fixture_credentials(
                     raw_engine,

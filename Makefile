@@ -34,7 +34,7 @@ lint:
 	mypy src tests || exit 1
 
 format:
-	isort --recursive src tests
+	isort src tests
 	black src tests
 
 ## Build
@@ -45,7 +45,7 @@ build-docs:
 	pip install -r docs/requirements.txt
 	make -C docs html
 
-build: build-package build-docs
+build: build-package
 
 publish: build
 	poetry publish -u __token__ -p '${PYPI_PASSWORD}' --no-interaction

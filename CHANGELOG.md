@@ -1,10 +1,23 @@
 # Changelog
 
-## [Unreleased](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.1.12...HEAD) (2022-02-13)
+### [v2.2.3](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.2.2...v2.2.3) (2022-02-23)
+
+#### Features
+
+* Refactor redshift fixture to be "first class". 1a3076d
+
+
+### [v2.2.2](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.2.1...v2.2.2) (2022-02-23)
+
+
+### [v2.2.1](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.2.0...v2.2.1) (2022-02-22)
+
+
+## [v2.2.0](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.1.12...v2.2.0) (2022-02-14)
 
 ### Features
 
-* Perform container cleanup in a multiprocess safe way. 28db0fb
+* Perform container cleanup in a multiprocess safe way. 10a9946
 
 
 ### [v2.1.12](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.1.11...v2.1.12) (2022-02-08)

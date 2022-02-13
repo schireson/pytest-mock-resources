@@ -49,7 +49,7 @@ def create_mysql_fixture(*ordered_actions, scope="function", tables=None, sessio
         )
 
         engine_manager = EngineManager(engine, ordered_actions, tables=tables)
-        for engine in engine_manager.manage(session=session):
+        for engine in engine_manager.manage_sync(session=session):
             yield engine
 
     return _
