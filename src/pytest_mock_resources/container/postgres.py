@@ -1,8 +1,8 @@
-import pytest
 import sqlalchemy
 
+from pytest_mock_resources.compat.sqlalchemy import URL
 from pytest_mock_resources.config import DockerContainerConfig, fallback
-from pytest_mock_resources.container.base import ContainerCheckFailed, get_container
+from pytest_mock_resources.container.base import ContainerCheckFailed
 
 
 class PostgresConfig(DockerContainerConfig):
@@ -50,13 +50,14 @@ class PostgresConfig(DockerContainerConfig):
 
 
 def get_sqlalchemy_engine(config, database_name, **engine_kwargs):
-    URI_TEMPLATE = "postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}?sslmode=disable"
-    DB_URI = URI_TEMPLATE.format(
+    url = URL(
+        drivername="postgresql+psycopg2",
         host=config.host,
         port=config.port,
         username=config.username,
         password=config.password,
         database=database_name,
+        query={"sslmode": "disable"},
     )
 
     # Trigger any psycopg2-based import failures
@@ -64,7 +65,7 @@ def get_sqlalchemy_engine(config, database_name, **engine_kwargs):
 
     psycopg2.connect
 
-    engine = sqlalchemy.create_engine(DB_URI, **engine_kwargs)
+    engine = sqlalchemy.create_engine(url, **engine_kwargs)
 
     # Verify engine is connected
     engine.connect()
@@ -77,20 +78,7 @@ def check_postgres_fn(config):
         get_sqlalchemy_engine(config, config.root_database)
     except sqlalchemy.exc.OperationalError:
         raise ContainerCheckFailed(
-            "Unable to connect to a presumed Postgres test container via given config: {}".format(config)
+            "Unable to connect to a presumed Postgres test container via given config: {}".format(
+                config
+            )
         )
-
-
-@pytest.fixture(scope="session")
-def _postgres_container(pytestconfig, pmr_postgres_config):
-    yield from get_container(
-        pytestconfig,
-        pmr_postgres_config,
-        ports={5432: pmr_postgres_config.port},
-        environment={
-            "POSTGRES_DB": pmr_postgres_config.root_database,
-            "POSTGRES_USER": pmr_postgres_config.username,
-            "POSTGRES_PASSWORD": pmr_postgres_config.password,
-        },
-        check_fn=check_postgres_fn,
-    )
