@@ -10,6 +10,8 @@ tests.
 A correct implementation would use some mechanism to avoid this inter-parallel-test
 key conflict problem.
 """
+import random
+import time
 
 
 def test_node_one(redis, pytestconfig):
@@ -35,9 +37,7 @@ def run_test(redis, pytestconfig):
     print(worker_id, database)
 
     redis.set("foo", "bar")
-    # XXX: Ideally we would sleep random times to ensure we're hitting the problem,
-    # XXX: however until the plugin is overall more process-safe, it's too flaky.
-    # time.sleep(random.randrange(1, 10) / 10)
+    time.sleep(random.randrange(1, 10) / 10)
     value = redis.get("foo")
 
     assert value == b"bar"

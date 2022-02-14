@@ -121,6 +121,7 @@ def make_postgres_like_sqlite_dialect():
 
         name = "pmrsqlite"
 
+        supports_statement_cache = True
         ddl_compiler = PMRSQLiteDDLCompiler
         type_compiler = PostgresLikeTypeCompiler
         colspecs = {

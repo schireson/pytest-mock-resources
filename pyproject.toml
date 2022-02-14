@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-mock-resources"
-version = "2.1.12"
+version = "2.2.0"
 description = "A pytest plugin for easily instantiating reproducible mock resources."
 authors = [
     "Omar Khan <oakhan3@gmail.com>",
@@ -24,7 +24,6 @@ include = [
 [tool.poetry.dependencies]
 python = ">=3.6, <4"
 
-docker = {version = ">= 2.5.1"}
 pytest = {version = ">=1.0"}
 responses = "*"
 sqlalchemy = {version = ">1.0, !=1.4.0, !=1.4.1, !=1.4.2, !=1.4.3, !=1.4.4, !=1.4.5, !=1.4.6, !=1.4.7, !=1.4.8, !=1.4.9, !=1.4.10, !=1.4.11, !=1.4.12, !=1.4.13, !=1.4.14, !=1.4.15, !=1.4.16, !=1.4.17, !=1.4.18, !=1.4.19, !=1.4.20, !=1.4.21, !=1.4.22, !=1.4.23"}
@@ -48,6 +47,9 @@ redis = {version = "*", optional = true}
 # extra [mysql]
 pymysql = {version = ">=1.0", optional = true}
 
+filelock = {version = "*", optional = true}
+docker = {version = ">= 2.5.1", optional = true}
+
 [tool.poetry.dev-dependencies]
 black = {version = "=>19.3b0", allow-prereleases = true}
 coverage = "*"
@@ -64,13 +66,13 @@ types-redis = "^3.5.6"
 sqlalchemy2-stubs = "^0.0.2-alpha.19"
 
 [tool.poetry.extras]
-postgres = ['psycopg2']
-postgres-binary = ['psycopg2-binary']
-postgres-async = ['asyncpg']
-redshift = ['boto3', 'moto', 'sqlparse']
-mongo = ['pymongo']
-redis = ['redis']
-mysql = ['pymysql']
+postgres = ['psycopg2', 'docker', 'filelock']
+postgres-binary = ['psycopg2-binary', 'docker', 'filelock']
+postgres-async = ['asyncpg', 'docker', 'filelock']
+redshift = ['boto3', 'moto', 'sqlparse', 'docker', 'filelock']
+mongo = ['pymongo', 'docker', 'filelock']
+redis = ['redis', 'docker', 'filelock']
+mysql = ['pymysql', 'docker', 'filelock']
 
 [tool.poetry.plugins.pytest11]
 pytest_mock_resources = "pytest_mock_resources"

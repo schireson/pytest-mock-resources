@@ -24,4 +24,9 @@ from pytest_mock_resources.fixture.database import (
     Rows,
     Statements,
 )
-from pytest_mock_resources.hooks import pytest_configure, pytest_itemcollected
+from pytest_mock_resources.hooks import (
+    pytest_addoption,
+    pytest_configure,
+    pytest_itemcollected,
+    pytest_sessionfinish,
+)
