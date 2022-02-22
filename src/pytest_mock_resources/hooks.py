@@ -100,4 +100,4 @@ def pytest_sessionfinish(session, exitstatus):
                 except Exception:
                     warnings.warn(f"Failed to kill container {container_id}")
 
-        fn.unlink()
+    fn.unlink()
