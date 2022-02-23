@@ -61,16 +61,34 @@ def get_container(
     check_fn = functools.partial(check_fn, config)
 
     try:
-        container = wait_for_container(
-            client,
-            check_fn,
-            run_args=(config.image,),
-            run_kwargs=dict(ports=ports, environment=environment),
-            retries=retries,
-            interval=interval,
-        )
-        if container and multiprocess_safe_mode:
-            record_container_creation(pytestconfig, container)
+        if multiprocess_safe_mode:
+            from filelock import FileLock
+            # get the temp directory shared by all workers (assuming pytest-xdist)
+            root_tmp_dir = pytestconfig._tmp_path_factory.getbasetemp().parent
+            fn = root_tmp_dir / f"pmr_create_container_{config.port}.lock"
+            # wait for the container one process at a time
+            with FileLock(str(fn)):
+                container = wait_for_container(
+                    client,
+                    check_fn,
+                    run_args=(config.image,),
+                    run_kwargs=dict(ports=ports, environment=environment),
+                    retries=retries,
+                    interval=interval,
+                )
+            if container:
+                record_container_creation(pytestconfig, container)
+
+        else:
+            container = wait_for_container(
+                client,
+                check_fn,
+                run_args=(config.image,),
+                run_kwargs=dict(ports=ports, environment=environment),
+                retries=retries,
+                interval=interval,
+            )
+
         yield
     finally:
         if container and not multiprocess_safe_mode:
