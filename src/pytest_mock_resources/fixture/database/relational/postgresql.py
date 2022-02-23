@@ -1,7 +1,12 @@
 import pytest
 import sqlalchemy
 
-from pytest_mock_resources.container.postgres import get_sqlalchemy_engine, PostgresConfig
+from pytest_mock_resources.container.base import get_container
+from pytest_mock_resources.container.postgres import (
+    check_postgres_fn,
+    get_sqlalchemy_engine,
+    PostgresConfig,
+)
 from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
 from pytest_mock_resources.fixture.database.relational.generic import EngineManager
 
@@ -18,22 +23,19 @@ def pmr_postgres_config():
     return PostgresConfig()
 
 
-def create_engine_manager(
-    pmr_postgres_config, ordered_actions, tables, createdb_template="template1", engine_kwargs=None
-):
-    database_name = produce_clean_database(pmr_postgres_config, createdb_template=createdb_template)
-
-    engine = get_sqlalchemy_engine(pmr_postgres_config, database_name, **(engine_kwargs or {}))
-    assign_fixture_credentials(
-        engine,
-        drivername="postgresql+psycopg2",
-        host=pmr_postgres_config.host,
-        port=pmr_postgres_config.port,
-        database=database_name,
-        username=pmr_postgres_config.username,
-        password=pmr_postgres_config.password,
+@pytest.fixture(scope="session")
+def _postgres_container(pytestconfig, pmr_postgres_config):
+    yield from get_container(
+        pytestconfig,
+        pmr_postgres_config,
+        ports={5432: pmr_postgres_config.port},
+        environment={
+            "POSTGRES_DB": pmr_postgres_config.root_database,
+            "POSTGRES_USER": pmr_postgres_config.username,
+            "POSTGRES_PASSWORD": pmr_postgres_config.password,
+        },
+        check_fn=check_postgres_fn,
     )
-    return EngineManager(engine, ordered_actions, tables=tables, default_schema="public")
 
 
 def create_postgres_fixture(
@@ -84,6 +86,24 @@ def create_postgres_fixture(
         return _async
     else:
         return _sync
+
+
+def create_engine_manager(
+    pmr_postgres_config, ordered_actions, tables, createdb_template="template1", engine_kwargs=None
+):
+    database_name = produce_clean_database(pmr_postgres_config, createdb_template=createdb_template)
+
+    engine = get_sqlalchemy_engine(pmr_postgres_config, database_name, **(engine_kwargs or {}))
+    assign_fixture_credentials(
+        engine,
+        drivername="postgresql+psycopg2",
+        host=pmr_postgres_config.host,
+        port=pmr_postgres_config.port,
+        database=database_name,
+        username=pmr_postgres_config.username,
+        password=pmr_postgres_config.password,
+    )
+    return EngineManager(engine, ordered_actions, tables=tables, default_schema="public")
 
 
 def produce_clean_database(config, createdb_template="template1"):

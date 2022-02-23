@@ -1,19 +1,59 @@
 import pytest
 
-from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
-from pytest_mock_resources.fixture.database.relational.generic import EngineManager
-from pytest_mock_resources.fixture.database.relational.postgresql import (
-    get_sqlalchemy_engine,
-    produce_clean_database,
-)
+from pytest_mock_resources.container.base import get_container
+from pytest_mock_resources.container.redshift import check_redshift_fn, RedshiftConfig
+from pytest_mock_resources.fixture.database.relational.postgresql import create_engine_manager
 from pytest_mock_resources.patch.redshift import psycopg2, sqlalchemy
 
 
-def create_redshift_fixture(*ordered_actions, scope="function", tables=None, session=None):
+@pytest.fixture(scope="session")
+def pmr_redshift_config():
+    """Override this fixture with a :class:`RedshiftConfig` instance to specify different defaults.
+
+    Note that, by default, redshift uses a postgres container.
+
+    Examples:
+        >>> @pytest.fixture(scope='session')
+        ... def pmr_redshift_config():
+        ...     return RedshiftConfig(image="postgres:9.6.10", root_database="foo")
+    """
+    return RedshiftConfig()
+
+
+@pytest.fixture(scope="session")
+def _redshift_container(pytestconfig, pmr_redshift_config):
+    result = get_container(
+        pytestconfig,
+        pmr_redshift_config,
+        ports={5432: pmr_redshift_config.port},
+        environment={
+            "POSTGRES_DB": pmr_redshift_config.root_database,
+            "POSTGRES_USER": pmr_redshift_config.username,
+            "POSTGRES_PASSWORD": pmr_redshift_config.password,
+        },
+        check_fn=check_redshift_fn,
+    )
+
+    yield next(iter(result))
+
+
+def create_redshift_fixture(
+    *ordered_actions,
+    scope="function",
+    tables=None,
+    session=None,
+    async_=False,
+    createdb_template="template1",
+    engine_kwargs=None,
+):
     """Produce a Redshift fixture.
 
     Any number of fixture functions can be created. Under the hood they will all share the same
     database server.
+
+    Note that, by default, redshift uses a postgres container as the database server
+    and attempts to reintroduce appoximations of Redshift features, such as
+    S3 COPY/UNLOAD, redshift-specific functions, and other specific behaviors.
 
     Arguments:
         ordered_actions: Any number of ordered actions to be run on test setup.
@@ -22,32 +62,44 @@ def create_redshift_fixture(*ordered_actions, scope="function", tables=None, ses
             most useful when a model-base was specified in `ordered_actions`.
         session: Whether to return a session instead of an engine directly. This can
             either be a bool or a callable capable of producing a session.
+        async_: Whether to return an async fixture/client.
+        createdb_template: The template database used to create sub-databases. "template1" is the
+            default chosen when no template is specified.
+        engine_kwargs: Optional set of kwargs to send into the engine on creation.
     """
 
     from pytest_mock_resources.fixture.database.relational.redshift.udf import REDSHIFT_UDFS
 
     ordered_actions = ordered_actions + (REDSHIFT_UDFS,)
 
+    engine_manager_kwargs = dict(
+        ordered_actions=ordered_actions,
+        tables=tables,
+        createdb_template=createdb_template,
+        engine_kwargs=engine_kwargs,
+    )
+
     @pytest.fixture(scope=scope)
-    def _(_redshift_container, pmr_postgres_config):
-        database_name = produce_clean_database(pmr_postgres_config)
-        engine = get_sqlalchemy_engine(pmr_postgres_config, database_name)
+    def _sync(_redshift_container, pmr_redshift_config):
+        engine_manager = create_engine_manager(pmr_redshift_config, **engine_manager_kwargs)
+        database_name = engine_manager.engine.url.database
 
-        assign_fixture_credentials(
-            engine,
-            drivername="postgresql+psycopg2",
-            host=pmr_postgres_config.host,
-            port=pmr_postgres_config.port,
-            database=database_name,
-            username=pmr_postgres_config.username,
-            password=pmr_postgres_config.password,
-        )
+        for engine in engine_manager.manage_sync(session=session):
+            sqlalchemy.register_redshift_behavior(engine)
+            with psycopg2.patch_connect(pmr_redshift_config, database_name):
+                yield engine
 
-        sqlalchemy.register_redshift_behavior(engine)
-        with psycopg2.patch_connect(pmr_postgres_config, database_name):
-            engine_manager = EngineManager(
-                engine, ordered_actions, tables=tables, default_schema="public"
-            )
-            yield from engine_manager.manage(session=session)
+    @pytest.fixture(scope=scope)
+    async def _async(_redshift_container, pmr_redshift_config):
+        engine_manager = create_engine_manager(pmr_redshift_config, **engine_manager_kwargs)
+        database_name = engine_manager.engine.url.database
 
-    return _
+        async for engine in engine_manager.manage_async(session=session):
+            sqlalchemy.register_redshift_behavior(engine)
+            with psycopg2.patch_connect(pmr_redshift_config, database_name):
+                yield engine
+
+    if async_:
+        return _async
+    else:
+        return _sync
