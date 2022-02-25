@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-mock-resources"
-version = "2.2.4"
+version = "2.2.5"
 description = "A pytest plugin for easily instantiating reproducible mock resources."
 authors = [
     "Omar Khan <oakhan3@gmail.com>",
@@ -55,7 +55,7 @@ black = {version = "=>19.3b0", allow-prereleases = true}
 coverage = "*"
 flake8 = "*"
 isort = ">=5.0"
-mypy = {version = "0.910", python = ">=3.5"}
+mypy = {version = "0.931", python = ">=3.5"}
 pydocstyle = {version = "*", python = ">=3.5"}
 sqlalchemy-stubs = {version = "*", python = ">=3.5"}
 pytest-xdist = "*"
@@ -98,6 +98,7 @@ ignore_missing_imports = true
 warn_unused_ignores = true
 incremental = true
 plugins = 'sqlalchemy.ext.mypy.plugin'
+exclude = 'tests/examples'
 
 [build-system]
 requires = ["poetry_core==1.0.4"]

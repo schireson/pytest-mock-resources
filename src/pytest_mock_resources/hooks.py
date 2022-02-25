@@ -7,8 +7,14 @@ def pytest_addoption(parser):
     parser.addini(
         "pmr_multiprocess_safe",
         "Enables multiprocess-safe mode",
-        type='bool',
+        type="bool",
         default=False,
+    )
+    parser.addini(
+        "pmr_cleanup_container",
+        "Optionally disable attempts to cleanup created containers",
+        type="bool",
+        default=True,
     )
 
     group = parser.getgroup("collect")
@@ -19,15 +25,26 @@ def pytest_addoption(parser):
         help="Enable multiprocess-safe mode",
         dest="pmr_multiprocess_safe",
     )
+    group.addoption(
+        "--pmr-cleanup-container",
+        action="store_true",
+        default=True,
+        help="Optionally disable attempts to cleanup created containers",
+        dest="pmr_cleanup_container",
+    )
+
+
+def get_pytest_flag(config, name, *, default=None):
+    value = getattr(config.option, name, default)
+    if value:
+        return True
+
+    config_value = config.getini(name)
+    return config_value
 
 
 def use_multiprocess_safe_mode(config):
-    cli_enabled = config.option.pmr_multiprocess_safe
-    if cli_enabled:
-        return True
-
-    config_enabled = config.getini("pmr_multiprocess_safe")
-    return config_enabled
+    return get_pytest_flag(config, "pmr_multiprocess_safe")
 
 
 def pytest_configure(config):

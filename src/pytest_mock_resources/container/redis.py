@@ -1,8 +1,6 @@
-import pytest
-
 from pytest_mock_resources.compat import redis
 from pytest_mock_resources.config import DockerContainerConfig
-from pytest_mock_resources.container.base import ContainerCheckFailed, get_container
+from pytest_mock_resources.container.base import ContainerCheckFailed
 
 
 class RedisConfig(DockerContainerConfig):
@@ -28,25 +26,16 @@ class RedisConfig(DockerContainerConfig):
         "ci_port": 6379,
     }
 
+    def ports(self):
+        return {6379: self.port}
 
-def check_redis_fn(config):
-    try:
-        client = redis.Redis(host=config.host, port=config.port)
-        client.ping()
-    except redis.ConnectionError:
-        raise ContainerCheckFailed(
-            "Unable to connect to a presumed Redis test container via given config: {}".format(
-                config
+    def check_fn(self):
+        try:
+            client = redis.Redis(host=self.host, port=self.port)
+            client.ping()
+        except redis.ConnectionError:
+            raise ContainerCheckFailed(
+                "Unable to connect to a presumed Redis test container via given config: {}".format(
+                    self
+                )
             )
-        )
-
-
-@pytest.fixture(scope="session")
-def _redis_container(pytestconfig, pmr_redis_config):
-    yield from get_container(
-        pytestconfig,
-        pmr_redis_config,
-        ports={6379: pmr_redis_config.port},
-        environment={},
-        check_fn=check_redis_fn,
-    )

@@ -1,6 +1,7 @@
 import pytest
 
 from pytest_mock_resources.compat import pymongo
+from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.mongo import MongoConfig
 from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
 
@@ -15,6 +16,11 @@ def pmr_mongo_config():
         ...     return MongoConfig(image="mongo:3.4", root_database="foo")
     """
     return MongoConfig()
+
+
+@pytest.fixture(scope="session")
+def _mongo_container(pytestconfig, pmr_mongo_config):
+    yield from get_container(pytestconfig, pmr_mongo_config)
 
 
 def create_mongo_fixture(scope="function"):

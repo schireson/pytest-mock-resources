@@ -1,6 +1,7 @@
 import pytest
 import sqlalchemy
 
+from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.mysql import get_sqlalchemy_engine, MysqlConfig
 from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
 from pytest_mock_resources.fixture.database.relational.generic import EngineManager
@@ -16,6 +17,11 @@ def pmr_mysql_config():
         ...     return MysqlConfig(image="mysql:5.2", root_database="foo")
     """
     return MysqlConfig()
+
+
+@pytest.fixture(scope="session")
+def _mysql_container(pytestconfig, pmr_mysql_config):
+    yield from get_container(pytestconfig, pmr_mysql_config)
 
 
 def create_mysql_fixture(*ordered_actions, scope="function", tables=None, session=None):

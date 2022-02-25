@@ -1,6 +1,7 @@
 import pytest
 
 from pytest_mock_resources.compat import redis
+from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.redis import RedisConfig
 from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
 
@@ -15,6 +16,11 @@ def pmr_redis_config():
         ...     return RedisConfig(image="redis:6.0")
     """
     return RedisConfig()
+
+
+@pytest.fixture(scope="session")
+def _redis_container(pytestconfig, pmr_redis_config):
+    yield from get_container(pytestconfig, pmr_redis_config)
 
 
 def create_redis_fixture(scope="function"):

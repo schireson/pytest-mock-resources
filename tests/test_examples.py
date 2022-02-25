@@ -16,6 +16,6 @@ def test_multiprocess_container_cleanup_race_condition(pytester):
     pytester.copy_example()
 
     # The `-n 2` are here is tightly coupled with the implementation of `test_split.py`.
-    args = ["-vv", "-n", "2", "test_split.py", "--pmr-multiprocess-safe"]
+    args = ["-vv", "-n", "2", "--pmr-multiprocess-safe", "test_split.py"]
     result = pytester.inline_run(*args)
     result.assertoutcome(passed=2, skipped=0, failed=0)
