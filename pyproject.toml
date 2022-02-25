@@ -98,6 +98,7 @@ ignore_missing_imports = true
 warn_unused_ignores = true
 incremental = true
 plugins = 'sqlalchemy.ext.mypy.plugin'
+exclude = 'tests/examples'
 
 [build-system]
 requires = ["poetry_core==1.0.4"]
