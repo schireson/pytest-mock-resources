@@ -90,3 +90,12 @@ class DockerContainerConfig:
             return ci_port
 
         raise NotImplementedError()
+
+    def ports(self):
+        return {}
+
+    def environment(self):
+        return {}
+
+    def check_fn(self):
+        pass

@@ -1,8 +1,6 @@
-import pytest
-
 from pytest_mock_resources.compat import pymongo
 from pytest_mock_resources.config import DockerContainerConfig, fallback
-from pytest_mock_resources.container.base import ContainerCheckFailed, get_container
+from pytest_mock_resources.container.base import ContainerCheckFailed
 
 
 class MongoConfig(DockerContainerConfig):
@@ -35,26 +33,17 @@ class MongoConfig(DockerContainerConfig):
     def root_database(self):
         raise NotImplementedError()
 
+    def ports(self):
+        return {27017: self.port}
 
-def check_mongo_fn(config):
-    try:
-        client = pymongo.MongoClient(config.host, config.port)
-        db = client[config.root_database]
-        db.command("ismaster")
-    except pymongo.errors.ConnectionFailure:
-        raise ContainerCheckFailed(
-            "Unable to connect to a presumed MongoDB test container via given config: {}".format(
-                config
+    def check_fn(self):
+        try:
+            client = pymongo.MongoClient(self.host, self.port)
+            db = client[self.root_database]
+            db.command("ismaster")
+        except pymongo.errors.ConnectionFailure:
+            raise ContainerCheckFailed(
+                "Unable to connect to a presumed MongoDB test container via given config: {}".format(
+                    self
+                )
             )
-        )
-
-
-@pytest.fixture(scope="session")
-def _mongo_container(pytestconfig, pmr_mongo_config):
-    yield from get_container(
-        pytestconfig,
-        pmr_mongo_config,
-        ports={27017: pmr_mongo_config.port},
-        environment={},
-        check_fn=check_mongo_fn,
-    )

@@ -1,5 +1,4 @@
 import contextlib
-import functools
 import json
 import pathlib
 import time
@@ -7,7 +6,7 @@ import time
 import responses
 
 from pytest_mock_resources.config import get_env_config
-from pytest_mock_resources.hooks import use_multiprocess_safe_mode
+from pytest_mock_resources.hooks import get_pytest_flag, use_multiprocess_safe_mode
 
 DEFAULT_RETRIES = 40
 DEFAULT_INTERVAL = 0.5
@@ -30,16 +29,7 @@ def retry(func=None, *, args=(), kwargs={}, retries=1, interval=DEFAULT_INTERVAL
             return result
 
 
-def get_container(
-    pytestconfig,
-    config,
-    *,
-    check_fn,
-    ports=None,
-    environment=None,
-    retries=DEFAULT_RETRIES,
-    interval=DEFAULT_INTERVAL
-):
+def get_container(pytestconfig, config, *, retries=DEFAULT_RETRIES, interval=DEFAULT_INTERVAL):
     import docker
     import docker.errors
 
@@ -58,11 +48,14 @@ def get_container(
     # we will need to know whether it's been created already or not.
     container = None
 
-    check_fn = functools.partial(check_fn, config)
+    run_kwargs = dict(
+        ports=config.ports(), environment=config.environment(), name=container_name(config.name)
+    )
 
     try:
         if multiprocess_safe_mode:
             from filelock import FileLock
+
             # get the temp directory shared by all workers (assuming pytest-xdist)
             root_tmp_dir = pytestconfig._tmp_path_factory.getbasetemp().parent
             fn = root_tmp_dir / f"pmr_create_container_{config.port}.lock"
@@ -70,9 +63,9 @@ def get_container(
             with FileLock(str(fn)):
                 container = wait_for_container(
                     client,
-                    check_fn,
+                    config.check_fn,
                     run_args=(config.image,),
-                    run_kwargs=dict(ports=ports, environment=environment),
+                    run_kwargs=run_kwargs,
                     retries=retries,
                     interval=interval,
                 )
@@ -82,29 +75,24 @@ def get_container(
         else:
             container = wait_for_container(
                 client,
-                check_fn,
+                config.check_fn,
                 run_args=(config.image,),
-                run_kwargs=dict(ports=ports, environment=environment),
+                run_kwargs=run_kwargs,
                 retries=retries,
                 interval=interval,
             )
 
         yield
     finally:
-        if container and not multiprocess_safe_mode:
+        cleanup_container = get_pytest_flag(pytestconfig, "pmr_cleanup_container", default=True)
+        if cleanup_container and container and not multiprocess_safe_mode:
             container.kill()
 
         client.close()
 
 
 def wait_for_container(
-    client,
-    check_fn,
-    *,
-    run_args,
-    run_kwargs,
-    retries=DEFAULT_RETRIES,
-    interval=DEFAULT_INTERVAL
+    client, check_fn, *, run_args, run_kwargs, retries=DEFAULT_RETRIES, interval=DEFAULT_INTERVAL
 ):
     """Wait for evidence that the container is up and healthy.
 
@@ -119,20 +107,26 @@ def wait_for_container(
     except ContainerCheckFailed:
         # In the event it doesn't exist, we attempt to start the container
         try:
-            container = client.containers.run(
-                *run_args, **run_kwargs, detach=True, remove=True
-            )
+            container = client.containers.run(*run_args, **run_kwargs, detach=True, remove=True)
         except docker.errors.APIError as e:
             container = None
             # This sometimes happens if multiple container fixtures race for the first
             # creation of the container, we want to still retry wait in this case.
-            if "port is already allocated" not in str(e):
+            port_allocated_error = "port is already allocated"
+            name_allocated_error = "to be able to reuse that name"
+
+            error = str(e)
+            if port_allocated_error not in error and name_allocated_error not in error:
                 raise
 
         # And then we perform more lengthy retry cycle.
         retry(check_fn, retries=retries, interval=interval, on_exc=ContainerCheckFailed)
         return container
     return None
+
+
+def container_name(name: str) -> str:
+    return f"pmr_{name}"
 
 
 def record_container_creation(pytestconfig, container):

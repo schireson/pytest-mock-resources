@@ -1,9 +1,8 @@
-import pytest
 import sqlalchemy
 
 from pytest_mock_resources import compat
 from pytest_mock_resources.config import DockerContainerConfig, fallback
-from pytest_mock_resources.container.base import ContainerCheckFailed, get_container
+from pytest_mock_resources.container.base import ContainerCheckFailed
 
 
 class MysqlConfig(DockerContainerConfig):
@@ -51,6 +50,25 @@ class MysqlConfig(DockerContainerConfig):
     def root_database(self):
         raise NotImplementedError()
 
+    def ports(self):
+        return {3306: self.port}
+
+    def environment(self):
+        return {
+            "MYSQL_DATABASE": self.root_database,
+            "MYSQL_ROOT_PASSWORD": self.password,
+        }
+
+    def check_fn(self):
+        try:
+            get_sqlalchemy_engine(self, self.root_database)
+        except sqlalchemy.exc.OperationalError:
+            raise ContainerCheckFailed(
+                "Unable to connect to a presumed MySQL test container via given config: {}".format(
+                    self
+                )
+            )
+
 
 def get_sqlalchemy_engine(config, database_name, isolation_level=None):
     DB_URI = str(
@@ -78,28 +96,3 @@ def get_sqlalchemy_engine(config, database_name, isolation_level=None):
     engine.connect()
 
     return engine
-
-
-def check_mysql_fn(config):
-    try:
-        get_sqlalchemy_engine(config, config.root_database)
-    except sqlalchemy.exc.OperationalError:
-        raise ContainerCheckFailed(
-            "Unable to connect to a presumed MySQL test container via given config: {}".format(
-                config
-            )
-        )
-
-
-@pytest.fixture(scope="session")
-def _mysql_container(pytestconfig, pmr_mysql_config):
-    yield from get_container(
-        pytestconfig,
-        pmr_mysql_config,
-        ports={3306: pmr_mysql_config.port},
-        environment={
-            "MYSQL_DATABASE": pmr_mysql_config.root_database,
-            "MYSQL_ROOT_PASSWORD": pmr_mysql_config.password,
-        },
-        check_fn=check_mysql_fn,
-    )

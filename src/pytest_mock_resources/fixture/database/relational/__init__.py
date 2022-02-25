@@ -1,6 +1,7 @@
 # flake8: noqa
 from pytest_mock_resources.fixture.database.relational.generic import Rows, Statements
 from pytest_mock_resources.fixture.database.relational.mysql import (
+    _mysql_container,
     create_mysql_fixture,
     pmr_mysql_config,
 )

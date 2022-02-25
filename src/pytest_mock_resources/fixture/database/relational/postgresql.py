@@ -2,11 +2,7 @@ import pytest
 import sqlalchemy
 
 from pytest_mock_resources.container.base import get_container
-from pytest_mock_resources.container.postgres import (
-    check_postgres_fn,
-    get_sqlalchemy_engine,
-    PostgresConfig,
-)
+from pytest_mock_resources.container.postgres import get_sqlalchemy_engine, PostgresConfig
 from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
 from pytest_mock_resources.fixture.database.relational.generic import EngineManager
 
@@ -24,18 +20,8 @@ def pmr_postgres_config():
 
 
 @pytest.fixture(scope="session")
-def _postgres_container(pytestconfig, pmr_postgres_config):
-    yield from get_container(
-        pytestconfig,
-        pmr_postgres_config,
-        ports={5432: pmr_postgres_config.port},
-        environment={
-            "POSTGRES_DB": pmr_postgres_config.root_database,
-            "POSTGRES_USER": pmr_postgres_config.username,
-            "POSTGRES_PASSWORD": pmr_postgres_config.password,
-        },
-        check_fn=check_postgres_fn,
-    )
+def _postgres_container(pytestconfig, pmr_postgres_config: PostgresConfig):
+    yield from get_container(pytestconfig, pmr_postgres_config)
 
 
 def create_postgres_fixture(

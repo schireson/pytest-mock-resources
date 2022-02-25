@@ -1,7 +1,7 @@
 import pytest
 
 from pytest_mock_resources.container.base import get_container
-from pytest_mock_resources.container.redshift import check_redshift_fn, RedshiftConfig
+from pytest_mock_resources.container.redshift import RedshiftConfig
 from pytest_mock_resources.fixture.database.relational.postgresql import create_engine_manager
 from pytest_mock_resources.patch.redshift import psycopg2, sqlalchemy
 
@@ -22,19 +22,7 @@ def pmr_redshift_config():
 
 @pytest.fixture(scope="session")
 def _redshift_container(pytestconfig, pmr_redshift_config):
-    result = get_container(
-        pytestconfig,
-        pmr_redshift_config,
-        ports={5432: pmr_redshift_config.port},
-        environment={
-            "POSTGRES_DB": pmr_redshift_config.root_database,
-            "POSTGRES_USER": pmr_redshift_config.username,
-            "POSTGRES_PASSWORD": pmr_redshift_config.password,
-        },
-        check_fn=check_redshift_fn,
-    )
-
-    yield next(iter(result))
+    yield from get_container(pytestconfig, pmr_redshift_config)
 
 
 def create_redshift_fixture(
