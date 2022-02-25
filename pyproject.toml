@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-mock-resources"
-version = "2.2.3"
+version = "2.2.4"
 description = "A pytest plugin for easily instantiating reproducible mock resources."
 authors = [
     "Omar Khan <oakhan3@gmail.com>",
@@ -66,6 +66,7 @@ types-redis = "^3.5.6"
 sqlalchemy2-stubs = "^0.0.2-alpha.19"
 
 [tool.poetry.extras]
+docker = ['docker', 'filelock']
 postgres = ['psycopg2', 'docker', 'filelock']
 postgres-binary = ['psycopg2-binary', 'docker', 'filelock']
 postgres-async = ['asyncpg', 'docker', 'filelock']
