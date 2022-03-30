@@ -19,6 +19,7 @@ mongo_image = MongoConfig().image
 
 class StubPytestConfig:
     pmr_multiprocess_safe = False
+    pmr_cleanup_container = False
 
     class option:
         pmr_multiprocess_safe = False
