@@ -1,38 +1,49 @@
 import abc
 import fnmatch
-from typing import Tuple
+from dataclasses import dataclass
+from typing import Iterable, List, Optional, Set, TypeVar, Union
 
-import attr
-import six
 from sqlalchemy import MetaData, text
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.engine import Engine
+from sqlalchemy.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.declarative import DeclarativeMeta
+from sqlalchemy.orm import scoped_session, Session, sessionmaker
 from sqlalchemy.sql.ddl import CreateSchema
 from sqlalchemy.sql.schema import Table
 
 from pytest_mock_resources import compat
-from pytest_mock_resources.compat.sqlalchemy import DeclarativeMeta
 
 
-@six.add_metaclass(abc.ABCMeta)
-class AbstractAction(object):
+def invalid_action_exception(action):
+    return ValueError(
+        f"`{action}` invalid: create_<x>_fixture functions accept sqlalchemy.MetaData or actions as inputs."
+    )
+
+
+class AbstractAction(metaclass=abc.ABCMeta):
+    static_safe = False
+
     @abc.abstractmethod
-    def run(self, engine_manager):
+    def run(self, conn):
         """Run an action on a database via the passed-in engine_manager instance."""
 
 
 class Rows(AbstractAction):
+    static_safe = True
+
     def __init__(self, *rows):
         self.rows = rows
 
-    def run(self, engine_manager):
+    def run(self, conn):
         rows = self._get_stateless_rows(self.rows)
 
-        metadatas = self._get_metadatas(rows)
+        if isinstance(conn, Session):
+            session = conn
+        else:
+            session = Session(bind=conn)
 
-        for metadata in metadatas:
-            engine_manager.create_ddl(metadata)
-
-        self._create_rows(engine_manager.engine, rows)
+        session.add_all(rows)
+        session.commit()
 
     @staticmethod
     def _get_stateless_rows(rows):
@@ -47,75 +58,140 @@ class Rows(AbstractAction):
             stateless_rows.append(stateless_row)
         return stateless_rows
 
-    @staticmethod
-    def _get_metadatas(rows):
-        return {row.metadata for row in rows}
-
-    @staticmethod
-    def _create_rows(engine, rows):
-        Session = sessionmaker(bind=engine)
-        session = Session()
-
-        session.add_all(rows)
-
-        session.commit()
-        session.close()
-
 
 class Statements(AbstractAction):
+    static_safe = False
+
     def __init__(self, *statements):
         self.statements = statements
 
-    def run(self, engine_manager):
-        with engine_manager.engine.begin() as connection:
-            for statement in self.statements:
-                if isinstance(statement, str):
-                    statement = text(statement)
-                connection.execute(statement)
+    def run(self, conn):
+        for statement in self.statements:
+            if isinstance(statement, str):
+                statement = text(statement)
+            conn.execute(statement)
 
 
-@attr.s
-class EngineManager(object):
-    engine = attr.ib()
-    ordered_actions = attr.ib(default=attr.Factory(tuple))
-    tables: Tuple = attr.ib(default=None, converter=attr.converters.optional(tuple))
-    session = attr.ib(default=False)
-    default_schema = attr.ib(default=None)
+class StaticStatements(Statements):
+    """A discriminator for statements which are safe to execute exactly once."""
+
+    static_safe = True
+
+
+StaticAction = Union[MetaData, DeclarativeMeta, Rows, StaticStatements]
+Action = Union[MetaData, DeclarativeMeta, AbstractAction]
+T = TypeVar("T", StaticAction, Action)
+
+
+@dataclass
+class EngineManager:
+    engine: Engine
+    dynamic_actions: Iterable[Action] = ()
+    tables: Iterable = ()
+    session: Union[bool, Session] = False
+    default_schema: Optional[str] = None
+    static_actions: Iterable[StaticAction] = ()
 
     _ddl_created = False
 
-    def _run_actions(self):
-        for action in self.ordered_actions:
-            if isinstance(action, MetaData):
-                self.create_ddl(action)
-            elif isinstance(action, DeclarativeMeta):
-                self.create_ddl(action.metadata)
-            elif isinstance(action, AbstractAction):
-                action.run(self)
-            elif callable(action):
-                self._execute_function(action)
-            else:
-                raise ValueError(
-                    "create_fixture function takes in sqlalchemy.MetaData or actions as inputs only."
-                )
+    @classmethod
+    def create(
+        cls,
+        engine: Engine,
+        dynamic_actions: Iterable[Action],
+        *,
+        tables: Iterable = (),
+        session: Union[bool, Session] = False,
+        default_schema: Optional[str] = None,
+        static_actions: Iterable[StaticAction] = (),
+    ) -> "EngineManager":
+        return cls(
+            engine,
+            static_actions=normalize_actions(static_actions),
+            dynamic_actions=normalize_actions(dynamic_actions),
+            tables=tables,
+            session=session,
+            default_schema=default_schema,
+        )
 
-    def _create_schemas(self, metadata):
+    def manage_sync(self):
+        try:
+            if self.session:
+                if isinstance(self.session, (sessionmaker, Session)):
+                    session_factory = self.session
+                else:
+                    session_factory = scoped_session(sessionmaker(bind=self.engine))
+
+                with session_factory(bind=self.engine) as session:
+                    self.run_actions(session)
+                    commit(session)
+                    yield session
+            else:
+                with self.engine.begin() as conn:
+                    self.run_actions(conn)
+                    commit(conn)
+                yield self.engine
+
+        finally:
+            self.engine.dispose()
+
+    async def manage_async(self, session=None):
+        engine = create_async_engine(self.engine.pmr_credentials)
+
+        try:
+            if self.session:
+                if isinstance(self.session, (sessionmaker, AsyncSession)):
+                    session_factory = self.session
+                else:
+                    session_factory = sessionmaker(
+                        expire_on_commit=False,
+                        class_=compat.sqlalchemy.asyncio.AsyncSession,
+                    )
+
+                async with session_factory(bind=engine) as session:
+                    await session.run_sync(self.run_actions)
+                    await session.commit()
+                    yield session
+            else:
+                async with engine.begin() as conn:
+                    await conn.run_sync(self.run_actions)
+                    await conn.execute(text("COMMIT"))
+                yield engine
+        finally:
+            await engine.dispose()
+            self.engine.dispose()
+
+    def run_actions(self, conn):
+        self.run_static_actions(conn)
+        self.run_dynamic_actions(conn)
+
+    def run_static_actions(self, conn):
+        for action in self.static_actions:
+            self.execute_action(conn, action, allow_function=False)
+
+    def run_dynamic_actions(self, conn):
+        for action in self.dynamic_actions:
+            self.execute_action(conn, action, allow_function=True)
+
+    def _create_schemas(self, conn, metadata):
         if self._ddl_created:
             return
 
         all_schemas = {table.schema for table in metadata.tables.values() if table.schema}
 
-        with self.engine.begin() as connection:
-            for schema in all_schemas:
-                if self.default_schema == schema:
-                    continue
+        for schema in all_schemas:
+            if self.default_schema == schema:
+                continue
 
-                statement = CreateSchema(schema, quote=True)
-                connection.execute(statement)
+            statement = CreateSchema(schema, quote=True)
+            conn.execute(statement)
 
-    def _create_tables(self, metadata):
+    def _create_tables(self, conn, metadata):
+        if isinstance(conn, Session):
+            conn = conn.connection()
+
         if not self.tables:
-            metadata.create_all(self.engine)
+            metadata.create_all(conn)
             return
 
         table_objects = {
@@ -124,77 +200,72 @@ class EngineManager(object):
             for table_object in identify_matching_tables(metadata, table)
         }
 
-        metadata.create_all(self.engine, tables=list(table_objects))
+        metadata.create_all(conn, tables=list(table_objects))
 
-    def _execute_function(self, fn):
-        Session = sessionmaker(bind=self.engine)
-        session = Session()
-
-        fn(session)
-
-        session.commit()
-        session.close()
-
-    def create_ddl(self, metadata):
-        self._create_schemas(metadata)
-        self._create_tables(metadata)
+    def create_ddl(self, conn, metadata):
+        self._create_schemas(conn, metadata)
+        self._create_tables(conn, metadata)
         self._ddl_created = True
 
-    def manage_sync(self, session=None):
-        try:
-            self._run_actions()
+    def execute_action(self, conn, action, allow_function=False):
+        if isinstance(action, MetaData):
+            self.create_ddl(conn, action)
+        elif isinstance(action, AbstractAction):
+            action.run(conn)
+        elif allow_function and callable(action):
+            action(conn)
+            commit(conn)
+        else:
+            raise invalid_action_exception(action)
 
-            if session:
-                if isinstance(session, sessionmaker):
-                    session_factory = session
-                else:
-                    session_factory = sessionmaker(bind=self.engine)
 
-                Session = scoped_session(session_factory)
-                session = Session(bind=self.engine)
-                yield session
-                session.close()
-            else:
-                yield self.engine
-        finally:
-            self.engine.dispose()
+def normalize_actions(ordered_actions: Iterable[T]) -> Iterable[T]:
+    # Keep track of metadata we've seen to ensure it's only added once per
+    # instance, regardless of `Row` references.
+    unique_metadata: Set[MetaData] = set()
+    normalized_actions: List[T] = []
+    for action in ordered_actions:
+        if isinstance(action, DeclarativeMeta):
+            action = action.metadata
+            normalized_actions.append(action)
 
-    async def manage_async(self, session=None):
-        try:
-            self._run_actions()
+        elif isinstance(action, Rows):
+            new_metadata = {row.metadata for row in action.rows} - unique_metadata
+            unique_metadata |= new_metadata
+            normalized_actions.extend(list(new_metadata))
+            normalized_actions.append(action)
 
-            async_engine = self._get_async_engine()
+        elif isinstance(action, MetaData):
+            if action not in unique_metadata:
+                normalized_actions.append(action)
+        elif isinstance(action, AbstractAction) or callable(action):
+            normalized_actions.append(action)
+        else:
+            raise invalid_action_exception(action)
 
-            if session:
-                if isinstance(session, sessionmaker):
-                    session_factory = session
-                else:
-                    session_factory = sessionmaker(
-                        async_engine,
-                        expire_on_commit=False,
-                        class_=compat.sqlalchemy.asyncio.AsyncSession,
-                    )
-                async with session_factory() as session:
-                    yield session
-            else:
-                yield async_engine
-        finally:
-            self.engine.dispose()
+    return normalized_actions
 
-    def _get_async_engine(self, isolation_level=None):
-        url = compat.sqlalchemy.URL(
-            drivername="postgresql+asyncpg",
-            username=self.engine.pmr_credentials.username,
-            password=self.engine.pmr_credentials.password,
-            host=self.engine.pmr_credentials.host,
-            port=self.engine.pmr_credentials.port,
-            database=self.engine.pmr_credentials.database,
-            query=dict(ssl="disable"),
+
+def bifurcate_actions(ordered_actions):
+    static_actions = []
+    dynamic_actions = []
+
+    static = True
+    for action in ordered_actions:
+        static_safe = isinstance(action, MetaData) or (
+            isinstance(action, AbstractAction) and action.static_safe
         )
-        options = {}
-        if isolation_level:
-            options["isolation_level"] = isolation_level
-        return compat.sqlalchemy.asyncio.create_async_engine(url, **options)
+
+        if static:
+            if static_safe:
+                static_actions.append(action)
+            else:
+                static = False
+                dynamic_actions.append(action)
+        else:
+            dynamic_actions.append(action)
+
+    return (static_actions, dynamic_actions)
 
 
 def identify_matching_tables(metadata, table_specifier):
@@ -217,3 +288,26 @@ def identify_matching_tables(metadata, table_specifier):
     raise ValueError(
         'Could not identify any tables matching "{}" from: {}'.format(table_specifier, table_names)
     )
+
+
+def commit(conn):
+    if isinstance(conn, Session):
+        return conn.commit()
+
+    return conn.execute(text("COMMIT"))
+
+
+def create_async_engine(credentials, isolation_level=None):
+    url = compat.sqlalchemy.URL(
+        drivername="postgresql+asyncpg",
+        username=credentials.username,
+        password=credentials.password,
+        host=credentials.host,
+        port=credentials.port,
+        database=credentials.database,
+        query=dict(ssl="disable"),
+    )
+    options = {}
+    if isolation_level:
+        options["isolation_level"] = isolation_level
+    return compat.sqlalchemy.asyncio.create_async_engine(url, **options)

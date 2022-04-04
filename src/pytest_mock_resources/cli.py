@@ -98,7 +98,7 @@ def execute(fixture_type: FixtureType, pytestconfig: StubPytestConfig, start=Tru
         version = get_env_config("docker", "api_version", "auto")
         client = retry(docker.from_env, kwargs=dict(version=version), retries=5, interval=1)
 
-        name = container_name(fixture_type.value)
+        name = container_name(fixture_type.value, config.port)
         try:
             container = client.containers.get(name)
         except Exception:

@@ -31,6 +31,7 @@ class Test_postgres_fixture:
     We need at least 2 (or more) tests to verify that the fixtures are not
     clobbering one another.
     """
+
     def test_one(self, pg):
         pg.execute(text("select 1"))
 

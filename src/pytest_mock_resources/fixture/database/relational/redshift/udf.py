@@ -1,5 +1,7 @@
 import enum
 
+from sqlalchemy import text
+
 from pytest_mock_resources.fixture.database import Statements
 
 
@@ -15,8 +17,10 @@ def create_udf(name, args, returns, body, language, schema="public"):
     CREATE FUNCTION {schema}.{name} ({args}) RETURNS {returns} AS $${body}$$ LANGUAGE {language};
     """
 
-    return _template.format(
-        schema=schema, name=name, args=args, returns=returns, body=body, language=language
+    return text(
+        _template.format(
+            schema=schema, name=name, args=args, returns=returns, body=body, language=language
+        )
     )
 
 

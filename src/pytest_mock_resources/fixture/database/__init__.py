@@ -22,4 +22,5 @@ from pytest_mock_resources.fixture.database.relational import (
     pmr_redshift_container,
     Rows,
     Statements,
+    StaticStatements,
 )
