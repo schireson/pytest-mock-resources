@@ -1,5 +1,6 @@
 import pytest
 import sqlalchemy.exc
+from sqlalchemy import text
 
 from pytest_mock_resources import create_postgres_fixture, create_redshift_fixture
 from tests.fixture.database import (
@@ -53,20 +54,24 @@ def test_tightly_scoped_patch(redshift, postgres):
     """
     import moto
 
-    copy_command = COPY_TEMPLATE.format(
-        COMMAND="COPY",
-        LOCATION="s3://mybucket/file.csv",
-        COLUMNS="",
-        FROM="from",
-        CREDENTIALS="credentials",
-        OPTIONAL_ARGS="",
+    copy_command = text(
+        COPY_TEMPLATE.format(
+            COMMAND="COPY",
+            LOCATION="s3://mybucket/file.csv",
+            COLUMNS="",
+            FROM="from",
+            CREDENTIALS="credentials",
+            OPTIONAL_ARGS="",
+        )
     )
     with moto.mock_s3():
         setup_table_and_bucket(redshift)
         setup_table_and_bucket(postgres, create_bucket=False)
-        redshift.execute(copy_command)
+        with redshift.begin() as conn:
+            conn.execute(copy_command)
 
         with pytest.raises(sqlalchemy.exc.ProgrammingError) as e:
-            postgres.execute(copy_command)
+            with postgres.begin() as conn:
+                conn.execute(copy_command)
 
         assert 'syntax error at or near "credentials"' in str(e.value)

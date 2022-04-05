@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, SmallInteger
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, SmallInteger, text
 
 from pytest_mock_resources import create_mysql_fixture, create_postgres_fixture, Rows
+from pytest_mock_resources.compat.sqlalchemy import declarative_base
 
 Base = declarative_base()
 
@@ -26,24 +26,22 @@ mysql = create_mysql_fixture(rows)
 
 
 def test_rows_postgres(postgres):
-    execute = postgres.execute(
-        """
-        SELECT *
-        FROM quarter
-        ORDER BY id
-        """
-    )
+    with postgres.begin() as conn:
+        execute = conn.execute(
+            text(
+                """
+            SELECT *
+            FROM quarter
+            ORDER BY id
+            """
+            )
+        )
     assert [(1, 2012, 1), (2, 2012, 2), (3, 2012, 3), (4, 2012, 4)] == list(execute)
 
 
 def test_rows_mysql(mysql):
-    execute = mysql.execute(
-        """
-        SELECT *
-        FROM quarter
-        ORDER BY id
-        """
-    )
+    with mysql.begin() as conn:
+        execute = conn.execute(text("SELECT * FROM quarter ORDER BY id"))
     assert [(1, 2012, 1), (2, 2012, 2), (3, 2012, 3), (4, 2012, 4)] == list(execute)
 
 
@@ -57,43 +55,21 @@ class Report(SecondBase):
 
 
 rows = Rows(Quarter(id=1, year=2012, quarter=1), Quarter(id=2, year=2012, quarter=2), Report(id=3))
-base_2_postgres = create_postgres_fixture(rows)
-base_2_mysql = create_mysql_fixture(rows)
+base_2_postgres = create_postgres_fixture(rows, session=True)
+base_2_mysql = create_mysql_fixture(rows, session=True)
 
 
 def test_2_bases_postgres(base_2_postgres):
-    execute = base_2_postgres.execute(
-        """
-        SELECT *
-        FROM quarter
-        ORDER BY id
-        """
-    )
+    execute = base_2_postgres.execute(text("SELECT * FROM quarter ORDER BY id"))
     assert [(1, 2012, 1), (2, 2012, 2)] == list(execute)
 
-    execute = base_2_postgres.execute(
-        """
-        SELECT *
-        FROM report
-        """
-    )
+    execute = base_2_postgres.execute(text("SELECT * FROM report"))
     assert [(3,)] == list(execute)
 
 
 def test_2_bases_mysql(base_2_mysql):
-    execute = base_2_mysql.execute(
-        """
-        SELECT *
-        FROM quarter
-        ORDER BY id
-        """
-    )
+    execute = base_2_mysql.execute(text("SELECT * FROM quarter ORDER BY id"))
     assert [(1, 2012, 1), (2, 2012, 2)] == list(execute)
 
-    execute = base_2_mysql.execute(
-        """
-        SELECT *
-        FROM report
-        """
-    )
+    execute = base_2_mysql.execute(text("SELECT * FROM report"))
     assert [(3,)] == list(execute)

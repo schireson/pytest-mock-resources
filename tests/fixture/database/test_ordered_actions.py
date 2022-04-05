@@ -3,10 +3,10 @@ from typing import List
 import pytest
 from sqlalchemy import Column, ForeignKey, Integer, String, text
 from sqlalchemy.exc import ProgrammingError
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
 from pytest_mock_resources import create_postgres_fixture, Rows, Statements
+from pytest_mock_resources.compat.sqlalchemy import declarative_base
 
 Base = declarative_base()
 
@@ -53,7 +53,8 @@ postgres_session_function = create_postgres_fixture(Base, session_function)
 # Run the test 5 times to ensure fixture is stateless
 @pytest.mark.parametrize("run", range(5))
 def test_ordered_actions(postgres_ordered_actions, run):
-    execute = postgres_ordered_actions.execute("SELECT * FROM user1")
+    with postgres_ordered_actions.begin() as conn:
+        execute = conn.execute(text("SELECT * FROM user1"))
     result = sorted([row[0] for row in execute])
     assert ["Gump1", "Harold1"] == result
 
@@ -61,20 +62,21 @@ def test_ordered_actions(postgres_ordered_actions, run):
 # Run the test 5 times to ensure fixture is stateless
 @pytest.mark.parametrize("run", range(5))
 def test_session_function(postgres_session_function, run):
-    execute = postgres_session_function.execute("SELECT * FROM stuffs.object")
-    owner_id = sorted([row[2] for row in execute])[0]
-    execute = postgres_session_function.execute(
-        "SELECT * FROM stuffs.user where id = {id}".format(id=owner_id)
-    )
-    result = [row[1] for row in execute]
+    with postgres_session_function.begin() as conn:
+        execute = conn.execute(text("SELECT * FROM stuffs.object"))
+        owner_id = sorted([row[2] for row in execute])[0]
+        execute = conn.execute(
+            text("SELECT * FROM stuffs.user where id = {id}".format(id=owner_id))
+        )
+        result = [row[1] for row in execute]
     assert result == ["Fake Name"]
 
 
-postgres_metadata_only = create_postgres_fixture(Base.metadata)
+postgres_metadata_only = create_postgres_fixture(Base.metadata, session=True)
 
 
 def test_metadata_only(postgres_metadata_only):
-    execute = postgres_metadata_only.execute("SELECT * FROM stuffs.user")
+    execute = postgres_metadata_only.execute(text("SELECT * FROM stuffs.user"))
 
     result = sorted([row[0] for row in execute])
     assert [] == result

@@ -8,20 +8,20 @@ lock:
 install-base:
 	poetry install
 
-install: install-base
+install:
 	poetry install -E postgres -E postgres-async -E redshift -E mongo -E redis -E mysql
 
 ## Test
 test-base:
-	coverage run -a -m \
+	SQLALCHEMY_WARN_20=1 coverage run -a -m \
 		py.test src tests -vv \
 		-m 'not postgres and not redshift and not mongo and not redis and not mysql'
 
 test-parallel:
-	coverage run -m py.test -n 4 src tests -vv
+	SQLALCHEMY_WARN_20=1 coverage run -m py.test -n 4 src tests -vv
 
 test: test-parallel
-	coverage run -a -m py.test src tests -vv
+	SQLALCHEMY_WARN_20=1 coverage run -a -m py.test src tests -vv
 	coverage report
 	coverage xml
 

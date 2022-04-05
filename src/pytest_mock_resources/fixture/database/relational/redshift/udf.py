@@ -84,7 +84,7 @@ datediff_kwargs = dict(
          'minute', 'minutes', 'm', 'min', 'mins',
          'second', 'seconds'
          ) THEN
-           RAISE EXCEPTION 'Invalid unit %% specified', units;
+           RAISE EXCEPTION 'Invalid unit % specified', units;
          END IF;
 
          IF units IN (

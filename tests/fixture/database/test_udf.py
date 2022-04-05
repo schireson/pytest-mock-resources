@@ -1,6 +1,7 @@
 from datetime import date, datetime
 
 import pytest
+from sqlalchemy import text
 from sqlalchemy.exc import InternalError
 
 from pytest_mock_resources import create_redshift_fixture
@@ -71,14 +72,13 @@ class TestUdf:
         ),
     )
     def test_date_add(self, redshift, interval_str, num, date_or_datetime, expected):
-        result = redshift.execute(
-            "SELECT DATE_ADD(%(interval_str)s, %(num)s, %(date_or_datetime)s);",
-            interval_str=interval_str,
-            num=num,
-            date_or_datetime=date_or_datetime,
-        )
+        with redshift.begin() as conn:
+            result = conn.execute(
+                text("SELECT DATE_ADD(:interval_str, :num, :date_or_datetime);"),
+                dict(interval_str=interval_str, num=num, date_or_datetime=date_or_datetime),
+            )
 
-        result = result.fetchall()
+            result = result.fetchall()
 
         assert len(result) == 1
         assert len(result[0]) == 1
@@ -156,39 +156,45 @@ class TestUdf:
     def test_datediff(
         self, redshift, interval_str, date_or_datetime_1, date_or_datetime_2, expected
     ):
-        result = redshift.execute(
-            "SELECT DATEDIFF(%(interval_str)s, %(date_or_datetime_1)s, %(date_or_datetime_2)s);",
-            interval_str=interval_str,
-            date_or_datetime_1=date_or_datetime_1,
-            date_or_datetime_2=date_or_datetime_2,
-        )
+        with redshift.connect() as conn:
+            result = conn.execute(
+                text("SELECT DATEDIFF(:interval_str, :date_or_datetime_1, :date_or_datetime_2);"),
+                dict(
+                    interval_str=interval_str,
+                    date_or_datetime_1=date_or_datetime_1,
+                    date_or_datetime_2=date_or_datetime_2,
+                ),
+            )
 
-        result = result.fetchall()
+            result = result.fetchall()
 
         assert len(result) == 1
         assert len(result[0]) == 1
         assert result[0][0] == expected
 
-        result = redshift.execute(
-            "SELECT DATEDIFF(%(interval_str)s, %(date_or_datetime_2)s, %(date_or_datetime_1)s);",
-            interval_str=interval_str,
-            date_or_datetime_2=date_or_datetime_2,
-            date_or_datetime_1=date_or_datetime_1,
-        )
+        with redshift.connect() as conn:
+            result = conn.execute(
+                text("SELECT DATEDIFF(:interval_str, :date_or_datetime_2, :date_or_datetime_1);"),
+                dict(
+                    interval_str=interval_str,
+                    date_or_datetime_2=date_or_datetime_2,
+                    date_or_datetime_1=date_or_datetime_1,
+                ),
+            )
 
-        result = result.fetchall()
+            result = result.fetchall()
 
         assert len(result) == 1
         assert len(result[0]) == 1
         assert result[0][0] == expected * -1
 
     def test_datediff_invalid_unit(self, redshift):
-        with pytest.raises(InternalError):
-            redshift.execute(
-                """
-                SELECT DATEDIFF(%(interval_str)s, %(date_or_datetime_2)s, %(date_or_datetime_1)s);
-                """,
-                interval_str="invalid",
-                date_or_datetime_2=date(2018, 1, 1),
-                date_or_datetime_1=date(2018, 1, 1),
+        with redshift.connect() as conn, pytest.raises(InternalError):
+            conn.execute(
+                text("SELECT DATEDIFF(:interval_str, :date_or_datetime_2, :date_or_datetime_1);"),
+                dict(
+                    interval_str="invalid",
+                    date_or_datetime_2=date(2018, 1, 1),
+                    date_or_datetime_1=date(2018, 1, 1),
+                ),
             )

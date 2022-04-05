@@ -1,21 +1,39 @@
+import sqlalchemy
 import sqlalchemy.engine.url
 
 from pytest_mock_resources.compat.import_ import ImportAdaptor
 
-try:
+version = sqlalchemy.__version__
+
+if version.startswith("1.4") or version.startswith("2."):
     from sqlalchemy.ext import asyncio
-except ImportError:
-    asyncio = ImportAdaptor(  # type: ignore
+    from sqlalchemy.orm import declarative_base, DeclarativeMeta
+
+    URL = sqlalchemy.engine.url.URL.create
+
+    select = sqlalchemy.select
+else:
+    from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta
+
+    URL = sqlalchemy.engine.url.URL
+
+    asyncio = ImportAdaptor(
         "SQLAlchemy",
         "SQLAlchemy >= 1.4",
         fail_message="Cannot use sqlalchemy async features with SQLAlchemy < 1.4.\n",
     )
 
-URL = sqlalchemy.engine.url.URL
-try:
-    # Attempt to use the newly recommended `URL.create` method when available
-    URL = URL.create  # type: ignore
-except AttributeError:
-    # But if it's not available, the top-level contructor should still exist,
-    # as this is the only available option in sqlalchemy<1.4 versions.
-    pass
+    def _select(*args, **kwargs):
+        return sqlalchemy.select(list(args), **kwargs)
+
+    select = _select
+
+
+__all__ = [
+    "asyncio",
+    "declarative_base",
+    "DeclarativeMeta",
+    "URL",
+    "select",
+    "version",
+]

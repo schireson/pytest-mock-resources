@@ -4,13 +4,13 @@ from typing import Tuple
 
 import attr
 import six
-from sqlalchemy import MetaData
-from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta
+from sqlalchemy import MetaData, text
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql.ddl import CreateSchema
 from sqlalchemy.sql.schema import Table
 
 from pytest_mock_resources import compat
+from pytest_mock_resources.compat.sqlalchemy import DeclarativeMeta
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -67,8 +67,11 @@ class Statements(AbstractAction):
         self.statements = statements
 
     def run(self, engine_manager):
-        for statement in self.statements:
-            engine_manager.engine.execute(statement)
+        with engine_manager.engine.begin() as connection:
+            for statement in self.statements:
+                if isinstance(statement, str):
+                    statement = text(statement)
+                connection.execute(statement)
 
 
 @attr.s
@@ -82,12 +85,10 @@ class EngineManager(object):
     _ddl_created = False
 
     def _run_actions(self):
-        BaseType = type(declarative_base())
-
         for action in self.ordered_actions:
             if isinstance(action, MetaData):
                 self.create_ddl(action)
-            elif isinstance(action, BaseType):
+            elif isinstance(action, DeclarativeMeta):
                 self.create_ddl(action.metadata)
             elif isinstance(action, AbstractAction):
                 action.run(self)
@@ -104,12 +105,13 @@ class EngineManager(object):
 
         all_schemas = {table.schema for table in metadata.tables.values() if table.schema}
 
-        for schema in all_schemas:
-            if self.default_schema == schema:
-                continue
+        with self.engine.begin() as connection:
+            for schema in all_schemas:
+                if self.default_schema == schema:
+                    continue
 
-            statement = CreateSchema(schema, quote=True)
-            self.engine.execute(statement)
+                statement = CreateSchema(schema, quote=True)
+                connection.execute(statement)
 
     def _create_tables(self, metadata):
         if not self.tables:
