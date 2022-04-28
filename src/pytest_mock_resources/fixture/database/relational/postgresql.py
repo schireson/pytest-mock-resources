@@ -21,7 +21,7 @@ def pmr_postgres_config():
 
 
 @pytest.fixture(scope="session")
-def _postgres_container(pytestconfig, pmr_postgres_config: PostgresConfig):
+def pmr_postgres_container(pytestconfig, pmr_postgres_config: PostgresConfig):
     yield from get_container(pytestconfig, pmr_postgres_config)
 
 
@@ -59,12 +59,12 @@ def create_postgres_fixture(
     )
 
     @pytest.fixture(scope=scope)
-    def _sync(_postgres_container, pmr_postgres_config):
+    def _sync(pmr_postgres_container, pmr_postgres_config):
         engine_manager = create_engine_manager(pmr_postgres_config, **engine_manager_kwargs)
         yield from engine_manager.manage_sync(session=session)
 
     @pytest.fixture(scope=scope)
-    async def _async(_postgres_container, pmr_postgres_config):
+    async def _async(pmr_postgres_container, pmr_postgres_config):
         engine_manager = create_engine_manager(pmr_postgres_config, **engine_manager_kwargs)
         async for engine in engine_manager.manage_async(session=session):
             yield engine

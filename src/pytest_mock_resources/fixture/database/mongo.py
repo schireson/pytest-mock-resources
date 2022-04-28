@@ -19,7 +19,7 @@ def pmr_mongo_config():
 
 
 @pytest.fixture(scope="session")
-def _mongo_container(pytestconfig, pmr_mongo_config):
+def pmr_mongo_container(pytestconfig, pmr_mongo_config):
     yield from get_container(pytestconfig, pmr_mongo_config)
 
 
@@ -34,7 +34,7 @@ def create_mongo_fixture(scope="function"):
     """
 
     @pytest.fixture(scope=scope)
-    def _(_mongo_container, pmr_mongo_config):
+    def _(pmr_mongo_container, pmr_mongo_config):
         return _create_clean_database(pmr_mongo_config)
 
     return _

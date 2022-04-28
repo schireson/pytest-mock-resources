@@ -1,4 +1,5 @@
 # flake8: noqa
+from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.mongo import MongoConfig
 from pytest_mock_resources.container.mysql import MysqlConfig
 from pytest_mock_resources.container.postgres import PostgresConfig

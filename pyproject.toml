@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-mock-resources"
-version = "2.2.7"
+version = "2.3.0"
 description = "A pytest plugin for easily instantiating reproducible mock resources."
 authors = [
     "Omar Khan <oakhan3@gmail.com>",
@@ -119,6 +119,7 @@ filterwarnings = [
   "ignore:urllib.parse.splitnport.*:DeprecationWarning",
   "ignore:distutils Version classes are deprecated. Use packaging.version instead.:DeprecationWarning",
   "ignore::ResourceWarning",
+  "ignore::UserWarning",
 ]
 
 [build-system]

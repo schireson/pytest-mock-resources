@@ -21,7 +21,7 @@ def pmr_mysql_config():
 
 
 @pytest.fixture(scope="session")
-def _mysql_container(pytestconfig, pmr_mysql_config):
+def pmr_mysql_container(pytestconfig, pmr_mysql_config):
     yield from get_container(pytestconfig, pmr_mysql_config)
 
 
@@ -41,7 +41,7 @@ def create_mysql_fixture(*ordered_actions, scope="function", tables=None, sessio
     """
 
     @pytest.fixture(scope=scope)
-    def _(_mysql_container, pmr_mysql_config):
+    def _(pmr_mysql_container, pmr_mysql_config):
         database_name = _create_clean_database(pmr_mysql_config)
         engine = get_sqlalchemy_engine(pmr_mysql_config, database_name)
 
