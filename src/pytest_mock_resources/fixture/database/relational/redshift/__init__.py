@@ -21,7 +21,7 @@ def pmr_redshift_config():
 
 
 @pytest.fixture(scope="session")
-def _redshift_container(pytestconfig, pmr_redshift_config):
+def pmr_redshift_container(pytestconfig, pmr_redshift_config):
     yield from get_container(pytestconfig, pmr_redshift_config)
 
 
@@ -68,7 +68,7 @@ def create_redshift_fixture(
     )
 
     @pytest.fixture(scope=scope)
-    def _sync(_redshift_container, pmr_redshift_config):
+    def _sync(pmr_redshift_container, pmr_redshift_config):
         engine_manager = create_engine_manager(pmr_redshift_config, **engine_manager_kwargs)
         database_name = engine_manager.engine.url.database
 
@@ -78,7 +78,7 @@ def create_redshift_fixture(
                 yield engine
 
     @pytest.fixture(scope=scope)
-    async def _async(_redshift_container, pmr_redshift_config):
+    async def _async(pmr_redshift_container, pmr_redshift_config):
         engine_manager = create_engine_manager(pmr_redshift_config, **engine_manager_kwargs)
         database_name = engine_manager.engine.url.database
 

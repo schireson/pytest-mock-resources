@@ -1,6 +1,7 @@
 import contextlib
 import json
 import pathlib
+import socket
 import time
 
 import responses
@@ -48,8 +49,11 @@ def get_container(pytestconfig, config, *, retries=DEFAULT_RETRIES, interval=DEF
     # we will need to know whether it's been created already or not.
     container = None
 
+    if config.port is None:
+        config.set('port', unused_tcp_port())
+
     run_kwargs = dict(
-        ports=config.ports(), environment=config.environment(), name=container_name(config.name)
+        ports=config.ports(), environment=config.environment(), name=container_name(config.name, config.port)
     )
 
     try:
@@ -82,7 +86,7 @@ def get_container(pytestconfig, config, *, retries=DEFAULT_RETRIES, interval=DEF
                 interval=interval,
             )
 
-        yield
+        yield container
     finally:
         cleanup_container = get_pytest_flag(pytestconfig, "pmr_cleanup_container", default=True)
         if cleanup_container and container and not multiprocess_safe_mode:
@@ -125,8 +129,8 @@ def wait_for_container(
     return None
 
 
-def container_name(name: str) -> str:
-    return f"pmr_{name}"
+def container_name(name: str, port: int) -> str:
+    return f"pmr_{name}_{port}"
 
 
 def record_container_creation(pytestconfig, container):
@@ -165,3 +169,11 @@ def load_container_lockfile(path: pathlib.Path):
                 yield json.load(f)
         else:
             yield []
+
+
+def unused_tcp_port():
+    """Find an unused localhost TCP port from 1024-65535 and return it.
+    """
+    with contextlib.closing(socket.socket()) as sock:
+        sock.bind(("127.0.0.1", 0))
+        return sock.getsockname()[1]

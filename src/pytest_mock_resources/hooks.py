@@ -97,24 +97,25 @@ def pytest_sessionfinish(session, exitstatus):
     # PMR runs failed to clean up their container, subsequent runs. Ironically
     # this might also lead to literal concurrent runs of unrelated PMR-enabled
     # pytest runs to clobber one another...:shrug:.
-    fn = get_tmp_root(session.config)
-    with load_container_lockfile(fn) as containers:
-        if not containers:
-            return
+    roots = [get_tmp_root(session.config), get_tmp_root(session.config, parent=True)]
+    for fn in roots:
+        with load_container_lockfile(fn) as containers:
+            if not containers:
+                continue
 
-        version = get_env_config("docker", "api_version", "auto")
-        client = docker.from_env(version=version)
-        while containers:
-            container_id = containers.pop(0)
+            version = get_env_config("docker", "api_version", "auto")
+            client = docker.from_env(version=version)
+            while containers:
+                container_id = containers.pop(0)
 
-            try:
-                container = client.containers.get(container_id)
-            except Exception:
-                warnings.warn(f"Unrecognized container {container_id}")
-            else:
                 try:
-                    container.kill()
+                    container = client.containers.get(container_id)
                 except Exception:
-                    warnings.warn(f"Failed to kill container {container_id}")
+                    warnings.warn(f"Unrecognized container {container_id}")
+                else:
+                    try:
+                        container.kill()
+                    except Exception:
+                        warnings.warn(f"Failed to kill container {container_id}")
 
-    fn.unlink()
+        fn.unlink()

@@ -35,9 +35,8 @@ def fallback(fn):
         if value is not None:
             return value
 
-        value = getattr(self, "_{attr}".format(attr=attr), None)
-        if value is not None:
-            return value
+        if self.has(attr):
+            return self.get(attr)
 
         try:
             return fn(self)
@@ -54,8 +53,10 @@ class DockerContainerConfig:
     _fields_defaults: Dict = {}
 
     def __init__(self, **kwargs):
-        for field in self._fields:
-            value = kwargs.get(field)
+        for field, value in kwargs.items():
+            if field not in self._fields:
+                continue
+
             attr = "_{}".format(field)
             setattr(self, attr, value)
 
@@ -67,6 +68,18 @@ class DockerContainerConfig:
                 "{}={}".format(attr, repr(getattr(self, attr))) for attr in self._fields
             ),
         )
+
+    def has(self, attr):
+        attr_name = "_{attr}".format(attr=attr)
+        return hasattr(self, attr_name)
+
+    def get(self, attr):
+        attr_name = "_{attr}".format(attr=attr)
+        return getattr(self, attr_name)
+
+    def set(self, attr, value):
+        attr_name = "_{attr}".format(attr=attr)
+        return setattr(self, attr_name, value)
 
     @fallback
     def image(self):

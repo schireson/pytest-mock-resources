@@ -1,5 +1,6 @@
 # flake8: noqa
 from pytest_mock_resources.container import (
+    get_container,
     MongoConfig,
     MysqlConfig,
     PostgresConfig,
@@ -7,11 +8,6 @@ from pytest_mock_resources.container import (
     RedshiftConfig,
 )
 from pytest_mock_resources.fixture.database import (
-    _mongo_container,
-    _mysql_container,
-    _postgres_container,
-    _redis_container,
-    _redshift_container,
     create_mongo_fixture,
     create_mysql_fixture,
     create_postgres_fixture,
@@ -19,10 +15,15 @@ from pytest_mock_resources.fixture.database import (
     create_redshift_fixture,
     create_sqlite_fixture,
     pmr_mongo_config,
+    pmr_mongo_container,
     pmr_mysql_config,
+    pmr_mysql_container,
     pmr_postgres_config,
+    pmr_postgres_container,
     pmr_redis_config,
+    pmr_redis_container,
     pmr_redshift_config,
+    pmr_redshift_container,
     Rows,
     Statements,
 )
