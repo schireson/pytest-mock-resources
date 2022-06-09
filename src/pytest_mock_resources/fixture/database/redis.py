@@ -19,7 +19,7 @@ def pmr_redis_config():
 
 
 @pytest.fixture(scope="session")
-def _redis_container(pytestconfig, pmr_redis_config):
+def pmr_redis_container(pytestconfig, pmr_redis_config):
     yield from get_container(pytestconfig, pmr_redis_config)
 
 
@@ -50,7 +50,7 @@ def create_redis_fixture(scope="function"):
     """
 
     @pytest.fixture(scope=scope)
-    def _(request, _redis_container, pmr_redis_config):
+    def _(request, pmr_redis_container, pmr_redis_config):
         database_number = 0
         if hasattr(request.config, "workerinput"):
             worker_input = request.config.workerinput
