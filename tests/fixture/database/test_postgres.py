@@ -3,7 +3,7 @@ from sqlalchemy import Column, event, Integer
 from pytest_mock_resources import create_postgres_fixture
 from pytest_mock_resources.compat.sqlalchemy import declarative_base
 from pytest_mock_resources.container.postgres import get_sqlalchemy_engine
-from pytest_mock_resources.fixture.database.relational.postgresql import _create_clean_database
+from pytest_mock_resources.fixture.database.relational.postgresql import _produce_clean_database
 
 Base = declarative_base()
 
@@ -35,7 +35,7 @@ def test_create_clean_database_createdb_template(pmr_postgres_config, createdb_t
     # Use the event system to hook into the statements being executed by sqlalchemy.
     with root_engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
         event.listen(conn, "before_execute", before_execute)
-        _create_clean_database(conn, createdb_template="template0")
+        _produce_clean_database(conn, createdb_template="template0")
         event.remove(conn, "before_execute", before_execute)
 
     assert "template0" in statement

@@ -1,5 +1,41 @@
 # Changelog
 
+## [v2.4.0](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.3.0...v2.4.0) (2022-06-15)
+
+### Features
+
+* Amortize the cost of database setup through the use of database templates. fdd8317
+* Support non-session scoped containers. 0d1474a
+
+
+## [v2.3.0](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.2.6...v2.3.0) (2022-04-05)
+
+### Fixes
+
+* Address sqlalchemy 2 warnings. 98f2c0b
+
+
+### [v2.2.6](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.2.5...v2.2.6) (2022-03-30)
+
+#### Fixes
+
+* Add missing stub config option to pmr command setup. 8ca0491
+
+
+### [v2.2.5](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.2.3...v2.2.5) (2022-02-25)
+
+#### Features
+
+* Add missing container types and use pmr internals for cli. 37fb772
+* Refactor redshift fixture to be "first class". a4e71ee
+
+#### Fixes
+
+* Bump mypy and safe-parallelize tests. be14cf5
+* Add missing example inits, leading to mypy caching problems. 436c8b2
+* Add additional "docker" extra. 891938f
+
+
 ### [v2.2.3](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.2.2...v2.2.3) (2022-02-23)
 
 #### Features

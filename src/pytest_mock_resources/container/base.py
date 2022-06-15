@@ -50,10 +50,12 @@ def get_container(pytestconfig, config, *, retries=DEFAULT_RETRIES, interval=DEF
     container = None
 
     if config.port is None:
-        config.set('port', unused_tcp_port())
+        config.set("port", unused_tcp_port())
 
     run_kwargs = dict(
-        ports=config.ports(), environment=config.environment(), name=container_name(config.name, config.port)
+        ports=config.ports(),
+        environment=config.environment(),
+        name=container_name(config.name, config.port),
     )
 
     try:
@@ -172,8 +174,7 @@ def load_container_lockfile(path: pathlib.Path):
 
 
 def unused_tcp_port():
-    """Find an unused localhost TCP port from 1024-65535 and return it.
-    """
+    """Find an unused localhost TCP port from 1024-65535 and return it."""
     with contextlib.closing(socket.socket()) as sock:
         sock.bind(("127.0.0.1", 0))
         return sock.getsockname()[1]

@@ -7,17 +7,17 @@ of e.g. SQLite, Postgres, Mongo, etc might **actually** exist in your system.
 Furthermore, you can prepopulate the connections those fixtures yield to you with whatever
 DDL, preset data, or functions you might require.
 
-Each fixture you create can be used in multiple tests without risking data leakage or side-effects
-from one test to another, see :ref:`internals-label` for more details.
+A new resource (database or otherwise) is created on a per test database, which allows each
+fixture to be used in multiple tests without risking data leakage or side-effects from one
+test to another.
 
-See :ref:`docker-config-label` for information on customizing the configuration for docker-based fixtures.
+See :ref:`Config` for information on customizing the configuration for docker-based fixtures.
 
 .. toctree::
 
-   Relational database fixtures <database>
+   Relational database fixtures <relational/index.rst>
+   Postgres <postgres>
    Redshift <redshift>
    SQLite <sqlite>
    Mongo <mongo>
    Redis <redis>
-
-   Internals <internals>

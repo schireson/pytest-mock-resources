@@ -55,8 +55,10 @@ def create_mysql_fixture(*ordered_actions, scope="function", tables=None, sessio
             password=pmr_mysql_config.password,
         )
 
-        engine_manager = EngineManager(engine, ordered_actions, tables=tables)
-        for engine in engine_manager.manage_sync(session=session):
+        engine_manager = EngineManager.create(
+            engine, dynamic_actions=ordered_actions, tables=tables, session=session
+        )
+        for engine in engine_manager.manage_sync():
             yield engine
 
     return _

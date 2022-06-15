@@ -6,12 +6,13 @@ Welcome to Pytest Mock Resource's documentation!
    :caption: Contents:
 
    Quickstart <quickstart>
-   Docker <docker>
    Fixtures <fixtures>
-   Async <async>
-   CI Service Support <ci>
-   Contributing <contributing>
+   Asyncio <async>
+   Fixture Configuration <config>
+   CLI (Startup Lag) <cli>
+   CI Support <ci>
    API <api>
+   Contributing <contributing>
 
 
 Indices and tables

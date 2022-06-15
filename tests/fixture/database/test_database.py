@@ -113,10 +113,11 @@ def test_create_custom_connection_url(postgres_3):
 
 def test_bad_actions(postgres):
     with pytest.raises(ValueError) as e:
-        EngineManager(postgres, ordered_actions=["random_string"])._run_actions()
+        EngineManager.create(postgres, dynamic_actions=["random_string"])
 
-    assert "create_fixture function takes in sqlalchemy.MetaData or actions as inputs only." in str(
-        e.value
+    assert (
+        "`random_string` invalid: create_<x>_fixture functions accept sqlalchemy.MetaData or actions as inputs."
+        in str(e.value)
     )
 
 

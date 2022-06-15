@@ -153,6 +153,27 @@ def enable_foreign_key_checks(dbapi_connection, connection_record):
     cursor.close()
 
 
+def do_connect(dbapi_connection, connection_record):
+    """Disable pysqlite's emitting of the BEGIN statement entirely.
+
+    Also stops it from emitting COMMIT before any DDL.
+
+    https://docs.sqlalchemy.org/en/20/dialects/sqlite.html#pysqlite-serializable
+    """
+    dbapi_connection.isolation_level = None
+
+
+def do_begin(conn):
+    """Emit our own BEGIN.
+
+    SQLite lazily emits begin on first write operation by default. This impacts our ability
+    to correctly manage the session in `EngineManager`.
+
+    https://docs.sqlalchemy.org/en/20/dialects/sqlite.html#pysqlite-serializable
+    """
+    conn.exec_driver_sql("BEGIN")
+
+
 @contextlib.contextmanager
 def filter_sqlalchemy_warnings(decimal_warnings_enabled=True):
     with warnings.catch_warnings():
@@ -228,8 +249,14 @@ def create_sqlite_fixture(
         # This *must* happen before the connection occurs (implicitly in `EngineManager`).
         event.listen(raw_engine, "connect", enable_foreign_key_checks)
 
-        engine_manager = EngineManager(raw_engine, ordered_actions, tables=tables)
-        for engine in engine_manager.manage_sync(session=session):
+        # https://docs.sqlalchemy.org/en/20/dialects/sqlite.html#pysqlite-serializable
+        event.listen(raw_engine, "connect", do_connect)
+        event.listen(raw_engine, "begin", do_begin)
+
+        engine_manager = EngineManager.create(
+            raw_engine, ordered_actions, tables=tables, session=session
+        )
+        for engine in engine_manager.manage_sync():
             with filter_sqlalchemy_warnings(decimal_warnings_enabled=(not decimal_warnings)):
                 assign_fixture_credentials(
                     raw_engine,
