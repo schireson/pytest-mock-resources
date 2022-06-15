@@ -64,6 +64,8 @@ types-six = "^1.16.0"
 types-PyMySQL = "^1.0.2"
 types-redis = "^3.5.6"
 sqlalchemy2-stubs = "^0.0.2-alpha.19"
+types-filelock = "^3.2.7"
+types-dataclasses = "^0.6.5"
 
 [tool.poetry.extras]
 docker = ['docker', 'filelock']

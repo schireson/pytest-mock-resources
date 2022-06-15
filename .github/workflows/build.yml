@@ -1,0 +1,22 @@
+name: CI
+on: pull_request
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-base:
+    uses: ./.github/workflows/lint_and_test.yml
+    with:
+      install: poetry install
+      lint: false
+      run: poetry run make test-base
+      python-versions: '["3.6"]'
+
+  test:
+    uses: ./.github/workflows/lint_and_test.yml
+    with:
+      install: make install
+      run: poetry run make test
+      python-versions: '["3.6", "3.7", "3.8", "3.9", "3.10"]'
