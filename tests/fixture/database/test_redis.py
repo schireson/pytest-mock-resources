@@ -1,5 +1,4 @@
 from pytest_mock_resources import create_redis_fixture
-from pytest_mock_resources.compat import redis
 
 redis_client = create_redis_fixture()
 
@@ -30,12 +29,16 @@ class TestGeneric:
         assert keys == []
 
     def test_custom_connection(self, redis_client):
+        import redis
+
         r = redis.Redis(**redis_client.pmr_credentials.as_redis_kwargs())
         r.set("foo", "bar")
         value = r.get("foo").decode("utf-8")
         assert value == "bar"
 
     def test_custom_connection_url(self, redis_client):
+        import redis
+
         r = redis.from_url(redis_client.pmr_credentials.as_url())
         r.set("foo", "bar")
         value = r.get("foo").decode("utf-8")

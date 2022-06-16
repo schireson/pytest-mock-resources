@@ -2,9 +2,8 @@ import random
 
 from sqlalchemy import create_engine, text
 
-from pytest_mock_resources.compat import boto3, moto, psycopg2
-from pytest_mock_resources.patch.redshift.mock_s3_copy import read_data_csv
-from pytest_mock_resources.patch.redshift.mock_s3_unload import get_data_csv
+from pytest_mock_resources.resource.redshift.s3_copy import read_data_csv
+from pytest_mock_resources.resource.redshift.s3_unload import get_data_csv
 
 original_data = [
     (3342, 32434.0, "a", "gfhsdgaf"),
@@ -67,7 +66,7 @@ def fetch_and_assert_psycopg2(cursor):
         assert result == expected_result
 
 
-def setup_table_and_bucket(redshift, file_name="file.csv", create_bucket=True, cursor=False):
+def setup_table_and_bucket(redshift, file_name="file.csv", create_bucket=True, cursor=False, *, boto3):
     statement = (
         "CREATE TABLE test_s3_copy_into_redshift (i INT, f FLOAT, c CHAR(1), v VARCHAR(16));"
     )
@@ -108,7 +107,7 @@ def setup_table_and_insert_data(engine, cursor=False):
 
 
 def fetch_values_from_s3_and_assert(
-    engine, file_name="myfile.csv", is_gzipped=False, delimiter="|"
+    engine, file_name="myfile.csv", is_gzipped=False, delimiter="|", *, boto3
 ):
     s3 = boto3.client(
         "s3",
@@ -124,7 +123,7 @@ def randomcase(s):
     return "".join(c.upper() if random.randint(0, 1) else c.lower() for c in s)
 
 
-def copy_fn_to_test_create_engine_patch(redshift):
+def copy_fn_to_test_create_engine_patch(redshift, *, moto):
     with moto.mock_s3():
         engine = create_engine(redshift.url)
         setup_table_and_bucket(redshift)
@@ -146,7 +145,7 @@ def copy_fn_to_test_create_engine_patch(redshift):
         fetch_values_from_table_and_assert(engine)
 
 
-def copy_fn_to_test_psycopg2_connect_patch(config):
+def copy_fn_to_test_psycopg2_connect_patch(config, *, psycopg2, moto):
     with moto.mock_s3():
         conn = psycopg2.connect(**config)
         cursor = conn.cursor()
@@ -166,7 +165,7 @@ def copy_fn_to_test_psycopg2_connect_patch(config):
         fetch_and_assert_psycopg2(cursor)
 
 
-def copy_fn_to_test_psycopg2_connect_patch_as_context_manager(config):
+def copy_fn_to_test_psycopg2_connect_patch_as_context_manager(config, *, psycopg2, moto):
     with moto.mock_s3():
         with psycopg2.connect(**config) as conn:
             with conn.cursor() as cursor:
@@ -186,7 +185,7 @@ def copy_fn_to_test_psycopg2_connect_patch_as_context_manager(config):
                 fetch_and_assert_psycopg2(cursor)
 
 
-def unload_fn_to_test_create_engine_patch(redshift):
+def unload_fn_to_test_create_engine_patch(redshift, *, moto):
     with moto.mock_s3():
         engine = create_engine(redshift.url)
         setup_table_and_insert_data(engine)
@@ -207,7 +206,7 @@ def unload_fn_to_test_create_engine_patch(redshift):
         fetch_values_from_s3_and_assert(engine, is_gzipped=False)
 
 
-def unload_fn_to_test_psycopg2_connect_patch(config):
+def unload_fn_to_test_psycopg2_connect_patch(config, *, psycopg2, moto):
     with moto.mock_s3():
         conn = psycopg2.connect(**config)
         cursor = conn.cursor()
@@ -227,7 +226,7 @@ def unload_fn_to_test_psycopg2_connect_patch(config):
         fetch_values_from_s3_and_assert(cursor, is_gzipped=False)
 
 
-def unload_fn_to_test_psycopg2_connect_patch_as_context_manager(config):
+def unload_fn_to_test_psycopg2_connect_patch_as_context_manager(config, *, psycopg2, moto):
     with moto.mock_s3():
         with psycopg2.connect(**config) as conn:
             with conn.cursor() as cursor:

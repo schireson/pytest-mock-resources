@@ -7,7 +7,8 @@ CI). Perhaps something can be worked out using a dind kind of setup.
 import pytest
 from sqlalchemy import text
 
-from pytest_mock_resources import create_postgres_fixture, get_container, PostgresConfig
+from pytest_mock_resources import create_postgres_fixture, PostgresConfig
+from pytest_mock_resources.container import get_container
 from tests import skip_if_ci
 
 

@@ -2,10 +2,15 @@ import os
 
 import pytest
 
-from pytest_mock_resources.compat import sqlalchemy
+try:
+    import sqlalchemy
+except ImportError:
+    sqlalchemy_version = ''
+else:
+    sqlalchemy_version = getattr(sqlalchemy, 'version', '')
 
 skip_if_sqlalchemy2 = pytest.mark.skipif(
-    sqlalchemy.version.startswith("1.4") or sqlalchemy.version.startswith("2."),
+    sqlalchemy_version.startswith("1.4") or sqlalchemy_version.startswith("2."),
     reason="Incompatible with sqlalchemy 2 behavior",
 )
 

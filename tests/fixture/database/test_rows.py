@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, SmallInteger, text
 
 from pytest_mock_resources import create_mysql_fixture, create_postgres_fixture, Rows
-from pytest_mock_resources.compat.sqlalchemy import declarative_base
+from pytest_mock_resources.sqlalchemy.compat import declarative_base
 
 Base = declarative_base()
 

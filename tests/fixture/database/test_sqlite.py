@@ -6,8 +6,8 @@ from sqlalchemy.dialects.postgresql import JSON, JSONB
 from sqlalchemy.exc import IntegrityError, SAWarning
 
 from pytest_mock_resources import create_postgres_fixture, create_sqlite_fixture, Rows
-from pytest_mock_resources.compat.sqlalchemy import declarative_base, select
-from pytest_mock_resources.fixture.database.relational.sqlite import utc
+from pytest_mock_resources.resource.sqlite.dialect import utc
+from pytest_mock_resources.sqlalchemy.compat import declarative_base, select
 
 Base = declarative_base()
 

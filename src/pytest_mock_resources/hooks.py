@@ -43,6 +43,10 @@ def get_pytest_flag(config, name, *, default=None):
     return config_value
 
 
+def cleanup_container(config):
+    return get_pytest_flag(config, "pmr_cleanup_container", default=True)
+
+
 def use_multiprocess_safe_mode(config):
     return get_pytest_flag(config, "pmr_multiprocess_safe")
 
@@ -90,8 +94,8 @@ def pytest_sessionfinish(session, exitstatus):
 
     # We ought to avoid performing deep imports here, this file is auto-loaded
     # by pytest plugin machinery.
-    from pytest_mock_resources.config import get_env_config
     from pytest_mock_resources.container.base import get_tmp_root, load_container_lockfile
+    from pytest_mock_resources.container.config import get_env_config
 
     # Kind of a neat side-effect of using the below lock file is that if past
     # PMR runs failed to clean up their container, subsequent runs. Ironically

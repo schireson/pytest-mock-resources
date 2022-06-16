@@ -5,7 +5,7 @@ from sqlalchemy import Column, ForeignKey, Integer, String, text
 from sqlalchemy.orm import relationship
 
 from pytest_mock_resources import create_postgres_fixture, Rows, Statements
-from pytest_mock_resources.compat.sqlalchemy import declarative_base
+from pytest_mock_resources.sqlalchemy.compat import declarative_base
 
 Base = declarative_base()
 

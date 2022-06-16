@@ -8,7 +8,7 @@ from pytest_mock_resources import (
     create_redshift_fixture,
     create_sqlite_fixture,
 )
-from pytest_mock_resources.fixture.database.relational.generic import EngineManager
+from pytest_mock_resources.sqlalchemy.engine_manager import EngineManager
 
 sqlite = create_sqlite_fixture()
 postgres = create_postgres_fixture()

@@ -4,10 +4,8 @@ import pathlib
 import socket
 import time
 
-import responses
-
-from pytest_mock_resources.config import get_env_config
-from pytest_mock_resources.hooks import get_pytest_flag, use_multiprocess_safe_mode
+from pytest_mock_resources.compat import try_import, verify_import
+from pytest_mock_resources.container.config import get_env_config
 
 DEFAULT_RETRIES = 40
 DEFAULT_INTERVAL = 0.5
@@ -30,14 +28,24 @@ def retry(func=None, *, args=(), kwargs={}, retries=1, interval=DEFAULT_INTERVAL
             return result
 
 
-def get_container(pytestconfig, config, *, retries=DEFAULT_RETRIES, interval=DEFAULT_INTERVAL):
+def get_container(
+    pytestconfig,
+    config,
+    *,
+    retries=DEFAULT_RETRIES,
+    interval=DEFAULT_INTERVAL,
+    cleanup_container=True,
+    multiprocess_safe_mode=True,
+):
+    verify_import("docker", extra_name="docker")
+
     import docker
     import docker.errors
 
-    multiprocess_safe_mode = use_multiprocess_safe_mode(pytestconfig)
-
     # XXX: moto library may over-mock responses. SEE: https://github.com/spulec/moto/issues/1026
-    responses.add_passthru("http+docker")
+    responses = try_import("responses")
+    if responses:
+        responses.add_passthru("http+docker")
 
     # Recent versions of the `docker` client make API calls to `docker` at this point
     # if provided the "auto" version. This leads to potential startup failure if
@@ -90,7 +98,6 @@ def get_container(pytestconfig, config, *, retries=DEFAULT_RETRIES, interval=DEF
 
         yield container
     finally:
-        cleanup_container = get_pytest_flag(pytestconfig, "pmr_cleanup_container", default=True)
         if cleanup_container and container and not multiprocess_safe_mode:
             container.kill()
 

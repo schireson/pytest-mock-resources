@@ -4,8 +4,8 @@ from sqlalchemy import Column, Integer, MetaData, SmallInteger, Table, text, Uni
 from sqlalchemy.orm import sessionmaker
 
 from pytest_mock_resources import create_postgres_fixture, create_sqlite_fixture, Rows
-from pytest_mock_resources.compat.sqlalchemy import declarative_base, select
-from pytest_mock_resources.fixture.database.relational.generic import identify_matching_tables
+from pytest_mock_resources.sqlalchemy.compat import declarative_base, select
+from pytest_mock_resources.sqlalchemy.engine_manager import identify_matching_tables
 from tests import skip_if_sqlalchemy2
 
 Base = declarative_base()

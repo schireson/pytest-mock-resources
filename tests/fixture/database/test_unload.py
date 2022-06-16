@@ -2,7 +2,6 @@ import sqlalchemy
 from sqlalchemy.sql import text
 
 from pytest_mock_resources import create_redshift_fixture
-from pytest_mock_resources.compat import moto
 from tests import skip_if_sqlalchemy2
 from tests.fixture.database import (
     fetch_values_from_s3_and_assert,
@@ -14,7 +13,7 @@ from tests.fixture.database import (
 redshift = create_redshift_fixture()
 
 
-def test_unload(redshift):
+def test_unload(redshift, moto):
     """Test if a file is created with the appropriate data."""
     with moto.mock_s3():
         setup_table_and_insert_data(redshift)
@@ -36,7 +35,7 @@ def test_unload(redshift):
         fetch_values_from_s3_and_assert(redshift, is_gzipped=False)
 
 
-def test_unload_case_senesitivity(redshift):
+def test_unload_case_senesitivity(redshift, moto):
     """Test case sensitivity for UNLOAD command."""
     with moto.mock_s3():
         setup_table_and_insert_data(redshift)
@@ -58,7 +57,7 @@ def test_unload_case_senesitivity(redshift):
         fetch_values_from_s3_and_assert(redshift, is_gzipped=False)
 
 
-def test_unload_gzipped(redshift):
+def test_unload_gzipped(redshift, moto):
     """Test gzip support."""
     with moto.mock_s3():
         setup_table_and_insert_data(redshift)
@@ -80,7 +79,7 @@ def test_unload_gzipped(redshift):
         fetch_values_from_s3_and_assert(redshift, file_name="myfile.csv.gz", is_gzipped=True)
 
 
-def test_inverted_credentials_string(redshift):
+def test_inverted_credentials_string(redshift, moto):
     """Test parsing with an inverted credentials string."""
     with moto.mock_s3():
         setup_table_and_insert_data(redshift)
@@ -107,7 +106,7 @@ def test_inverted_credentials_string(redshift):
         fetch_values_from_s3_and_assert(redshift, is_gzipped=False)
 
 
-def test_optional_keywords(redshift):
+def test_optional_keywords(redshift, moto):
     """Test command with optimal keyword arguments."""
     with moto.mock_s3():
         setup_table_and_insert_data(redshift)
@@ -129,7 +128,7 @@ def test_optional_keywords(redshift):
         fetch_values_from_s3_and_assert(redshift, is_gzipped=False, delimiter=",")
 
 
-def test_random_spacing(redshift):
+def test_random_spacing(redshift, moto):
     """Test command with random spaces."""
     with moto.mock_s3():
         setup_table_and_insert_data(redshift)
@@ -151,7 +150,7 @@ def test_random_spacing(redshift):
         fetch_values_from_s3_and_assert(redshift, is_gzipped=False, delimiter=",")
 
 
-def test_ignores_sqlalchmey_text_obj(redshift):
+def test_ignores_sqlalchmey_text_obj(redshift, moto):
     """Test command ignores SQLAlchemy Text Objects and raises error."""
     with moto.mock_s3():
         setup_table_and_insert_data(redshift)
@@ -177,7 +176,7 @@ def test_ignores_sqlalchmey_text_obj(redshift):
 
 
 @skip_if_sqlalchemy2
-def test_multiple_sql_statemts(redshift):
+def test_multiple_sql_statemts(redshift, moto):
     with moto.mock_s3():
         with redshift.begin() as conn:
             conn.execute(

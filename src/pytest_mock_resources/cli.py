@@ -9,8 +9,8 @@ from pytest_mock_resources import (
     RedisConfig,
     RedshiftConfig,
 )
-from pytest_mock_resources.config import DockerContainerConfig, get_env_config
 from pytest_mock_resources.container.base import container_name, get_container, retry
+from pytest_mock_resources.container.config import DockerContainerConfig, get_env_config
 
 postgres_image = PostgresConfig().image
 mysql_image = MysqlConfig().image

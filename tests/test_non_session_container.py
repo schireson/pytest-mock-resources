@@ -1,6 +1,6 @@
 import pytest
 
-from pytest_mock_resources.container.postgres import PostgresConfig
+from pytest_mock_resources.config import PostgresConfig
 
 
 @pytest.fixture(scope="session")

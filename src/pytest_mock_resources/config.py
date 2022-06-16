@@ -1,114 +1,295 @@
-import functools
-import os
-import socket
-from typing import Dict, Iterable
-
-_DOCKER_HOST = "host.docker.internal"
+from pytest_mock_resources.container.base import ContainerCheckFailed
+from pytest_mock_resources.container.config import DockerContainerConfig, fallback
 
 
-def is_ci():
-    return os.getenv("CI") == "true"
+class MongoConfig(DockerContainerConfig):
+    """Define the configuration object for mongo.
 
+    Args:
+        image (str): The docker image:tag specifier to use for mongo containers.
+            Defaults to :code:`"mongo:3.6"`.
+        host (str): The hostname under which a mounted port will be available.
+            Defaults to :code:`"localhost"`.
+        port (int): The port to bind the container to.
+            Defaults to :code:`28017`.
+        ci_port (int): The port to bind the container to when a CI environment is detected.
+            Defaults to :code:`27017`.
+        root_database (str): The name of the root mongo database to create.
+            Defaults to :code:`"dev-mongo"`.
+    """
 
-@functools.lru_cache()
-def is_docker_host():
-    try:
-        socket.gethostbyname(_DOCKER_HOST)
-    except socket.gaierror:
-        return False
-    else:
-        return True
+    name = "mongo"
 
-
-def get_env_config(name, kind, default=None):
-    env_var = "PMR_{name}_{kind}".format(name=name.upper(), kind=kind.upper())
-    return os.environ.get(env_var, default)
-
-
-def fallback(fn):
-    attr = fn.__name__
-
-    @property
-    @functools.wraps(fn)
-    def wrapper(self):
-        value = get_env_config(self.name, attr)
-        if value is not None:
-            return value
-
-        if self.has(attr):
-            return self.get(attr)
-
-        try:
-            return fn(self)
-        except NotImplementedError:
-            if attr in self._fields_defaults:
-                return self._fields_defaults[attr]
-            return None
-
-    return wrapper
-
-
-class DockerContainerConfig:
-    _fields: Iterable = {"image", "host", "port", "ci_port"}
-    _fields_defaults: Dict = {}
-
-    def __init__(self, **kwargs):
-        for field, value in kwargs.items():
-            if field not in self._fields:
-                continue
-
-            attr = "_{}".format(field)
-            setattr(self, attr, value)
-
-    def __repr__(self):
-        cls_name = self.__class__.__name__
-        return "{cls_name}({attrs})".format(
-            cls_name=cls_name,
-            attrs=", ".join(
-                "{}={}".format(attr, repr(getattr(self, attr))) for attr in self._fields
-            ),
-        )
-
-    def has(self, attr):
-        attr_name = "_{attr}".format(attr=attr)
-        return hasattr(self, attr_name)
-
-    def get(self, attr):
-        attr_name = "_{attr}".format(attr=attr)
-        return getattr(self, attr_name)
-
-    def set(self, attr, value):
-        attr_name = "_{attr}".format(attr=attr)
-        return setattr(self, attr_name, value)
+    _fields = {"image", "host", "port", "ci_port", "root_database"}
+    _fields_defaults = {
+        "image": "mongo:3.6",
+        "port": 28017,
+        "ci_port": 27017,
+        "root_database": "dev-mongo",
+    }
 
     @fallback
-    def image(self):
-        raise NotImplementedError()
-
-    @fallback
-    def ci_port(self):
-        raise NotImplementedError()
-
-    @fallback
-    def host(self):
-        if is_docker_host():
-            return _DOCKER_HOST
-
-        return os.environ.get("PYTEST_MOCK_RESOURCES_HOST", "localhost")
-
-    @fallback
-    def port(self):
-        ci_port = self.ci_port
-        if ci_port and is_ci():
-            return ci_port
-
+    def root_database(self):
         raise NotImplementedError()
 
     def ports(self):
-        return {}
-
-    def environment(self):
-        return {}
+        return {27017: self.port}
 
     def check_fn(self):
-        pass
+        import pymongo
+
+        try:
+            client = pymongo.MongoClient(self.host, self.port)
+            db = client[self.root_database]
+            db.command("ismaster")
+        except pymongo.errors.ConnectionFailure:
+            raise ContainerCheckFailed(
+                "Unable to connect to a presumed MongoDB test container via given config: {}".format(
+                    self
+                )
+            )
+
+
+class MysqlConfig(DockerContainerConfig):
+    """Define the configuration object for MySql.
+
+    Args:
+        image (str): The docker image:tag specifier to use for mysql containers.
+            Defaults to :code:`"mysql:5.6"`.
+        host (str): The hostname under which a mounted port will be available.
+            Defaults to :code:`"localhost"`.
+        port (int): The port to bind the container to.
+            Defaults to :code:`5532`.
+        ci_port (int): The port to bind the container to when a CI environment is detected.
+            Defaults to :code:`5432`.
+        username (str): The username of the root user
+            Defaults to :code:`"user"`.
+        password (str): The password of the root password
+            Defaults to :code:`"password"`.
+        root_database (str): The name of the root database to create.
+            Defaults to :code:`"dev"`.
+    """
+
+    name = "mysql"
+    _fields = {"image", "host", "port", "ci_port", "username", "password", "root_database"}
+    _fields_defaults = {
+        "image": "mysql:5.6",
+        "port": 3406,
+        "ci_port": 3306,
+        # XXX: For now, username is disabled/ignored. We need root access for PMR
+        #      internals.
+        "username": "root",
+        "password": "password",
+        "root_database": "dev",
+    }
+
+    @fallback
+    def username(self):
+        raise NotImplementedError()
+
+    @fallback
+    def password(self):
+        raise NotImplementedError()
+
+    @fallback
+    def root_database(self):
+        raise NotImplementedError()
+
+    def ports(self):
+        return {3306: self.port}
+
+    def environment(self):
+        return {
+            "MYSQL_DATABASE": self.root_database,
+            "MYSQL_ROOT_PASSWORD": self.password,
+        }
+
+    def check_fn(self):
+        import sqlalchemy.exc
+
+        from pytest_mock_resources.resource.mysql.fixture import get_sqlalchemy_engine
+
+        try:
+            get_sqlalchemy_engine(self, self.root_database)
+        except sqlalchemy.exc.OperationalError:
+            raise ContainerCheckFailed(
+                "Unable to connect to a presumed MySQL test container via given config: {}".format(
+                    self
+                )
+            )
+
+
+class PostgresConfig(DockerContainerConfig):
+    """Define the configuration object for postgres.
+
+    Args:
+        image (str): The docker image:tag specifier to use for postgres containers.
+            Defaults to :code:`"postgres:9.6.10-alpine"`.
+        host (str): The hostname under which a mounted port will be available.
+            Defaults to :code:`"localhost"`.
+        port (int): The port to bind the container to.
+            Defaults to :code:`5532`.
+        ci_port (int): The port to bind the container to when a CI environment is detected.
+            Defaults to :code:`5432`.
+        username (str): The username of the root postgres user
+            Defaults to :code:`"user"`.
+        password (str): The password of the root postgres password
+            Defaults to :code:`"password"`.
+        root_database (str): The name of the root postgres database to create.
+            Defaults to :code:`"dev"`.
+    """
+
+    name = "postgres"
+    _fields = {"image", "host", "port", "ci_port", "username", "password", "root_database"}
+    _fields_defaults = {
+        "image": "postgres:9.6.10-alpine",
+        "port": 5532,
+        "ci_port": 5432,
+        "username": "user",
+        "password": "password",
+        "root_database": "dev",
+    }
+
+    @fallback
+    def username(self):
+        raise NotImplementedError()
+
+    @fallback
+    def password(self):
+        raise NotImplementedError()
+
+    @fallback
+    def root_database(self):
+        raise NotImplementedError()
+
+    def ports(self):
+        return {5432: self.port}
+
+    def environment(self):
+        return {
+            "POSTGRES_DB": self.root_database,
+            "POSTGRES_USER": self.username,
+            "POSTGRES_PASSWORD": self.password,
+        }
+
+    def check_fn(self):
+        import sqlalchemy.exc
+
+        from pytest_mock_resources.resource.postgres.sqlalchemy import get_sqlalchemy_engine
+
+        try:
+            get_sqlalchemy_engine(self, self.root_database)
+        except sqlalchemy.exc.OperationalError:
+            raise ContainerCheckFailed(
+                "Unable to connect to a presumed Postgres test container via given config: {}".format(
+                    self
+                )
+            )
+
+
+class RedisConfig(DockerContainerConfig):
+    """Define the configuration object for redis.
+
+    Args:
+        image (str): The docker image:tag specifier to use for redis containers.
+            Defaults to :code:`"redis:5.0.7"`.
+        host (str): The hostname under which a mounted port will be available.
+            Defaults to :code:`"localhost"`.
+        port (int): The port to bind the container to.
+            Defaults to :code:`6380`.
+        ci_port (int): The port to bind the container to when a CI environment is detected.
+            Defaults to :code:`6379`.
+    """
+
+    name = "redis"
+
+    _fields = {"image", "host", "port", "ci_port"}
+    _fields_defaults = {
+        "image": "redis:5.0.7",
+        "port": 6380,
+        "ci_port": 6379,
+    }
+
+    def ports(self):
+        return {6379: self.port}
+
+    def check_fn(self):
+        import redis
+
+        try:
+            client = redis.Redis(host=self.host, port=self.port)
+            client.ping()
+        except redis.ConnectionError:
+            raise ContainerCheckFailed(
+                "Unable to connect to a presumed Redis test container via given config: {}".format(
+                    self
+                )
+            )
+
+
+class RedshiftConfig(DockerContainerConfig):
+    """Define the configuration object for Redshift.
+
+    Args:
+        image (str): The docker image:tag specifier to use for Redshift containers.
+            Defaults to :code:`"postgres:9.6.10-alpine"`.
+        host (str): The hostname under which a mounted port will be available.
+            Defaults to :code:`"localhost"`.
+        port (int): The port to bind the container to.
+            Defaults to :code:`5532`.
+        ci_port (int): The port to bind the container to when a CI environment is detected.
+            Defaults to :code:`5432`.
+        username (str): The username of the root Redshift user
+            Defaults to :code:`"user"`.
+        password (str): The password of the root Redshift password
+            Defaults to :code:`"password"`.
+        root_database (str): The name of the root Redshift database to create.
+            Defaults to :code:`"dev"`.
+    """
+
+    name = "redshift"
+    _fields = {"image", "host", "port", "ci_port", "username", "password", "root_database"}
+    _fields_defaults = {
+        "image": "postgres:9.6.10-alpine",
+        "port": 5532,
+        "ci_port": 5432,
+        "username": "user",
+        "password": "password",
+        "root_database": "dev",
+    }
+
+    @fallback
+    def username(self):
+        raise NotImplementedError()
+
+    @fallback
+    def password(self):
+        raise NotImplementedError()
+
+    @fallback
+    def root_database(self):
+        raise NotImplementedError()
+
+    def ports(self):
+        return {5432: self.port}
+
+    def environment(self):
+        return {
+            "POSTGRES_DB": self.root_database,
+            "POSTGRES_USER": self.username,
+            "POSTGRES_PASSWORD": self.password,
+        }
+
+    def check_fn(self):
+        import sqlalchemy.exc
+
+        from pytest_mock_resources.resource.postgres.sqlalchemy import get_sqlalchemy_engine
+
+        try:
+            get_sqlalchemy_engine(self, self.root_database)
+        except sqlalchemy.exc.OperationalError:
+            raise ContainerCheckFailed(
+                "Unable to connect to a presumed Redshift test container via given config: {}".format(
+                    self
+                )
+            )
