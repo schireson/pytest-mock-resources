@@ -5,8 +5,6 @@ from typing import Iterable, List, Optional, Set, TypeVar, Union
 
 from sqlalchemy import MetaData, text
 from sqlalchemy.engine import Engine
-from sqlalchemy.ext.asyncio.session import AsyncSession
-from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm import scoped_session, Session, sessionmaker
 from sqlalchemy.sql.ddl import CreateSchema
 from sqlalchemy.sql.schema import Table
@@ -78,8 +76,8 @@ class StaticStatements(Statements):
     static_safe = True
 
 
-StaticAction = Union[MetaData, DeclarativeMeta, Rows, StaticStatements]
-Action = Union[MetaData, DeclarativeMeta, AbstractAction]
+StaticAction = Union[MetaData, compat.sqlalchemy.DeclarativeMeta, Rows, StaticStatements]
+Action = Union[MetaData, compat.sqlalchemy.DeclarativeMeta, AbstractAction]
 T = TypeVar("T", StaticAction, Action)
 
 
@@ -136,6 +134,8 @@ class EngineManager:
             self.engine.dispose()
 
     async def manage_async(self, session=None):
+        from sqlalchemy.ext.asyncio.session import AsyncSession
+
         engine = create_async_engine(self.engine.pmr_credentials)
 
         try:
@@ -225,7 +225,7 @@ def normalize_actions(ordered_actions: Iterable[T]) -> Iterable[T]:
     unique_metadata: Set[MetaData] = set()
     normalized_actions: List[T] = []
     for action in ordered_actions:
-        if isinstance(action, DeclarativeMeta):
+        if isinstance(action, compat.sqlalchemy.DeclarativeMeta):
             action = action.metadata
             normalized_actions.append(action)
 
@@ -269,7 +269,7 @@ def bifurcate_actions(ordered_actions):
 
 
 def identify_matching_tables(metadata, table_specifier):
-    if isinstance(table_specifier, DeclarativeMeta):
+    if isinstance(table_specifier, compat.sqlalchemy.DeclarativeMeta):
         return [table_specifier.__table__]
 
     if isinstance(table_specifier, Table):

@@ -1,0 +1,104 @@
+name: Reusable lint and test workflow
+on:
+  workflow_call:
+    inputs:
+      install:
+        required: false
+        type: string
+        default: make install
+        description: Command to run
+      run:
+        required: false
+        type: string
+        default: poetry run make test
+        description: Command to run
+      lint:
+        required: false
+        type: boolean
+        default: true
+        description: Whether to run linters
+      python-versions:
+        required: false
+        type: string
+        default: >-
+          ["3.9"]
+        description: The python versions to utilize in workflow.
+      sqlalchemy-versions:
+        required: false
+        type: string
+        default: >-
+          ["1.3", "1.4"]
+        description: The sqlalchemy versions to utilize in workflow.
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:9.6.10
+        env:
+          POSTGRES_DB: dev
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      redis:
+        image: redis:5.0.7
+        ports:
+          - 6379:6379
+      mongo:
+        image: mongo:3.6.12
+        ports:
+          - 27017:27017
+      mysql:
+        image: mysql:5.6
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_DATABASE: dev
+          MYSQL_ROOT_PASSWORD: password
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ${{fromJson(inputs.python-versions)}}
+        sqlalchemy-version: ${{fromJson(inputs.sqlalchemy-versions)}}
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run image
+        uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: 1.1.8
+
+      - name: Set up cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+      - name: Install dependencies
+        run: ${{ inputs.install }}
+
+      - name: Install dependencies
+        run: pip install 'sqlalchemy==${{ matrix.sqlalchemy-version }}'
+
+      - name: Run linters
+        run: poetry run make lint
+
+      - if: ${{ inputs.lint }}
+        name: Run tests
+        run: ${{ inputs.run }}
+
+      - name: Store test result artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          path: coverage.xml
+
+      - name: Codecov
+        uses: codecov/codecov-action@v2
