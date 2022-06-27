@@ -17,8 +17,7 @@ import json
 import warnings
 
 import pytest
-from sqlalchemy import create_engine, event
-from sqlalchemy.dialects import registry  # type: ignore
+from sqlalchemy import create_engine, dialects, event
 from sqlalchemy.dialects.postgresql import JSON, JSONB
 from sqlalchemy.dialects.sqlite import base as sqlite_base
 from sqlalchemy.dialects.sqlite.pysqlite import SQLiteDialect_pysqlite
@@ -233,6 +232,7 @@ def create_sqlite_fixture(
     if postgres_like:
         dialect = make_postgres_like_sqlite_dialect()
         dialect_name = dialect.name
+        registry = getattr(dialects, "registry")
         registry.register("sqlite.{}".format(dialect_name), __name__, "PostgresLikeSQLitePDialect")
 
     driver_name = "sqlite+{}".format(dialect_name)

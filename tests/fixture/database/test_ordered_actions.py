@@ -154,3 +154,39 @@ def test_non_template_database(non_template_database, run):
         execute = conn.execute(text("SELECT name FROM stuffs.user")).all()
         result = sorted([row[0] for row in execute])
         assert ["Mug", "Perrier"] == result
+
+
+class Test_multi_metadata_schemata:
+    """Assert that schemas are automatically created, given more than one input MetaData.
+
+    Addresses bug which set test-state in such a way that only the first MetaData's
+    schemas were created.
+    """
+
+    Base = declarative_base()
+
+    class Foo(Base):
+        __tablename__ = "foo"
+        __table_args__ = {"schema": "foo"}
+
+        id = Column(Integer, primary_key=True, autoincrement=True)
+
+    Base2 = declarative_base()
+
+    class Bar(Base2):
+        __tablename__ = "bar"
+        __table_args__ = {"schema": "bar"}
+
+        id = Column(Integer, primary_key=True, autoincrement=True)
+
+    multi_metadata_schemata = create_postgres_fixture(Base, Base2)
+
+    def test_creates_all_metadata_schemas(self, multi_metadata_schemata):
+        with multi_metadata_schemata.connect() as conn:
+            result = conn.execute(text("select * from foo.foo")).all()
+            assert len(result) == 0
+
+            result = conn.execute(text("select * from bar.bar")).all()
+            assert len(result) == 0
+            # We dont need much in the way of assertions. You would see
+            # database errors from the nonexistence of these schemas/tables.
