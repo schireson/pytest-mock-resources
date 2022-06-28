@@ -1,7 +1,7 @@
 import abc
 import fnmatch
-from dataclasses import dataclass
-from typing import Iterable, List, Optional, Set, TypeVar, Union
+from dataclasses import dataclass, field
+from typing import Dict, Iterable, List, Optional, Set, TypeVar, Union
 
 from sqlalchemy import MetaData, text
 from sqlalchemy.engine import Engine
@@ -90,7 +90,7 @@ class EngineManager:
     default_schema: Optional[str] = None
     static_actions: Iterable[StaticAction] = ()
 
-    _ddl_created = False
+    _ddl_created: Dict[MetaData, bool] = field(default_factory=dict)
 
     @classmethod
     def create(
@@ -174,7 +174,7 @@ class EngineManager:
             self.execute_action(conn, action, allow_function=True)
 
     def _create_schemas(self, conn, metadata):
-        if self._ddl_created:
+        if metadata in self._ddl_created:
             return
 
         all_schemas = {table.schema for table in metadata.tables.values() if table.schema}
@@ -205,7 +205,7 @@ class EngineManager:
     def create_ddl(self, conn, metadata):
         self._create_schemas(conn, metadata)
         self._create_tables(conn, metadata)
-        self._ddl_created = True
+        self._ddl_created[metadata] = True
 
     def execute_action(self, conn, action, allow_function=False):
         if isinstance(action, MetaData):

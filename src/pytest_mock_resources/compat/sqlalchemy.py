@@ -3,7 +3,7 @@ import sqlalchemy.engine.url
 
 from pytest_mock_resources.compat.import_ import ImportAdaptor
 
-version = sqlalchemy.__version__
+version = getattr(sqlalchemy, "__version__", "")
 
 if version.startswith("1.4") or version.startswith("2."):
     from sqlalchemy.ext import asyncio
