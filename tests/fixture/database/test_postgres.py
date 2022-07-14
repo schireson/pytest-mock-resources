@@ -25,7 +25,7 @@ def test_create_clean_database_createdb_template(pmr_postgres_config, createdb_t
 
     statement = ""
 
-    def before_execute(conn, clauseelement, multiparams, params, execution_options):
+    def before_execute(conn, clauseelement, multiparams, params, execution_options=None):
         # Search for our create database statement, so we can assert against it.
         if "CREATE DATABASE" in clauseelement.text:
             nonlocal statement

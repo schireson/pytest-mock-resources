@@ -181,23 +181,21 @@ def test_multiple_sql_statemts(redshift):
     with moto.mock_s3():
         with redshift.begin() as conn:
             conn.execute(
-                text(
-                    "CREATE TEMP TABLE test_s3_unload_from_redshift "
-                    "(i INT, f FLOAT, c CHAR(1), v VARCHAR(16));"
-                    "INSERT INTO test_s3_unload_from_redshift(i, f, c, v)"
-                    " values(3342, 32434.0, 'a', 'gfhsdgaf'), (3343, 0, 'b', NULL), "
-                    "(0, 32434.0, NULL, 'gfhsdgaf');"
-                    "{COMMAND} ({SELECT_STATEMENT}) {TO} '{LOCATION}' "
-                    "{AUTHORIZATION} 'aws_access_key_id=AAAAAAAAAAAAAAAAAAAA;"
-                    "aws_secret_access_key=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' "
-                    "{OPTIONAL_ARGS}".format(
-                        COMMAND="UNLOAD",
-                        SELECT_STATEMENT="select * from test_s3_unload_from_redshift",
-                        TO="TO",
-                        LOCATION="s3://mybucket/myfile.csv",
-                        AUTHORIZATION="AUTHORIZATION",
-                        OPTIONAL_ARGS="",
-                    )
+                "CREATE TEMP TABLE test_s3_unload_from_redshift "
+                "(i INT, f FLOAT, c CHAR(1), v VARCHAR(16));"
+                "INSERT INTO test_s3_unload_from_redshift(i, f, c, v)"
+                " values(3342, 32434.0, 'a', 'gfhsdgaf'), (3343, 0, 'b', NULL), "
+                "(0, 32434.0, NULL, 'gfhsdgaf');"
+                "{COMMAND} ({SELECT_STATEMENT}) {TO} '{LOCATION}' "
+                "{AUTHORIZATION} 'aws_access_key_id=AAAAAAAAAAAAAAAAAAAA;"
+                "aws_secret_access_key=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' "
+                "{OPTIONAL_ARGS}".format(
+                    COMMAND="UNLOAD",
+                    SELECT_STATEMENT="select * from test_s3_unload_from_redshift",
+                    TO="TO",
+                    LOCATION="s3://mybucket/myfile.csv",
+                    AUTHORIZATION="AUTHORIZATION",
+                    OPTIONAL_ARGS="",
                 )
             )
 

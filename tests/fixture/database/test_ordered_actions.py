@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 
 from pytest_mock_resources import create_postgres_fixture, Rows, Statements
 from pytest_mock_resources.compat.sqlalchemy import declarative_base
+from tests import skip_if_not_sqlalchemy2
 
 Base = declarative_base()
 
@@ -98,6 +99,7 @@ postgres_session_function_async = create_postgres_fixture(
 # Run the test 5 times to ensure fixture is stateless
 @pytest.mark.asyncio
 @pytest.mark.parametrize("run", range(5))
+@skip_if_not_sqlalchemy2
 async def test_ordered_actions_aysnc_shares_transaction(postgres_ordered_actions_async, run):
     async with postgres_ordered_actions_async.begin() as conn:
         execute = await conn.execute(text("SELECT * FROM user1"))
@@ -109,6 +111,7 @@ async def test_ordered_actions_aysnc_shares_transaction(postgres_ordered_actions
 # Run the test 5 times to ensure fixture is stateless
 @pytest.mark.asyncio
 @pytest.mark.parametrize("run", range(5))
+@skip_if_not_sqlalchemy2
 async def test_session_function_async(postgres_session_function_async, run):
     execute = await postgres_session_function_async.execute(text("SELECT * FROM stuffs.object"))
     owner_id = sorted([row[2] for row in execute])[0]
@@ -138,6 +141,7 @@ async_engine_function = create_postgres_fixture(Base, async_engine_function, asy
 
 
 @pytest.mark.asyncio
+@skip_if_not_sqlalchemy2
 async def test_async_engine_function(async_engine_function):
     async with async_engine_function.begin() as conn:
         query = await conn.execute(text("SELECT name FROM stuffs.user"))
@@ -151,7 +155,7 @@ non_template_database = create_postgres_fixture(Base, additional_rows, template_
 @pytest.mark.parametrize("run", range(5))
 def test_non_template_database(non_template_database, run):
     with non_template_database.begin() as conn:
-        execute = conn.execute(text("SELECT name FROM stuffs.user")).all()
+        execute = conn.execute(text("SELECT name FROM stuffs.user")).fetchall()
         result = sorted([row[0] for row in execute])
         assert ["Mug", "Perrier"] == result
 
@@ -183,10 +187,10 @@ class Test_multi_metadata_schemata:
 
     def test_creates_all_metadata_schemas(self, multi_metadata_schemata):
         with multi_metadata_schemata.connect() as conn:
-            result = conn.execute(text("select * from foo.foo")).all()
+            result = conn.execute(text("select * from foo.foo")).fetchall()
             assert len(result) == 0
 
-            result = conn.execute(text("select * from bar.bar")).all()
+            result = conn.execute(text("select * from bar.bar")).fetchall()
             assert len(result) == 0
             # We dont need much in the way of assertions. You would see
             # database errors from the nonexistence of these schemas/tables.
