@@ -9,6 +9,7 @@ from pytest_mock_resources import (
     create_sqlite_fixture,
 )
 from pytest_mock_resources.fixture.database.relational.generic import EngineManager
+from tests import skip_if_not_sqlalchemy2
 
 sqlite = create_sqlite_fixture()
 postgres = create_postgres_fixture()
@@ -125,6 +126,7 @@ postgres_async = create_postgres_fixture(async_=True)
 
 
 @pytest.mark.asyncio
+@skip_if_not_sqlalchemy2
 async def test_basic_postgres_fixture_async(postgres_async):
     async with postgres_async.connect() as conn:
         await conn.execute(text("select 1"))

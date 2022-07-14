@@ -1,8 +1,10 @@
 import abc
 import fnmatch
+import logging
 from dataclasses import dataclass, field
 from typing import Dict, Iterable, List, Optional, Set, TypeVar, Union
 
+import sqlalchemy
 from sqlalchemy import MetaData, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import scoped_session, Session, sessionmaker
@@ -10,6 +12,8 @@ from sqlalchemy.sql.ddl import CreateSchema
 from sqlalchemy.sql.schema import Table
 
 from pytest_mock_resources import compat
+
+log = logging.getLogger(__name__)
 
 
 def invalid_action_exception(action):
@@ -41,7 +45,7 @@ class Rows(AbstractAction):
             session = Session(bind=conn)
 
         session.add_all(rows)
-        session.commit()
+        commit(session)
 
     @staticmethod
     def _get_stateless_rows(rows):
@@ -115,15 +119,21 @@ class EngineManager:
     def manage_sync(self):
         try:
             if self.session:
-                if isinstance(self.session, (sessionmaker, Session)):
+                if isinstance(self.session, sessionmaker):
                     session_factory = self.session
+                    session = session_factory(bind=self.engine)
+                elif isinstance(self.session, Session):
+                    session = self.session
                 else:
                     session_factory = scoped_session(sessionmaker(bind=self.engine))
+                    session = session_factory(bind=self.engine)
 
-                with session_factory(bind=self.engine) as session:
+                try:
                     self.run_actions(session)
                     commit(session)
                     yield session
+                finally:
+                    session.close()
             else:
                 with self.engine.begin() as conn:
                     self.run_actions(conn)
@@ -291,10 +301,14 @@ def identify_matching_tables(metadata, table_specifier):
 
 
 def commit(conn):
-    if isinstance(conn, Session):
-        return conn.commit()
+    try:
+        if isinstance(conn, Session):
+            return conn.commit()
 
-    return conn.execute(text("COMMIT"))
+        return conn.execute(text("COMMIT"))
+    except sqlalchemy.exc.InvalidRequestError:
+        # In autocommit mode, we wont be able to commit.
+        pass
 
 
 def create_async_engine(credentials, isolation_level=None):

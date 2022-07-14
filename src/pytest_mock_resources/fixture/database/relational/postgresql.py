@@ -3,7 +3,7 @@ import logging
 import pytest
 import sqlalchemy
 from sqlalchemy import text
-from sqlalchemy.future.engine import Connection
+from sqlalchemy.engine import Connection
 
 from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.postgres import get_sqlalchemy_engine, PostgresConfig

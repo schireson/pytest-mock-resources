@@ -20,6 +20,8 @@ in CI because no container cleanup happens in the first place.
 """
 import time
 
+from sqlalchemy import text
+
 
 def test_node_one(pg, pytestconfig):
     containers = pytestconfig._pmr_containers
@@ -39,4 +41,5 @@ def delay(pg, containers):
     if not containers:
         time.sleep(5)
 
-    pg.execute("select 1")
+    with pg.connect() as conn:
+        conn.execute(text("select 1"))

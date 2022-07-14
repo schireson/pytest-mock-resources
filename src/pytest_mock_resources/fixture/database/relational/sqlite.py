@@ -170,7 +170,10 @@ def do_begin(conn):
 
     https://docs.sqlalchemy.org/en/20/dialects/sqlite.html#pysqlite-serializable
     """
-    conn.exec_driver_sql("BEGIN")
+    try:
+        conn.exec_driver_sql("BEGIN")
+    except AttributeError:  # pragma: no cover
+        conn.execute("BEGIN")
 
 
 @contextlib.contextmanager

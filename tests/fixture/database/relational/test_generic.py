@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from pytest_mock_resources import create_postgres_fixture, create_sqlite_fixture, Rows
 from pytest_mock_resources.compat.sqlalchemy import declarative_base, select
 from pytest_mock_resources.fixture.database.relational.generic import identify_matching_tables
-from tests import skip_if_sqlalchemy2
+from tests import skip_if_not_sqlalchemy2, skip_if_sqlalchemy2
 
 Base = declarative_base()
 
@@ -144,9 +144,8 @@ class TestSessionArg:
 
     @skip_if_sqlalchemy2
     def test_session2(self, sqlite2):
-        with sqlite2.begin() as conn:
-            conn.execute(text("INSERT INTO report (id) VALUES (1)"))
-            conn.rollback()
+        sqlite2.execute(text("INSERT INTO report (id) VALUES (1)"))
+        sqlite2.rollback()
         result = sqlite2.query(Report).all()
         assert len(result) == 1
 
@@ -155,6 +154,7 @@ class TestSessionArg:
         assert result.id == 1
 
     @pytest.mark.asyncio
+    @skip_if_not_sqlalchemy2
     async def test_session_pg_async(self, pg_session_async):
         result = (await pg_session_async.execute(select(Quarter))).scalars().one()
         assert result.id == 1
