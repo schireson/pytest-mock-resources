@@ -84,13 +84,12 @@ def pytest_sessionfinish(session, exitstatus):
 
     # docker-based fixtures should be optional based on the selected extras.
     try:
-        import docker
+        from python_on_whales import docker
     except ImportError:
         return
 
     # We ought to avoid performing deep imports here, this file is auto-loaded
     # by pytest plugin machinery.
-    from pytest_mock_resources.config import get_env_config
     from pytest_mock_resources.container.base import get_tmp_root, load_container_lockfile
 
     # Kind of a neat side-effect of using the below lock file is that if past
@@ -103,13 +102,11 @@ def pytest_sessionfinish(session, exitstatus):
             if not containers:
                 continue
 
-            version = get_env_config("docker", "api_version", "auto")
-            client = docker.from_env(version=version)
             while containers:
                 container_id = containers.pop(0)
 
                 try:
-                    container = client.containers.get(container_id)
+                    container = docker.container.inspect(container_id)
                 except Exception:
                     warnings.warn(f"Unrecognized container {container_id}")
                 else:

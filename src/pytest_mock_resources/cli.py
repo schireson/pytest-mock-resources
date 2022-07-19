@@ -9,8 +9,8 @@ from pytest_mock_resources import (
     RedisConfig,
     RedshiftConfig,
 )
-from pytest_mock_resources.config import DockerContainerConfig, get_env_config
-from pytest_mock_resources.container.base import container_name, get_container, retry
+from pytest_mock_resources.config import DockerContainerConfig
+from pytest_mock_resources.container.base import container_name, get_container
 
 postgres_image = PostgresConfig().image
 mysql_image = MysqlConfig().image
@@ -93,20 +93,15 @@ def execute(fixture_type: FixtureType, pytestconfig: StubPytestConfig, start=Tru
             pass
 
     if stop:
-        import docker
-
-        version = get_env_config("docker", "api_version", "auto")
-        client = retry(docker.from_env, kwargs=dict(version=version), retries=5, interval=1)
+        from python_on_whales import docker
 
         name = container_name(fixture_type.value, config.port)
         try:
-            container = client.containers.get(name)
+            container = docker.container.inspect(name)
         except Exception:
             print(f"Failed to stop {fixture_type.value} container")
         else:
             container.kill()
-
-        client.close()
 
 
 if __name__ == "__main__":
