@@ -48,7 +48,10 @@ redis = {version = "*", optional = true}
 pymysql = {version = ">=1.0", optional = true}
 
 filelock = {version = "*", optional = true}
-docker = {version = ">= 2.5.1", optional = true}
+python-on-whales = [
+  {version = "<0.22.0", optional = true, python = "<3.7"},
+  {version = ">=0.22.0", optional = true, python = ">=3.7"}
+]
 
 [tool.poetry.dev-dependencies]
 black = {version = "=>19.3b0", allow-prereleases = true}
@@ -68,14 +71,14 @@ types-filelock = "^3.2.7"
 types-dataclasses = "^0.6.5"
 
 [tool.poetry.extras]
-docker = ['docker', 'filelock']
-postgres = ['psycopg2', 'docker', 'filelock']
-postgres-binary = ['psycopg2-binary', 'docker', 'filelock']
-postgres-async = ['asyncpg', 'docker', 'filelock']
-redshift = ['boto3', 'moto', 'sqlparse', 'docker', 'filelock']
-mongo = ['pymongo', 'docker', 'filelock']
-redis = ['redis', 'docker', 'filelock']
-mysql = ['pymysql', 'docker', 'filelock']
+docker = ['python-on-whales', 'filelock']
+postgres = ['psycopg2', 'python-on-whales', 'filelock']
+postgres-binary = ['psycopg2-binary', 'python-on-whales', 'filelock']
+postgres-async = ['asyncpg', 'python-on-whales', 'filelock']
+redshift = ['boto3', 'moto', 'sqlparse', 'python-on-whales', 'filelock']
+mongo = ['pymongo', 'python-on-whales', 'filelock']
+redis = ['redis', 'python-on-whales', 'filelock']
+mysql = ['pymysql', 'python-on-whales', 'filelock']
 
 [tool.poetry.plugins.pytest11]
 pytest_mock_resources = "pytest_mock_resources"
@@ -117,11 +120,6 @@ markers = [
 ]
 filterwarnings = [
   "error",
-  "ignore:invalid escape sequence.*",
-  "ignore:urllib.parse.splitnport.*:DeprecationWarning",
-  "ignore:distutils Version classes are deprecated. Use packaging.version instead.:DeprecationWarning",
-  "ignore::ResourceWarning",
-  "ignore::UserWarning",
 ]
 
 [build-system]
