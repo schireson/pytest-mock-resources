@@ -91,10 +91,13 @@ class DockerContainerConfig:
 
     @fallback
     def host(self):
+        if os.environ.get("PYTEST_MOCK_RESOURCES_HOST") is not None:
+            return os.environ.get("PYTEST_MOCK_RESOURCES_HOST")
+
         if is_docker_host():
             return _DOCKER_HOST
 
-        return os.environ.get("PYTEST_MOCK_RESOURCES_HOST", "localhost")
+        return "localhost"
 
     @fallback
     def port(self):
