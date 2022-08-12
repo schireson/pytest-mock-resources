@@ -1,10 +1,30 @@
 # Changelog
 
+## [Unreleased](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.4.3...HEAD) (2022-08-12)
+
+
+### [v2.4.3](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.4.2...v2.4.3) (2022-07-20)
+
+
+### [v2.4.2](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.4.1...v2.4.2) (2022-07-14)
+
+#### Fixes
+
+* Incompatilities with sqlalchemy 1.3. dbdca54
+
+
+### [v2.4.1](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.4.0...v2.4.1) (2022-06-28)
+
+#### Fixes
+
+* Address bug which fails to create schemas for MetaData beyond the first, in a series of ordered actions. 2feca11
+
+
 ## [v2.4.0](https://github.com/schireson/schireson-pytest-mock-resources/compare/v2.3.0...v2.4.0) (2022-06-15)
 
 ### Features
 
-* Amortize the cost of database setup through the use of database templates. fdd8317
+* Amortize the cost of database setup through the use of database templates. 4c3c1f8
 * Support non-session scoped containers. 0d1474a
 
 
