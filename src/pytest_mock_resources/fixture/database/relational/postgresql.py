@@ -97,14 +97,20 @@ def create_postgres_fixture(
         engine_manager = _create_engine_manager(pmr_postgres_config)
         yield from engine_manager.manage_sync()
 
-    @pytest.fixture(scope=scope)
     async def _async(pmr_postgres_container, pmr_postgres_config):
         engine_manager = _create_engine_manager(pmr_postgres_config)
         async for engine in engine_manager.manage_async():
             yield engine
 
     if async_:
-        return _async
+        # pytest-asyncio in versions >=0.17 force you to use a `pytest_asyncio.fixture`
+        # call instead of `pytest.fixture`. Given that this would introduce an unncessary
+        # dependency on pytest-asyncio (when there are other alternatives) seems less than
+        # ideal, so instead we can just set the flag that they set, as the indicator.
+        _async._force_asyncio_fixture = True
+
+        fixture = pytest.fixture(scope=scope)
+        return fixture(_async)
     else:
         return _sync
 

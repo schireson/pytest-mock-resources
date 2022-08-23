@@ -29,6 +29,15 @@ jobs:
       python-versions: '["3.7", "3.8", "3.9", "3.10"]'
       lint: false
 
+  test-pytest-asyncio-gt-16:
+    uses: ./.github/workflows/lint_and_test.yml
+    with:
+      install: make install
+      pytest-asyncio-versions: '["0.19"]'
+      sqlalchemy-versions: '["1.4.39"]'
+      python-versions: '["3.7"]'
+      lint: false
+
   test-no-extras:
     uses: ./.github/workflows/lint_and_test.yml
     with:
