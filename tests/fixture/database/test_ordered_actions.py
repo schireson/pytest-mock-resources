@@ -185,6 +185,7 @@ class Test_multi_metadata_schemata:
 
     multi_metadata_schemata = create_postgres_fixture(Base, Base2)
 
+    @pytest.mark.postgres
     def test_creates_all_metadata_schemas(self, multi_metadata_schemata):
         with multi_metadata_schemata.connect() as conn:
             result = conn.execute(text("select * from foo.foo")).fetchall()
