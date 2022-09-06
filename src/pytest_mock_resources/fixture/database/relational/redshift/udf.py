@@ -85,8 +85,6 @@ date_add_timestamptz = create_udf(
 )
 
 
-
-
 datediff_kwargs = dict(
     returns="BIGINT",
     # Credit: https://gist.github.com/JoshuaGross/18b9bb1db8021efc88884cbd8dc8fddb
