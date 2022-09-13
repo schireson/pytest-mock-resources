@@ -201,20 +201,12 @@ class TestUdf:
 
     def test_left_integer(self, redshift):
         with redshift.connect() as conn:
-            result = conn.execute(
-                text("SELECT LEFT(1234, 2)")
-            )
-
+            result = conn.execute(text("SELECT LEFT(1234, 2)"))
             result = result.fetchone()
-
             assert result[0] == 12
 
     def test_right_integer(self, redshift):
         with redshift.connect() as conn:
-            result = conn.execute(
-                text("SELECT RIGHT(1234, 2)")
-            )
-
+            result = conn.execute(text("SELECT RIGHT(1234, 2)"))
             result = result.fetchone()
-
             assert result[0] == 34
