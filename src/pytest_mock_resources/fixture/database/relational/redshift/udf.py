@@ -185,5 +185,5 @@ REDSHIFT_UDFS = Statements(
     datediff_timestamp,
     datediff_timestamptz,
     left_integer,
-    right_integer
+    right_integer,
 )
