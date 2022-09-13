@@ -25,19 +25,19 @@ def create_udf(name, args, returns, body, language, schema="public"):
 
 
 left_integer = create_udf(
-  name='LEFT',
-  args="s1 INTEGER, s2 INTEGER",
-  returns='INTEGER',
-  body='SELECT LEFT(s1::TEXT, s2)::INTEGER',
-  language=UdfLanguage.SQL.value
+    name="LEFT",
+    args="s1 INTEGER, s2 INTEGER",
+    returns="INTEGER",
+    body="SELECT LEFT(s1::TEXT, s2)::INTEGER",
+    language=UdfLanguage.SQL.value
 )
 
 right_integer = create_udf(
-  name='RIGHT',
-  args="s1 INTEGER, s2 INTEGER",
-  returns='INTEGER',
-  body='SELECT RIGHT(s1::TEXT, s2)::INTEGER',
-  language=UdfLanguage.SQL.value
+    name="RIGHT",
+    args="s1 INTEGER, s2 INTEGER",
+    returns=vINTEGER",
+    body="SELECT RIGHT(s1::TEXT, s2)::INTEGER",
+    language=UdfLanguage.SQL.value
 )
 
 dateadd_kwargs = dict(body="SELECT d + (n::VARCHAR || i)::INTERVAL", language=UdfLanguage.SQL.value)
