@@ -166,6 +166,8 @@ class EngineManager:
                 async with engine.begin() as conn:
                     await conn.run_sync(self.run_actions)
                     await conn.execute(text("COMMIT"))
+
+                await engine.dispose()
                 yield engine
         finally:
             await engine.dispose()
