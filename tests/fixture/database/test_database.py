@@ -130,3 +130,12 @@ postgres_async = create_postgres_fixture(async_=True)
 async def test_basic_postgres_fixture_async(postgres_async):
     async with postgres_async.connect() as conn:
         await conn.execute(text("select 1"))
+
+
+@skip_if_not_sqlalchemy2
+def test_engine_reuse(postgres_async, event_loop):
+    async def execute(async_engine):
+        async with async_engine.connect() as conn:
+            await conn.execute(text("select 1"))
+
+    event_loop.run_until_complete(execute(postgres_async))
