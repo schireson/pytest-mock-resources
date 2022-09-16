@@ -2,6 +2,7 @@ from typing import List
 
 import pytest
 from sqlalchemy import Column, ForeignKey, Integer, String, text
+from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm import relationship
 
 from pytest_mock_resources import create_postgres_fixture, Rows, Statements
@@ -33,43 +34,87 @@ class Object(Base):
 
 
 rows = Rows(User(name="Harold"), User(name="Gump"))
-
-row_dependant_statements = Statements(
-    "CREATE TEMP TABLE user1 as SELECT DISTINCT CONCAT(name, 1) as name FROM stuffs.user"
-)
-
 additional_rows = Rows(User(name="Perrier"), User(name="Mug"))
 
 
-def session_function(session):
-    session.add(User(name="Fake Name", objects=[Object(name="Boots")]))
+class Test_non_shared_transaction_session:
+    """Assert the temp table is not accessible when not using the shared transaction option."""
 
-
-postgres_ordered_actions = create_postgres_fixture(
-    rows, row_dependant_statements, additional_rows, session=True
-)
-
-postgres_session_function = create_postgres_fixture(Base, session_function, session=True)
-
-
-# Run the test 5 times to ensure fixture is stateless
-@pytest.mark.parametrize("run", range(5))
-def test_ordered_actions(postgres_ordered_actions, run):
-    execute = postgres_ordered_actions.execute(text("SELECT * FROM user1"))
-    result = sorted([row[0] for row in execute])
-    assert ["Gump1", "Harold1"] == result
-
-
-# Run the test 5 times to ensure fixture is stateless
-@pytest.mark.parametrize("run", range(5))
-def test_session_function(postgres_session_function, run):
-    execute = postgres_session_function.execute(text("SELECT * FROM stuffs.object"))
-    owner_id = sorted([row[2] for row in execute])[0]
-    execute = postgres_session_function.execute(
-        text("SELECT * FROM stuffs.user where id = {id}".format(id=owner_id))
+    temp_table = Statements(
+        "CREATE TEMP TABLE user1 as SELECT DISTINCT CONCAT(name, 1) as name FROM stuffs.user"
     )
-    result = [row[1] for row in execute]
-    assert result == ["Fake Name"]
+
+    non_shared_transaction_session = create_postgres_fixture(
+        rows, temp_table, additional_rows, session=True, actions_share_transaction=False
+    )
+
+    @pytest.mark.postgres
+    def test_session_is_not_shared(self, non_shared_transaction_session):
+        with pytest.raises(ProgrammingError):
+            non_shared_transaction_session.execute(text("SELECT * FROM user1"))
+
+
+class Test_non_shared_transaction_engine:
+    """Assert the temp table is not accessible when not using the shared transaction option."""
+
+    temp_table = Statements(
+        "CREATE TEMP TABLE user1 as SELECT DISTINCT CONCAT(name, 1) as name FROM stuffs.user"
+    )
+
+    postgres = create_postgres_fixture(
+        rows, temp_table, additional_rows, actions_share_transaction=False
+    )
+
+    @pytest.mark.postgres
+    def test_engine_is_not_shared(self, postgres):
+        with pytest.raises(ProgrammingError):
+            with postgres.begin() as conn:
+                conn.execute(text("SELECT * FROM user1"))
+
+
+class Test_ordered_actions:
+    """Assert a temp table created in a Statements is accessible to a session based fixture.
+
+    Run the test 5 times to ensure fixture is stateless
+    """
+
+    temp_table = Statements(
+        "CREATE TEMP TABLE user1 as SELECT DISTINCT CONCAT(name, 1) as name FROM stuffs.user"
+    )
+
+    postgres_ordered_actions = create_postgres_fixture(
+        rows, temp_table, additional_rows, session=True
+    )
+
+    @pytest.mark.parametrize("run", range(5))
+    @pytest.mark.postgres
+    def test_ordered_actions(self, postgres_ordered_actions, run):
+        execute = postgres_ordered_actions.execute(text("SELECT * FROM user1"))
+        result = sorted([row[0] for row in execute])
+        assert ["Gump1", "Harold1"] == result
+
+
+class Test_postgres_session_function:
+    """Assert a "function" action which operates on a session is handed a session.
+
+    Run the test 5 times to ensure fixture is stateless
+    """
+
+    def session_function(session):
+        session.add(User(name="Fake Name", objects=[Object(name="Boots")]))
+
+    postgres_session_function = create_postgres_fixture(Base, session_function, session=True)
+
+    @pytest.mark.parametrize("run", range(5))
+    @pytest.mark.postgres
+    def test_session_function(self, postgres_session_function, run):
+        execute = postgres_session_function.execute(text("SELECT * FROM stuffs.object"))
+        owner_id = sorted([row[2] for row in execute])[0]
+        execute = postgres_session_function.execute(
+            text("SELECT * FROM stuffs.user where id = {id}".format(id=owner_id))
+        )
+        result = [row[1] for row in execute]
+        assert result == ["Fake Name"]
 
 
 postgres_metadata_only = create_postgres_fixture(Base.metadata, session=True)
@@ -82,44 +127,58 @@ def test_metadata_only(postgres_metadata_only):
     assert [] == result
 
 
-postgres_ordered_actions_async = create_postgres_fixture(
-    rows, row_dependant_statements, additional_rows, async_=True
-)
-
-
-def async_session_function(session):
-    session.add(User(name="Fake Name", objects=[Object(name="Boots")]))
-
-
-postgres_session_function_async = create_postgres_fixture(
-    Base, async_session_function, async_=True, session=True
-)
-
-
-# Run the test 5 times to ensure fixture is stateless
-@pytest.mark.asyncio
-@pytest.mark.parametrize("run", range(5))
-@skip_if_not_sqlalchemy2
-async def test_ordered_actions_aysnc_shares_transaction(postgres_ordered_actions_async, run):
-    async with postgres_ordered_actions_async.begin() as conn:
-        execute = await conn.execute(text("SELECT * FROM user1"))
-
-    result = sorted([row[0] for row in execute])
-    assert ["Gump1", "Harold1"] == result
-
-
-# Run the test 5 times to ensure fixture is stateless
-@pytest.mark.asyncio
-@pytest.mark.parametrize("run", range(5))
-@skip_if_not_sqlalchemy2
-async def test_session_function_async(postgres_session_function_async, run):
-    execute = await postgres_session_function_async.execute(text("SELECT * FROM stuffs.object"))
-    owner_id = sorted([row[2] for row in execute])[0]
-    execute = await postgres_session_function_async.execute(
-        text("SELECT * FROM stuffs.user where id = {id}".format(id=owner_id))
+class Test_postgres_ordered_actions_async:
+    temp_table = Statements(
+        "CREATE TEMP TABLE user1 as SELECT DISTINCT CONCAT(name, 1) as name FROM stuffs.user"
     )
-    result = [row[1] for row in execute]
-    assert result == ["Fake Name"]
+
+    postgres_ordered_actions_async = create_postgres_fixture(
+        rows,
+        temp_table,
+        additional_rows,
+        async_=True,
+        actions_share_transaction=True,
+    )
+
+    @pytest.mark.postgres
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("run", range(5))
+    @skip_if_not_sqlalchemy2
+    async def test_ordered_actions_aysnc_shares_transaction(
+        self, postgres_ordered_actions_async, run
+    ):
+        async with postgres_ordered_actions_async.begin() as conn:
+            execute = await conn.execute(text("SELECT * FROM user1"))
+
+        result = sorted([row[0] for row in execute])
+        assert ["Gump1", "Harold1"] == result
+
+
+class Test_session_function_async:
+    """
+
+    Run the test more than once (i.e. 5 times) to ensure fixture is stateless.
+    """
+
+    def async_session_function(session):
+        session.add(User(name="Fake Name", objects=[Object(name="Boots")]))
+
+    postgres_session_function_async = create_postgres_fixture(
+        Base, async_session_function, async_=True, session=True
+    )
+
+    @pytest.mark.asyncio
+    @pytest.mark.postgres
+    @pytest.mark.parametrize("run", range(5))
+    @skip_if_not_sqlalchemy2
+    async def test_session_function_async(self, postgres_session_function_async, run):
+        execute = await postgres_session_function_async.execute(text("SELECT * FROM stuffs.object"))
+        owner_id = sorted([row[2] for row in execute])[0]
+        execute = await postgres_session_function_async.execute(
+            text("SELECT * FROM stuffs.user where id = {id}".format(id=owner_id))
+        )
+        result = [row[1] for row in execute]
+        assert result == ["Fake Name"]
 
 
 engine_function = create_postgres_fixture(

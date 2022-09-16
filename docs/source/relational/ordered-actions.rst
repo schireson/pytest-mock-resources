@@ -171,8 +171,8 @@ library know that the included SQL statements are safe to "cache" in order to
 reduce database creation costs. For that reason, you should prefer
 a ``StaticStatements`` over a ``Statements`` where possible.
 
-For example, the creation of temp tables or other transaction-specific operations,
-are places where a static statement might be inappropriate.
+For example, the execution of DDL for which there is not a supported SQLALchemy abstraction, or
+other transaction-specific operations, are places where a static statement might be inappropriate.
 
 .. code-block:: python
    :caption: tests/test_something.py

@@ -53,6 +53,7 @@ def create_postgres_fixture(
     createdb_template="template1",
     engine_kwargs=None,
     template_database=True,
+    actions_share_transaction=None,
 ):
     """Produce a Postgres fixture.
 
@@ -73,6 +74,13 @@ def create_postgres_fixture(
         template_database: Defaults to True. When True, amortizes the cost of performing database
             setup through `ordered_actions`, by performing them once into a postgres "template"
             database, then creating all subsequent per-test databases from that template.
+        actions_share_transaction: When True, the transaction used by `ordered_actions` context
+            will be the same as the one handed to the test function. This is required in order
+            to support certain usages of `ordered_actions, such as the creation of temp tables
+            through a `Statements` object. By default, this behavior is enabled for synchronous
+            fixtures for backwards compatibility; and disabled by default for
+            asynchronous fixtures (the way v2-style/async features work in SQLAlchemy can lead
+            to bad default behavior).
     """
     fixture_id = generate_fixture_id(enabled=template_database, name="pg")
 
@@ -90,6 +98,7 @@ def create_postgres_fixture(
                 engine_kwargs=engine_kwargs or {},
                 session=session,
                 fixture_id=fixture_id,
+                actions_share_transaction=actions_share_transaction,
             )
 
     @pytest.fixture(scope=scope)
@@ -125,6 +134,7 @@ def create_engine_manager(
     engine_kwargs,
     createdb_template="template1",
     fixture_id=None,
+    actions_share_transaction=None,
 ):
     normalized_actions = normalize_actions(ordered_actions)
     static_actions, dynamic_actions = bifurcate_actions(normalized_actions)
@@ -180,6 +190,7 @@ def create_engine_manager(
         session=session,
         tables=tables,
         default_schema="public",
+        actions_share_transaction=actions_share_transaction,
     )
 
 

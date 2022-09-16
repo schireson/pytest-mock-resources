@@ -93,6 +93,7 @@ class EngineManager:
     session: Union[bool, Session] = False
     default_schema: Optional[str] = None
     static_actions: Iterable[StaticAction] = ()
+    actions_share_transaction: Optional[bool] = None
 
     _ddl_created: Dict[MetaData, bool] = field(default_factory=dict)
 
@@ -131,6 +132,10 @@ class EngineManager:
                 try:
                     self.run_actions(session)
                     commit(session)
+
+                    if self.actions_share_transaction is False:
+                        self.engine.dispose()
+
                     yield session
                 finally:
                     session.close()
@@ -138,6 +143,10 @@ class EngineManager:
                 with self.engine.begin() as conn:
                     self.run_actions(conn)
                     commit(conn)
+
+                if self.actions_share_transaction is False:
+                    self.engine.dispose()
+
                 yield self.engine
 
         finally:
@@ -160,12 +169,19 @@ class EngineManager:
 
                 async with session_factory(bind=engine) as session:
                     await session.run_sync(self.run_actions)
-                    await session.commit()
+                    if not self.actions_share_transaction:
+                        await session.commit()
+                        await session.close()
+
                     yield session
             else:
                 async with engine.begin() as conn:
                     await conn.run_sync(self.run_actions)
-                    await conn.execute(text("COMMIT"))
+                    await conn.commit()
+
+                if not self.actions_share_transaction:
+                    await engine.dispose()
+
                 yield engine
         finally:
             await engine.dispose()
