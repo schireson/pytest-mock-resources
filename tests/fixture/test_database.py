@@ -8,7 +8,7 @@ from pytest_mock_resources import (
     create_redshift_fixture,
     create_sqlite_fixture,
 )
-from pytest_mock_resources.fixture.database.relational.generic import EngineManager
+from pytest_mock_resources.sqlalchemy import EngineManager
 from tests import skip_if_not_sqlalchemy2
 
 sqlite = create_sqlite_fixture()

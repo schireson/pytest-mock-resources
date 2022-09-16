@@ -6,13 +6,14 @@ from pytest_mock_resources.container import (
     RedisConfig,
     RedshiftConfig,
 )
-from pytest_mock_resources.fixture.database import (
+from pytest_mock_resources.fixture import (
     create_mongo_fixture,
     create_mysql_fixture,
     create_postgres_fixture,
     create_redis_fixture,
     create_redshift_fixture,
     create_sqlite_fixture,
+    Credentials,
     pmr_mongo_config,
     pmr_mongo_container,
     pmr_mysql_config,
@@ -23,9 +24,6 @@ from pytest_mock_resources.fixture.database import (
     pmr_redis_container,
     pmr_redshift_config,
     pmr_redshift_container,
-    Rows,
-    Statements,
-    StaticStatements,
 )
 from pytest_mock_resources.hooks import (  # noqa
     pytest_addoption,
@@ -33,6 +31,7 @@ from pytest_mock_resources.hooks import (  # noqa
     pytest_itemcollected,
     pytest_sessionfinish,
 )
+from pytest_mock_resources.sqlalchemy import Rows, Statements, StaticStatements
 
 __all__ = [
     "get_container",
@@ -47,6 +46,7 @@ __all__ = [
     "create_redis_fixture",
     "create_redshift_fixture",
     "create_sqlite_fixture",
+    "Credentials",
     "pmr_mongo_config",
     "pmr_mongo_container",
     "pmr_mysql_config",

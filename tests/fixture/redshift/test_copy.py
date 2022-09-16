@@ -6,7 +6,7 @@ from pytest_mock_resources import create_redshift_fixture
 from pytest_mock_resources.compat import boto3, moto
 from pytest_mock_resources.compat.sqlalchemy import declarative_base
 from tests import skip_if_sqlalchemy2
-from tests.fixture.database import (
+from tests.fixture.redshift.utils import (
     COPY_TEMPLATE,
     data_columns,
     fetch_values_from_table_and_assert,

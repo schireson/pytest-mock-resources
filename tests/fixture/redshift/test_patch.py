@@ -3,7 +3,7 @@ import sqlalchemy.exc
 from sqlalchemy import text
 
 from pytest_mock_resources import create_postgres_fixture, create_redshift_fixture
-from tests.fixture.database import (
+from tests.fixture.redshift.utils import (
     copy_fn_to_test_create_engine_patch,
     copy_fn_to_test_psycopg2_connect_patch,
     copy_fn_to_test_psycopg2_connect_patch_as_context_manager,

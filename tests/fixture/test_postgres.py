@@ -3,7 +3,7 @@ from sqlalchemy import Column, event, Integer
 from pytest_mock_resources import create_postgres_fixture
 from pytest_mock_resources.compat.sqlalchemy import declarative_base
 from pytest_mock_resources.container.postgres import get_sqlalchemy_engine
-from pytest_mock_resources.fixture.database.relational.postgresql import _produce_clean_database
+from pytest_mock_resources.fixture.postgresql import _produce_clean_database
 
 Base = declarative_base()
 

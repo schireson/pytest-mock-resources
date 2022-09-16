@@ -4,7 +4,7 @@ from sqlalchemy.sql import text
 from pytest_mock_resources import create_redshift_fixture
 from pytest_mock_resources.compat import moto
 from tests import skip_if_sqlalchemy2
-from tests.fixture.database import (
+from tests.fixture.redshift.utils import (
     fetch_values_from_s3_and_assert,
     randomcase,
     setup_table_and_insert_data,

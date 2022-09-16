@@ -3,7 +3,7 @@ import pytest
 from pytest_mock_resources.compat import redis
 from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.redis import RedisConfig
-from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
+from pytest_mock_resources.fixture.credentials import assign_fixture_credentials
 
 
 @pytest.fixture(scope="session")

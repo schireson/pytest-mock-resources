@@ -1,3 +1,3 @@
 import pytest
 
-pytest.register_assert_rewrite("tests.fixture.database")
+pytest.register_assert_rewrite("tests.fixture.redshift.utils")
