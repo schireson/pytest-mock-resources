@@ -2,7 +2,7 @@ import enum
 
 from sqlalchemy import text
 
-from pytest_mock_resources.fixture.database import Statements
+from pytest_mock_resources.sqlalchemy import Statements
 
 
 @enum.unique

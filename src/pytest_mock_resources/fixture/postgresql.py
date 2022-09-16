@@ -7,13 +7,9 @@ from sqlalchemy.engine import Connection
 
 from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.postgres import get_sqlalchemy_engine, PostgresConfig
-from pytest_mock_resources.fixture import generate_fixture_id
-from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
-from pytest_mock_resources.fixture.database.relational.generic import (
-    bifurcate_actions,
-    EngineManager,
-    normalize_actions,
-)
+from pytest_mock_resources.fixture.base import generate_fixture_id
+from pytest_mock_resources.fixture.credentials import assign_fixture_credentials
+from pytest_mock_resources.sqlalchemy import bifurcate_actions, EngineManager, normalize_actions
 
 log = logging.getLogger(__name__)
 

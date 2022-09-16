@@ -4,8 +4,8 @@ from sqlalchemy import text
 
 from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.mysql import get_sqlalchemy_engine, MysqlConfig
-from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
-from pytest_mock_resources.fixture.database.relational.generic import EngineManager
+from pytest_mock_resources.fixture.credentials import assign_fixture_credentials
+from pytest_mock_resources.sqlalchemy import EngineManager
 
 
 @pytest.fixture(scope="session")

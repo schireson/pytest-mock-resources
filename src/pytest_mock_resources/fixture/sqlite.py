@@ -25,8 +25,8 @@ from sqlalchemy.exc import SAWarning
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql import sqltypes
 
-from pytest_mock_resources.fixture.database.generic import assign_fixture_credentials
-from pytest_mock_resources.fixture.database.relational.generic import EngineManager
+from pytest_mock_resources.fixture.credentials import assign_fixture_credentials
+from pytest_mock_resources.sqlalchemy import EngineManager
 
 
 class PMRSQLiteDDLCompiler(sqlite_base.SQLiteDDLCompiler):

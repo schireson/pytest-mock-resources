@@ -2,8 +2,8 @@ import pytest
 
 from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.redshift import get_sqlalchemy_engine, RedshiftConfig
-from pytest_mock_resources.fixture import generate_fixture_id
-from pytest_mock_resources.fixture.database.relational.postgresql import create_engine_manager
+from pytest_mock_resources.fixture.base import generate_fixture_id
+from pytest_mock_resources.fixture.postgresql import create_engine_manager
 from pytest_mock_resources.patch.redshift import psycopg2, sqlalchemy
 
 
@@ -69,7 +69,7 @@ def create_redshift_fixture(
             to bad default behavior).
     """
 
-    from pytest_mock_resources.fixture.database.relational.redshift.udf import REDSHIFT_UDFS
+    from pytest_mock_resources.fixture.redshift.udf import REDSHIFT_UDFS
 
     fixture_id = generate_fixture_id(enabled=template_database, name="pg")
 
