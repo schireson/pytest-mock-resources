@@ -4,6 +4,12 @@ from pytest_mock_resources.fixture.mongo import (
     pmr_mongo_config,
     pmr_mongo_container,
 )
+from pytest_mock_resources.fixture.moto import (
+    create_moto_fixture,
+    pmr_moto_config,
+    pmr_moto_container,
+    pmr_moto_credentials,
+)
 from pytest_mock_resources.fixture.mysql import (
     create_mysql_fixture,
     pmr_mysql_config,
@@ -27,15 +33,19 @@ from pytest_mock_resources.fixture.redshift import (
 from pytest_mock_resources.fixture.sqlite import create_sqlite_fixture
 
 __all__ = [
+    "Credentials",
     "create_mongo_fixture",
+    "create_moto_fixture",
     "create_mysql_fixture",
     "create_postgres_fixture",
     "create_redis_fixture",
     "create_redshift_fixture",
     "create_sqlite_fixture",
-    "Credentials",
     "pmr_mongo_config",
     "pmr_mongo_container",
+    "pmr_moto_config",
+    "pmr_moto_container",
+    "pmr_moto_credentials",
     "pmr_mysql_config",
     "pmr_mysql_container",
     "pmr_postgres_config",

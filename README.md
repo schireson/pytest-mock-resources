@@ -115,6 +115,12 @@ def test_view_function_user_with_purchases(pg):
   from pytest_mock_resources import create_mysql_fixture
   ```
 
+- Moto
+
+  ```python
+  from pytest_mock_resources import create_moto_fixture
+  ```
+
 ## Features
 
 General features include:
@@ -149,6 +155,9 @@ pip install "pytest-mock-resources[redis]"
 
 # For mysql
 pip install "pytest-mock-resources[mysql]"
+
+# For moto
+pip install "pytest-mock-resources[moto]"
 ```
 
 ## Possible Future Resources
