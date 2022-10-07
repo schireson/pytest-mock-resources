@@ -30,4 +30,5 @@ See :ref:`Config` for information on customizing the configuration for docker-ba
    Redshift <redshift>
    SQLite <sqlite>
    Mongo <mongo>
+   Moto <moto>
    Redis <redis>

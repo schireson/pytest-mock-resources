@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-mock-resources"
-version = "2.5.2"
+version = "2.6.0"
 description = "A pytest plugin for easily instantiating reproducible mock resources."
 authors = [
     "Omar Khan <oakhan3@gmail.com>",
@@ -51,7 +51,7 @@ filelock = {version = "*", optional = true}
 python-on-whales = {version = ">=0.22.0", optional = true}
 
 [tool.poetry.dev-dependencies]
-black = {version = "=>19.3b0", allow-prereleases = true}
+black = "22.3.0"
 coverage = "*"
 flake8 = "*"
 isort = ">=5.0"
@@ -66,6 +66,7 @@ types-redis = "^3.5.6"
 sqlalchemy2-stubs = "^0.0.2-alpha.19"
 types-filelock = "^3.2.7"
 types-dataclasses = "^0.6.5"
+types-requests = "*"
 
 [tool.poetry.extras]
 docker = ['python-on-whales', 'filelock']
@@ -74,6 +75,7 @@ postgres-binary = ['psycopg2-binary', 'python-on-whales', 'filelock']
 postgres-async = ['asyncpg', 'python-on-whales', 'filelock']
 redshift = ['boto3', 'moto', 'sqlparse', 'python-on-whales', 'filelock']
 mongo = ['pymongo', 'python-on-whales', 'filelock']
+moto = ['boto3', 'python-on-whales', 'filelock']
 redis = ['redis', 'python-on-whales', 'filelock']
 mysql = ['pymysql', 'python-on-whales', 'filelock']
 
