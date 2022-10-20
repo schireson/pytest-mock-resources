@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-mock-resources"
-version = "2.6.0"
+version = "2.6.1"
 description = "A pytest plugin for easily instantiating reproducible mock resources."
 authors = [
     "Omar Khan <oakhan3@gmail.com>",
@@ -55,9 +55,9 @@ black = "22.3.0"
 coverage = "*"
 flake8 = "*"
 isort = ">=5.0"
-mypy = {version = "0.931", python = ">=3.5"}
-pydocstyle = {version = "*", python = ">=3.5"}
-sqlalchemy-stubs = {version = "*", python = ">=3.5"}
+mypy = {version = "0.982"}
+pydocstyle = {version = "*"}
+sqlalchemy-stubs = {version = "*"}
 pytest-xdist = "*"
 pytest-asyncio = "*"
 types-six = "^1.16.0"

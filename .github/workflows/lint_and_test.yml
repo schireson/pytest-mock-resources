@@ -80,15 +80,13 @@ jobs:
       - name: Run image
         uses: abatilo/actions-poetry@v2.0.0
         with:
-          poetry-version: 1.1.8
+          poetry-version: 1.2.0
 
       - name: Set up cache
         uses: actions/cache@v2
         with:
-          path: ~/.cache/pypoetry/virtualenvs
+          path: ~/.cache/pypoetry
           key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-poetry-
       - name: Install dependencies
         run: ${{ inputs.install }}
 

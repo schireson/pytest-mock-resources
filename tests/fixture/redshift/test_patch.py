@@ -75,3 +75,19 @@ def test_tightly_scoped_patch(redshift, postgres):
                 conn.execute(copy_command)
 
         assert 'syntax error at or near "credentials"' in str(e.value)
+
+
+redshift_session = create_redshift_fixture(session=True)
+async_redshift_session = create_redshift_fixture(session=True, async_=True)
+
+
+def test_event_listener_registration(redshift_session):
+    result = redshift_session.execute(text("select 1; select 1")).scalar()
+    assert result == 1
+
+
+@pytest.mark.asyncio
+async def test_event_listener_registration_async(async_redshift_session):
+    result = await async_redshift_session.execute(text("select 1; select 1"))
+    value = result.scalar()
+    assert value == 1
