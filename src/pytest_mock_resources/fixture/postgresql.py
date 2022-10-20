@@ -7,7 +7,7 @@ from sqlalchemy.engine import Connection
 
 from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.postgres import get_sqlalchemy_engine, PostgresConfig
-from pytest_mock_resources.fixture.base import generate_fixture_id
+from pytest_mock_resources.fixture.base import asyncio_fixture, generate_fixture_id
 from pytest_mock_resources.fixture.credentials import assign_fixture_credentials
 from pytest_mock_resources.sqlalchemy import bifurcate_actions, EngineManager, normalize_actions
 
@@ -108,14 +108,7 @@ def create_postgres_fixture(
             yield engine
 
     if async_:
-        # pytest-asyncio in versions >=0.17 force you to use a `pytest_asyncio.fixture`
-        # call instead of `pytest.fixture`. Given that this would introduce an unncessary
-        # dependency on pytest-asyncio (when there are other alternatives) seems less than
-        # ideal, so instead we can just set the flag that they set, as the indicator.
-        _async._force_asyncio_fixture = True
-
-        fixture = pytest.fixture(scope=scope)
-        return fixture(_async)
+        return asyncio_fixture(_async, scope=scope)
     else:
         return _sync
 

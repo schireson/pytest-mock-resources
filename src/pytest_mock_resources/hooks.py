@@ -1,6 +1,6 @@
 import warnings
 
-_resource_kinds = ["postgres", "redshift", "mongo", "redis", "mysql"]
+_resource_kinds = ["postgres", "redshift", "mongo", "redis", "mysql", "moto"]
 
 
 def pytest_addoption(parser):

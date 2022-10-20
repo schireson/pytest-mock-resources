@@ -1,7 +1,8 @@
 from typing import Union
 
-from sqlalchemy import event
+from sqlalchemy import event, text
 from sqlalchemy.sql.base import Executable
+from sqlalchemy.sql.elements import TextClause
 
 from pytest_mock_resources.compat import sqlparse
 from pytest_mock_resources.patch.redshift.mock_s3_copy import mock_s3_copy_command, strip
@@ -24,6 +25,9 @@ def receive_before_execute(
     individual cursor executions. Only the final statement's return value will be
     returned.
     """
+    if isinstance(clauseelement, TextClause):
+        clauseelement = clauseelement.text
+
     if isinstance(clauseelement, Executable):
         return clauseelement, multiparams, params
 
@@ -33,7 +37,7 @@ def receive_before_execute(
     for statement in statements:
         cursor.execute(statement, *multiparams, **params)
 
-    return final_statement, multiparams, params
+    return text(final_statement), multiparams, params
 
 
 def receive_before_cursor_execute(_, cursor, statement: str, parameters, context, executemany):
