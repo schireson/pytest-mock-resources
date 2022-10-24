@@ -107,9 +107,10 @@ def create_redshift_fixture(
         database_name = engine_manager.engine.url.database
 
         async for conn in engine_manager.manage_async():
-            engine = conn
             if session:
                 engine = conn.sync_session.connection().engine
+            else:
+                engine = conn.sync_engine
 
             sqlalchemy.register_redshift_behavior(engine)
 

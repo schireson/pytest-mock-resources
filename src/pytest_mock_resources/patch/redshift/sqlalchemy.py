@@ -1,11 +1,10 @@
 from typing import Union
 
-from sqlalchemy import event, text
+from sqlalchemy import event
 from sqlalchemy.sql.base import Executable
-from sqlalchemy.sql.elements import TextClause
 
 from pytest_mock_resources.compat import sqlparse
-from pytest_mock_resources.patch.redshift.mock_s3_copy import mock_s3_copy_command, strip
+from pytest_mock_resources.patch.redshift.mock_s3_copy import mock_s3_copy_command
 from pytest_mock_resources.patch.redshift.mock_s3_unload import mock_s3_unload_command
 
 
@@ -25,9 +24,6 @@ def receive_before_execute(
     individual cursor executions. Only the final statement's return value will be
     returned.
     """
-    if isinstance(clauseelement, TextClause):
-        clauseelement = clauseelement.text
-
     if isinstance(clauseelement, Executable):
         return clauseelement, multiparams, params
 
@@ -37,7 +33,7 @@ def receive_before_execute(
     for statement in statements:
         cursor.execute(statement, *multiparams, **params)
 
-    return text(final_statement), multiparams, params
+    return final_statement, multiparams, params
 
 
 def receive_before_cursor_execute(_, cursor, statement: str, parameters, context, executemany):
@@ -51,7 +47,7 @@ def receive_before_cursor_execute(_, cursor, statement: str, parameters, context
     we return a no-op query to be executed by sqlalchemy for certain kinds of supported
     extra features.
     """
-    normalized_statement = strip(statement).lower()
+    normalized_statement = _preprocess(statement).lower()
     if normalized_statement.startswith("unload"):
         mock_s3_unload_command(statement, cursor)
         return "SELECT 1", {}
