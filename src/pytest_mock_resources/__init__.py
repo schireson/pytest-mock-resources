@@ -6,6 +6,7 @@ from pytest_mock_resources.container import (
     RedisConfig,
     RedshiftConfig,
 )
+from pytest_mock_resources.credentials import Credentials
 from pytest_mock_resources.fixture import (
     create_mongo_fixture,
     create_moto_fixture,
@@ -14,7 +15,6 @@ from pytest_mock_resources.fixture import (
     create_redis_fixture,
     create_redshift_fixture,
     create_sqlite_fixture,
-    Credentials,
     pmr_mongo_config,
     pmr_mongo_container,
     pmr_moto_config,

@@ -7,8 +7,8 @@ from sqlalchemy.engine import Connection
 
 from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.postgres import get_sqlalchemy_engine, PostgresConfig
+from pytest_mock_resources.credentials import Credentials
 from pytest_mock_resources.fixture.base import asyncio_fixture, generate_fixture_id
-from pytest_mock_resources.fixture.credentials import assign_fixture_credentials
 from pytest_mock_resources.sqlalchemy import bifurcate_actions, EngineManager, normalize_actions
 
 log = logging.getLogger(__name__)
@@ -170,7 +170,7 @@ def create_engine_manager(
     # distinct from what might have been used for the template database.
     database_name = _produce_clean_database(root_engine, createdb_template=createdb_template)
     engine = get_sqlalchemy_engine(pmr_postgres_config, database_name, **engine_kwargs)
-    _assign_credential(engine, pmr_postgres_config, database_name)
+    Credentials.assign_from_connection(engine)
 
     return EngineManager(
         engine,
@@ -217,15 +217,3 @@ def _generate_database_name(conn):
     id_ = tuple(result)[0][0]
     database_name = "pytest_mock_resource_db_{}".format(id_)
     return database_name
-
-
-def _assign_credential(engine, config, database_name):
-    assign_fixture_credentials(
-        engine,
-        drivername="postgresql+psycopg2",
-        host=config.host,
-        port=config.port,
-        username=config.username,
-        password=config.password,
-        database=database_name,
-    )

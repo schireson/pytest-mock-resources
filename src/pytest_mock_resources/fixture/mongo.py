@@ -3,7 +3,7 @@ import pytest
 from pytest_mock_resources.compat import pymongo
 from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.mongo import MongoConfig
-from pytest_mock_resources.fixture.credentials import assign_fixture_credentials
+from pytest_mock_resources.credentials import Credentials
 
 
 @pytest.fixture(scope="session")
@@ -64,14 +64,13 @@ def _create_clean_database(config):
     )
     limited_db = limited_client[db_id]
 
-    assign_fixture_credentials(
+    Credentials.assign_from_credentials(
         limited_db,
         drivername="mongodb",
         host=config.host,
         port=config.port,
-        database=db_id,
         username=db_id,
-        password="password",
+        password=password,
+        database=db_id,
     )
-
     return limited_db

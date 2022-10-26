@@ -12,6 +12,7 @@ from sqlalchemy.sql.ddl import CreateSchema
 from sqlalchemy.sql.schema import Table
 
 from pytest_mock_resources import compat
+from pytest_mock_resources.credentials import Credentials
 
 log = logging.getLogger(__name__)
 
@@ -136,6 +137,7 @@ class EngineManager:
                     if self.actions_share_transaction is False:
                         self.engine.dispose()
 
+                    Credentials.assign_from_connection(session)
                     yield session
                 finally:
                     session.close()
@@ -147,6 +149,7 @@ class EngineManager:
                 if self.actions_share_transaction is False:
                     self.engine.dispose()
 
+                Credentials.assign_from_connection(self.engine)
                 yield self.engine
 
         finally:
@@ -173,6 +176,7 @@ class EngineManager:
                         await session.commit()
                         await session.close()
 
+                    Credentials.assign_from_connection(engine.sync_engine)
                     yield session
             else:
                 async with engine.begin() as conn:
@@ -182,6 +186,7 @@ class EngineManager:
                 if not self.actions_share_transaction:
                     await engine.dispose()
 
+                Credentials.assign_from_connection(engine.sync_engine)
                 yield engine
         finally:
             await engine.dispose()

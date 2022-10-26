@@ -1,4 +1,3 @@
-from pytest_mock_resources.fixture.credentials import Credentials
 from pytest_mock_resources.fixture.mongo import (
     create_mongo_fixture,
     pmr_mongo_config,
@@ -33,7 +32,6 @@ from pytest_mock_resources.fixture.redshift import (
 from pytest_mock_resources.fixture.sqlite import create_sqlite_fixture
 
 __all__ = [
-    "Credentials",
     "create_mongo_fixture",
     "create_moto_fixture",
     "create_mysql_fixture",
