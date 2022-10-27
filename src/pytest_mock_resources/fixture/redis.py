@@ -3,7 +3,7 @@ import pytest
 from pytest_mock_resources.compat import redis
 from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.redis import RedisConfig
-from pytest_mock_resources.fixture.credentials import assign_fixture_credentials
+from pytest_mock_resources.credentials import Credentials
 
 
 @pytest.fixture(scope="session")
@@ -65,7 +65,7 @@ def create_redis_fixture(scope="function"):
         db = redis.Redis(host=pmr_redis_config.host, port=pmr_redis_config.port, db=database_number)
         db.flushdb()
 
-        assign_fixture_credentials(
+        Credentials.assign_from_credentials(
             db,
             drivername="redis",
             host=pmr_redis_config.host,

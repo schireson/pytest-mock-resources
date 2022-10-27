@@ -25,7 +25,6 @@ from sqlalchemy.exc import SAWarning
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql import sqltypes
 
-from pytest_mock_resources.fixture.credentials import assign_fixture_credentials
 from pytest_mock_resources.sqlalchemy import EngineManager
 
 
@@ -261,16 +260,6 @@ def create_sqlite_fixture(
         )
         for engine in engine_manager.manage_sync():
             with filter_sqlalchemy_warnings(decimal_warnings_enabled=(not decimal_warnings)):
-                assign_fixture_credentials(
-                    raw_engine,
-                    drivername=driver_name,
-                    host="",
-                    port=None,
-                    database=database_name,
-                    username="",
-                    password="",
-                )
-
                 yield engine
 
         event.remove(raw_engine, "connect", enable_foreign_key_checks)

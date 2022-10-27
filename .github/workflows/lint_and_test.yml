@@ -86,7 +86,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.cache/pypoetry
-          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.sqlalchemy-version }}-${{ matrix.pytest-asyncio-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install dependencies
         run: ${{ inputs.install }}
 

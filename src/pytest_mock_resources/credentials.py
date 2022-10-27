@@ -1,3 +1,5 @@
+from sqlalchemy.orm import Session
+
 from pytest_mock_resources import compat
 
 
@@ -74,6 +76,26 @@ class Credentials:
             "password": self.password,
         }
 
+    @classmethod
+    def assign_from_connection(cls, connection):
+        if isinstance(connection, Session):
+            url = connection.connection().engine.url
+        else:
+            url = connection.url
 
-def assign_fixture_credentials(engine, **credentials):
-    engine.pmr_credentials = Credentials(**credentials)
+        instance = cls(
+            drivername=url.drivername,
+            host=url.host,
+            port=url.port,
+            username=url.username,
+            password=url.password,
+            database=url.database,
+        )
+        connection.pmr_credentials = instance
+        return instance
+
+    @classmethod
+    def assign_from_credentials(cls, engine, **credentials):
+        instance = Credentials(**credentials)
+        engine.pmr_credentials = instance
+        return instance

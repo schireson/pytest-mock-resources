@@ -3,6 +3,7 @@ import sqlalchemy.exc
 from sqlalchemy import text
 
 from pytest_mock_resources import create_postgres_fixture, create_redshift_fixture
+from tests import skip_if_sqlalchemy2
 from tests.fixture.redshift.utils import (
     copy_fn_to_test_create_engine_patch,
     copy_fn_to_test_psycopg2_connect_patch,
@@ -77,17 +78,42 @@ def test_tightly_scoped_patch(redshift, postgres):
         assert 'syntax error at or near "credentials"' in str(e.value)
 
 
+redshift_engine = create_redshift_fixture(session=False)
 redshift_session = create_redshift_fixture(session=True)
+async_redshift_engine = create_redshift_fixture(session=False, async_=True)
 async_redshift_session = create_redshift_fixture(session=True, async_=True)
 
 
-def test_event_listener_registration(redshift_session):
+@skip_if_sqlalchemy2
+def test_event_listener_registration_engine(redshift_engine):
+    with redshift_engine.connect() as conn:
+        result = conn.execute("select 1; select 1").scalar()
+
+    result = redshift_engine.execute("select 1; select 1").scalar()
+    assert result == 1
+
+
+@skip_if_sqlalchemy2
+def test_event_listener_registration_session(redshift_session):
+    result = redshift_session.execute("select 1; select 1").scalar()
+    assert result == 1
+
+
+def test_event_listener_registration_text(redshift_session):
     result = redshift_session.execute(text("select 1; select 1")).scalar()
     assert result == 1
 
 
 @pytest.mark.asyncio
-async def test_event_listener_registration_async(async_redshift_session):
-    result = await async_redshift_session.execute(text("select 1; select 1"))
+async def test_event_listener_registration_async_engine(async_redshift_engine):
+    async with async_redshift_engine.connect() as conn:
+        result = await conn.execute(text("select 1"))
+    value = result.scalar()
+    assert value == 1
+
+
+@pytest.mark.asyncio
+async def test_event_listener_registration_async_session(async_redshift_session):
+    result = await async_redshift_session.execute(text("select 1"))
     value = result.scalar()
     assert value == 1

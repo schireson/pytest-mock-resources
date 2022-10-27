@@ -4,7 +4,6 @@ from sqlalchemy import text
 
 from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.mysql import get_sqlalchemy_engine, MysqlConfig
-from pytest_mock_resources.fixture.credentials import assign_fixture_credentials
 from pytest_mock_resources.sqlalchemy import EngineManager
 
 
@@ -44,16 +43,6 @@ def create_mysql_fixture(*ordered_actions, scope="function", tables=None, sessio
     def _(pmr_mysql_container, pmr_mysql_config):
         database_name = _create_clean_database(pmr_mysql_config)
         engine = get_sqlalchemy_engine(pmr_mysql_config, database_name)
-
-        assign_fixture_credentials(
-            engine,
-            drivername="mysql+pymysql",
-            host=pmr_mysql_config.host,
-            port=pmr_mysql_config.port,
-            database=database_name,
-            username=pmr_mysql_config.username,
-            password=pmr_mysql_config.password,
-        )
 
         engine_manager = EngineManager.create(
             engine, dynamic_actions=ordered_actions, tables=tables, session=session
