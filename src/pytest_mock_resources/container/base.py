@@ -40,15 +40,6 @@ def get_container(pytestconfig, config, *, retries=DEFAULT_RETRIES, interval=DEF
     # we will need to know whether it's been created already or not.
     container = None
 
-    if config.port is None:
-        config.set("port", unused_tcp_port())
-
-    run_kwargs = dict(
-        publish=[(dest, source) for source, dest in config.ports().items()],
-        envs=config.environment(),
-        name=container_name(config.name, config.port),
-    )
-
     try:
         if multiprocess_safe_mode:
             from filelock import FileLock
@@ -59,9 +50,7 @@ def get_container(pytestconfig, config, *, retries=DEFAULT_RETRIES, interval=DEF
             # wait for the container one process at a time
             with FileLock(str(fn)):
                 container = wait_for_container(
-                    config.check_fn,
-                    run_args=(config.image,),
-                    run_kwargs=run_kwargs,
+                    config,
                     retries=retries,
                     interval=interval,
                 )
@@ -70,9 +59,7 @@ def get_container(pytestconfig, config, *, retries=DEFAULT_RETRIES, interval=DEF
 
         else:
             container = wait_for_container(
-                config.check_fn,
-                run_args=(config.image,),
-                run_kwargs=run_kwargs,
+                config,
                 retries=retries,
                 interval=interval,
             )
@@ -84,15 +71,24 @@ def get_container(pytestconfig, config, *, retries=DEFAULT_RETRIES, interval=DEF
             container.kill()
 
 
-def wait_for_container(
-    check_fn, *, run_args, run_kwargs, retries=DEFAULT_RETRIES, interval=DEFAULT_INTERVAL
-):
+def wait_for_container(config, *, retries=DEFAULT_RETRIES, interval=DEFAULT_INTERVAL):
     """Wait for evidence that the container is up and healthy.
 
     The caller must provide a `check_fn` which should `raise ContainerCheckFailed` if
     it finds that the container is not yet up.
     """
     from python_on_whales import docker
+
+    if config.port is None:
+        config.set("port", unused_tcp_port())
+
+    check_fn = config.check_fn
+    run_args = (config.image,)
+    run_kwargs = dict(
+        publish=[(dest, source) for source, dest in config.ports().items()],
+        envs=config.environment(),
+        name=container_name(config.name, config.port),
+    )
 
     try:
         from python_on_whales.exceptions import DockerException
