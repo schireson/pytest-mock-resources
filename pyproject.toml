@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-mock-resources"
-version = "2.6.3"
+version = "2.6.4"
 description = "A pytest plugin for easily instantiating reproducible mock resources."
 authors = [
     "Omar Khan <oakhan3@gmail.com>",
@@ -119,6 +119,7 @@ markers = [
 ]
 filterwarnings = [
   "error",
+  "ignore:There is no current event loop:DeprecationWarning",
 ]
 
 [build-system]

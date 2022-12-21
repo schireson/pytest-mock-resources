@@ -41,9 +41,17 @@ jobs:
       python-versions: '["3.7", "3.8", "3.9", "3.10"]'
       lint: false
 
+  test:
+    uses: ./.github/workflows/lint_and_test.yml
+    with:
+      install: make install
+      lint: false
+      sqlalchemy-versions: '["1.4.39"]'
+      python-versions: '["3.10"]'
+
   test-and-lint:
     uses: ./.github/workflows/lint_and_test.yml
     with:
       install: make install
       sqlalchemy-versions: '["1.4.39"]'
-      python-versions: '["3.7", "3.8", "3.9", "3.10"]'
+      python-versions: '["3.7", "3.8", "3.9"]'
