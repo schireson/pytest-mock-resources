@@ -214,7 +214,7 @@ class EngineManager:
             if self.default_schema == schema:
                 continue
 
-            statement = CreateSchema(schema, quote=True)
+            statement = CreateSchema(schema)
             conn.execute(statement)
 
     def _create_tables(self, conn, metadata):
