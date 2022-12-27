@@ -1,5 +1,3 @@
-from typing import List
-
 import pytest
 from sqlalchemy import Column, ForeignKey, Integer, String, text
 from sqlalchemy.exc import ProgrammingError
@@ -19,7 +17,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
 
-    objects: List["Object"] = relationship("Object", back_populates="owner")
+    objects = relationship("Object", back_populates="owner", uselist=True)  # type: ignore
 
 
 class Object(Base):
@@ -30,7 +28,7 @@ class Object(Base):
     name = Column(String, nullable=False)
     belongs_to = Column(Integer, ForeignKey("stuffs.user.id"))
 
-    owner: List[User] = relationship("User", back_populates="objects")
+    owner = relationship("User", back_populates="objects", uselist=False)  # type: ignore
 
 
 rows = Rows(User(name="Harold"), User(name="Gump"))

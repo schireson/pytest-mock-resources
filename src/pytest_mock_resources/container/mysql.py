@@ -71,15 +71,13 @@ class MysqlConfig(DockerContainerConfig):
 
 
 def get_sqlalchemy_engine(config, database_name, isolation_level=None):
-    DB_URI = str(
-        compat.sqlalchemy.URL(
-            "mysql+pymysql",
-            username=config.username,
-            password=config.password,
-            host=config.host,
-            port=config.port,
-            database=database_name,
-        )
+    url = compat.sqlalchemy.URL(
+        "mysql+pymysql",
+        username=config.username,
+        password=config.password,
+        host=config.host,
+        port=config.port,
+        database=database_name,
     )
 
     options = {}
@@ -90,7 +88,7 @@ def get_sqlalchemy_engine(config, database_name, isolation_level=None):
 
     pymysql.connect
 
-    engine = sqlalchemy.create_engine(DB_URI, **options)
+    engine = sqlalchemy.create_engine(url, **options)
 
     # Verify engine is connected
     engine.connect()

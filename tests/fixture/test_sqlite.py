@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError, SAWarning
 from pytest_mock_resources import create_postgres_fixture, create_sqlite_fixture, Rows
 from pytest_mock_resources.compat.sqlalchemy import declarative_base, select
 from pytest_mock_resources.fixture.sqlite import utc
+from tests import skip_if_sqlalchemy2
 
 Base = declarative_base()
 
@@ -110,6 +111,7 @@ sqlite_with_warnings = create_sqlite_fixture(NumericBase, decimal_warnings=True)
 sqlite_without_warnings = create_sqlite_fixture(NumericBase)
 
 
+@skip_if_sqlalchemy2
 def test_decimal_warnings_enabled(sqlite_with_warnings):
     with sqlite_with_warnings.begin() as conn:
         conn.execute(text("INSERT INTO numeric (id, value) VALUES (1, 1)"))
