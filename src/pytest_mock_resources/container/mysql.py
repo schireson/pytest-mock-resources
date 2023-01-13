@@ -70,7 +70,7 @@ class MysqlConfig(DockerContainerConfig):
             )
 
 
-def get_sqlalchemy_engine(config, database_name, isolation_level=None):
+def get_sqlalchemy_engine(config, database_name, **engine_kwargs):
     url = compat.sqlalchemy.URL(
         "mysql+pymysql",
         username=config.username,
@@ -80,15 +80,11 @@ def get_sqlalchemy_engine(config, database_name, isolation_level=None):
         database=database_name,
     )
 
-    options = {}
-    if isolation_level:
-        options["isolation_level"] = isolation_level
-
     from pytest_mock_resources.compat import pymysql
 
     pymysql.connect
 
-    engine = sqlalchemy.create_engine(url, **options)
+    engine = sqlalchemy.create_engine(url, **engine_kwargs)
 
     # Verify engine is connected
     engine.connect()
