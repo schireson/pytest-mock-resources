@@ -24,7 +24,13 @@ def pmr_mysql_container(pytestconfig, pmr_mysql_config):
     yield from get_container(pytestconfig, pmr_mysql_config)
 
 
-def create_mysql_fixture(*ordered_actions, scope="function", tables=None, session=None):
+def create_mysql_fixture(
+    *ordered_actions,
+    scope="function",
+    tables=None,
+    session=None,
+    engine_kwargs=None,
+):
     """Produce a MySQL fixture.
 
     Any number of fixture functions can be created. Under the hood they will all share the same
@@ -37,12 +43,17 @@ def create_mysql_fixture(*ordered_actions, scope="function", tables=None, sessio
             most useful when a model-base was specified in `ordered_actions`.
         session: Whether to return a session instead of an engine directly. This can
             either be a bool or a callable capable of producing a session.
+        engine_kwargs: Optional set of kwargs to send into the engine on creation.
     """
 
     @pytest.fixture(scope=scope)
     def _(pmr_mysql_container, pmr_mysql_config):
         database_name = _create_clean_database(pmr_mysql_config)
-        engine = get_sqlalchemy_engine(pmr_mysql_config, database_name)
+        engine = get_sqlalchemy_engine(
+            pmr_mysql_config,
+            database_name,
+            **(engine_kwargs or {}),
+        )
 
         engine_manager = EngineManager.create(
             engine, dynamic_actions=ordered_actions, tables=tables, session=session
