@@ -2,23 +2,23 @@ import binascii
 import csv
 import gzip
 import io
-
-import attr
+from dataclasses import dataclass
+from typing import List, Optional
 
 from pytest_mock_resources.compat import boto3
 
 
-@attr.s
+@dataclass
 class S3CopyCommand:
-    table_name = attr.ib()
-    delimiter = attr.ib()
-    s3_uri = attr.ib()
-    empty_as_null = attr.ib()
-    format = attr.ib(default="CSV")
-    aws_access_key_id = attr.ib(default=None)
-    aws_secret_access_key = attr.ib(default=None)
-    columns = attr.ib(default=None)
-    schema_name = attr.ib(default=None)
+    table_name: str
+    delimiter: str
+    s3_uri: str
+    empty_as_null: bool
+    aws_access_key_id: str
+    aws_secret_access_key: str
+    columns: List[str]
+    format: str = "CSV"
+    schema_name: Optional[str] = None
 
 
 def mock_s3_copy_command(statement, cursor):

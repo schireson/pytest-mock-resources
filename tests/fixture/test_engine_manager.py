@@ -165,7 +165,7 @@ class Test__identify_matching_tables:
     def by_tablename(table):
         return table.schema + table.name
 
-    def setup(self):
+    def setup_metadata(self):
         self.metadata = metadata = MetaData()
         self.base = declarative_base()
 
@@ -175,17 +175,21 @@ class Test__identify_matching_tables:
         self.two_far = Table("far", metadata, schema="two")
 
     def test_no_glob(self):
+        self.setup_metadata()
         result = identify_matching_tables(self.metadata, "one.foo")
         assert sorted(result, key=self.by_tablename) == [self.one_foo]
 
     def test_glob_table_on_schema(self):
+        self.setup_metadata()
         result = identify_matching_tables(self.metadata, "one.*")
         assert sorted(result, key=self.by_tablename) == [self.one_foo, self.one_foo_bar]
 
     def test_glob_schema_on_table(self):
+        self.setup_metadata()
         result = identify_matching_tables(self.metadata, "*.foo")
         assert sorted(result, key=self.by_tablename) == [self.one_foo, self.two_foo]
 
     def test_glob_optional_char(self):
+        self.setup_metadata()
         result = identify_matching_tables(self.metadata, "two.f??")
         assert sorted(result, key=self.by_tablename) == [self.two_far, self.two_foo]
