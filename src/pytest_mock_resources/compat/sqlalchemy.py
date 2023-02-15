@@ -5,6 +5,9 @@ from pytest_mock_resources.compat.import_ import ImportAdaptor
 
 version = getattr(sqlalchemy, "__version__", "")
 
+# Support starting at 1.2.X, and we declare a minimum version of 1.0
+has_pool_pre_ping = not version.startswith("1.1") and not version.startswith("1.0")
+
 if version.startswith("1.4") or version.startswith("2."):
     from sqlalchemy.ext import asyncio
     from sqlalchemy.orm import declarative_base, DeclarativeMeta

@@ -5,9 +5,8 @@ import sqlalchemy
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
-from pytest_mock_resources.container.base import get_container
+from pytest_mock_resources.container.base import async_retry, DEFAULT_RETRIES, get_container, retry
 from pytest_mock_resources.container.postgres import get_sqlalchemy_engine, PostgresConfig
-from pytest_mock_resources.credentials import Credentials
 from pytest_mock_resources.fixture.base import asyncio_fixture, generate_fixture_id
 from pytest_mock_resources.sqlalchemy import bifurcate_actions, EngineManager, normalize_actions
 
@@ -80,32 +79,26 @@ def create_postgres_fixture(
     """
     fixture_id = generate_fixture_id(enabled=template_database, name="pg")
 
-    def _create_engine_manager(config):
-        root_engine = get_sqlalchemy_engine(
-            config, config.root_database, isolation_level="AUTOCOMMIT"
-        )
-        with root_engine.begin() as conn:
-            return create_engine_manager(
-                conn,
-                config,
-                ordered_actions=ordered_actions,
-                tables=tables,
-                createdb_template=createdb_template,
-                engine_kwargs=engine_kwargs or {},
-                session=session,
-                fixture_id=fixture_id,
-                actions_share_transaction=actions_share_transaction,
-            )
+    engine_kwargs_ = engine_kwargs or {}
+    engine_manager_kwargs = dict(
+        ordered_actions=ordered_actions,
+        tables=tables,
+        createdb_template=createdb_template,
+        session=session,
+        fixture_id=fixture_id,
+        actions_share_transaction=actions_share_transaction,
+    )
 
     @pytest.fixture(scope=scope)
-    def _sync(pmr_postgres_container, pmr_postgres_config):
-        engine_manager = _create_engine_manager(pmr_postgres_config)
-        yield from engine_manager.manage_sync()
+    def _sync(*_, pmr_postgres_container, pmr_postgres_config):
+        fixture = _sync_fixture(pmr_postgres_config, engine_manager_kwargs, engine_kwargs_)
+        for _, conn in fixture:
+            yield conn
 
-    async def _async(pmr_postgres_container, pmr_postgres_config):
-        engine_manager = _create_engine_manager(pmr_postgres_config)
-        async for engine in engine_manager.manage_async():
-            yield engine
+    async def _async(*_, pmr_postgres_container, pmr_postgres_config):
+        fixture = _async_fixture(pmr_postgres_config, engine_manager_kwargs, engine_kwargs_)
+        async for _, conn in fixture:
+            yield conn
 
     if async_:
         return asyncio_fixture(_async, scope=scope)
@@ -113,14 +106,75 @@ def create_postgres_fixture(
         return _sync
 
 
+def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs):
+    root_engine = get_sqlalchemy_engine(pmr_config, pmr_config.root_database)
+    retry(root_engine.connect, retries=DEFAULT_RETRIES)
+
+    with root_engine.connect() as root_conn:
+        template_database, template_manager, engine_manager = create_engine_manager(
+            root_conn, **engine_manager_kwargs
+        )
+        root_conn.execute(text("commit"))
+
+    if template_manager:
+        assert template_database
+
+        template_engine = get_sqlalchemy_engine(pmr_config, template_database, **engine_kwargs)
+        with template_engine.begin() as conn:
+            template_manager.run_static_actions(conn)
+            conn.execute(text("commit"))
+        template_engine.dispose()
+
+    # Everything below is normal per-test context. We create a brand new database/engine/manager
+    # distinct from what might have been used for the template database.
+    with root_engine.connect() as root_conn:
+        database_name = _produce_clean_database(root_conn, createdb_template=template_database)
+
+    engine = get_sqlalchemy_engine(pmr_config, database_name, **engine_kwargs)
+    yield from engine_manager.manage_sync(engine)
+
+
+async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs):
+    root_engine = get_sqlalchemy_engine(pmr_config, pmr_config.root_database, async_=True)
+
+    root_conn = await async_retry(root_engine.connect, retries=DEFAULT_RETRIES)
+    await root_conn.close()
+
+    async with root_engine.connect() as root_conn:
+        template_database, template_manager, engine_manager = await root_conn.run_sync(
+            create_engine_manager, **engine_manager_kwargs
+        )
+        await root_conn.execute(text("commit"))
+
+    if template_manager:
+        assert template_database
+
+        engine = get_sqlalchemy_engine(pmr_config, template_database, **engine_kwargs, async_=True)
+        async with engine.begin() as conn:
+            await conn.run_sync(template_manager.run_static_actions)
+            await conn.commit()
+        await engine.dispose()
+
+    # Everything below is normal per-test context. We create a brand new database/engine/manager
+    # distinct from what might have been used for the template database.
+    async with root_engine.connect() as root_conn:
+        database_name = await root_conn.run_sync(
+            _produce_clean_database, createdb_template=template_database
+        )
+
+    await root_engine.dispose()
+
+    engine = get_sqlalchemy_engine(pmr_config, database_name, **engine_kwargs, async_=True)
+    async for engine, conn in engine_manager.manage_async(engine):
+        yield engine, conn
+
+
 def create_engine_manager(
-    root_engine,
-    pmr_postgres_config,
+    root_connection,
     *,
     ordered_actions,
     session,
     tables,
-    engine_kwargs,
     createdb_template="template1",
     fixture_id=None,
     actions_share_transaction=None,
@@ -128,10 +182,12 @@ def create_engine_manager(
     normalized_actions = normalize_actions(ordered_actions)
     static_actions, dynamic_actions = bifurcate_actions(normalized_actions)
 
+    template_database = createdb_template
+    template_manager = None
     if fixture_id:
         try:
-            database_name = _produce_clean_database(
-                root_engine,
+            template_database = _produce_clean_database(
+                root_connection,
                 createdb_template=createdb_template,
                 database_name=fixture_id,
                 ignore_failure=True,
@@ -141,46 +197,30 @@ def create_engine_manager(
             # populated.
             pass
         else:
-            engine = get_sqlalchemy_engine(pmr_postgres_config, database_name, **engine_kwargs)
-            engine_manager = EngineManager(
-                engine,
+            template_manager = EngineManager(
                 dynamic_actions,
                 static_actions=static_actions,
                 session=session,
                 tables=tables,
-                default_schema="public",
             )
-
-            with engine.begin() as conn:
-                engine_manager.run_static_actions(conn)
-                conn.execute(text("commit"))
-
-            engine.dispose()
 
         # The template to be used needs to be changed for the downstream database to the template
         # we created earlier.
-        createdb_template = fixture_id
+        template_database = fixture_id
 
         # With template databases, static actions must be zeroed out so they're only executed once.
         # It only happens in this condition, so that when template databases are **not** used, we
         # execute them during the normal `manage_sync` flow per-test.
         static_actions = []
 
-    # Everything below is normal per-test context. We create a brand new database/engine/manager
-    # distinct from what might have been used for the template database.
-    database_name = _produce_clean_database(root_engine, createdb_template=createdb_template)
-    engine = get_sqlalchemy_engine(pmr_postgres_config, database_name, **engine_kwargs)
-    Credentials.assign_from_connection(engine)
-
-    return EngineManager(
-        engine,
+    fixture_manager = EngineManager(
         dynamic_actions,
         static_actions=static_actions,
         session=session,
         tables=tables,
-        default_schema="public",
         actions_share_transaction=actions_share_transaction,
     )
+    return template_database, template_manager, fixture_manager
 
 
 def _produce_clean_database(

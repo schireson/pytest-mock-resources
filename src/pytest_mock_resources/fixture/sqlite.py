@@ -255,12 +255,10 @@ def create_sqlite_fixture(
         event.listen(raw_engine, "connect", do_connect)
         event.listen(raw_engine, "begin", do_begin)
 
-        engine_manager = EngineManager.create(
-            raw_engine, ordered_actions, tables=tables, session=session
-        )
-        for engine in engine_manager.manage_sync():
+        engine_manager = EngineManager.create(ordered_actions, tables=tables, session=session)
+        for _, conn in engine_manager.manage_sync(raw_engine):
             with filter_sqlalchemy_warnings(decimal_warnings_enabled=(not decimal_warnings)):
-                yield engine
+                yield conn
 
         event.remove(raw_engine, "connect", enable_foreign_key_checks)
 

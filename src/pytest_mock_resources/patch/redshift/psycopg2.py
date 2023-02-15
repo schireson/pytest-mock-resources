@@ -3,7 +3,6 @@ from unittest import mock
 
 from sqlalchemy.sql.base import Executable
 
-from pytest_mock_resources.compat import psycopg2
 from pytest_mock_resources.container.postgres import PostgresConfig
 from pytest_mock_resources.patch.redshift.mock_s3_copy import mock_s3_copy_command, strip
 from pytest_mock_resources.patch.redshift.mock_s3_unload import mock_s3_unload_command
@@ -11,6 +10,13 @@ from pytest_mock_resources.patch.redshift.mock_s3_unload import mock_s3_unload_c
 
 @contextlib.contextmanager
 def patch_connect(config: PostgresConfig, database: str):
+    try:
+        # Not all consumers of redshift may be using psycopg2, so it could be unavailable.
+        import psycopg2
+    except ImportError:
+        yield
+        return
+
     new_connect = mock_psycopg2_connect(config, database, _connect=psycopg2._connect)
 
     # We patch `psycopg2._connect` specifically because it allows us to patch the
@@ -24,6 +30,7 @@ def mock_psycopg2_connect(config: PostgresConfig, database: str, _connect):
 
     Add support for S3 COPY and UNLOAD.
     """
+    import psycopg2
 
     class CustomCursor(psycopg2.extensions.cursor):
         """A custom cursor class to define a custom execute method."""

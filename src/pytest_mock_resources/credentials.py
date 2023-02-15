@@ -29,7 +29,7 @@ class Credentials:
 
     def as_url(self):
         """Return a stringified dbapi URL string."""
-        return str(self.as_sqlalchemy_url())
+        return self.as_sqlalchemy_url().render_as_string(hide_password=False)
 
     def as_sqlalchemy_url(self):
         """Return a sqlalchemy :class:`sqlalchemy.engine.url.URL`."""

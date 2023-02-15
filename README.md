@@ -129,35 +129,46 @@ General features include:
 - [Async fixtures](https://pytest-mock-resources.readthedocs.io/en/latest/async.html)
 - Custom configuration for container/resource startup
 
-## Installing
+## Installation
 
 ```bash
-# Basic fixture support
+# Basic fixture support i.e. SQLite
 pip install "pytest-mock-resources"
 
-# For postgres install EITHER of the following:
+# General, docker-based fixture support
+pip install "pytest-mock-resources[docker]"
+
+# Mongo fixture support, installs `pymongo`
+pip install "pytest-mock-resources[mongo]"
+
+# Moto fixture support, installs non-driver extras specific to moto support
+pip install "pytest-mock-resources[moto]"
+
+# Redis fixture support, Installs `redis` client
+pip install "pytest-mock-resources[redis]"
+
+# Redshift fixture support, installs non-driver extras specific to redshift support
+pip install "pytest-mock-resources[redshift]"
+```
+
+Additionally there are number of **convenience** extras currently provided
+for installing drivers/clients of specific features. However in most cases,
+you **should** already be installing the driver/client used for that fixture
+as as first-party dependency of your project.
+
+As such, we recommend against using these extras, and instead explcitly depending
+on the package in question in your own project's 1st party dependencies.
+
+```bash
+# Installs psycopg2/psycopg2-binary driver
 pip install "pytest-mock-resources[postgres-binary]"
 pip install "pytest-mock-resources[postgres]"
 
-# For postgres async
+# Installs asyncpg driver
 pip install "pytest-mock-resources[postgres-async]"
 
-# For redshift install EITHER of the following:
-# (redshift fixtures require postgres dependencies...)
-pip install "pytest-mock-resources[postgres, redshift]"
-pip install "pytest-mock-resources[postgres-binary, redshift]"
-
-# For mongo install the following:
-pip install "pytest-mock-resources[mongo]"
-
-# For redis
-pip install "pytest-mock-resources[redis]"
-
-# For mysql
+# Installs pymysql driver
 pip install "pytest-mock-resources[mysql]"
-
-# For moto
-pip install "pytest-mock-resources[moto]"
 ```
 
 ## Possible Future Resources

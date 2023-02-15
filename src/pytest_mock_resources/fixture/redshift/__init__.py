@@ -1,9 +1,9 @@
 import pytest
 
 from pytest_mock_resources.container.base import get_container
-from pytest_mock_resources.container.redshift import get_sqlalchemy_engine, RedshiftConfig
+from pytest_mock_resources.container.redshift import RedshiftConfig
 from pytest_mock_resources.fixture.base import asyncio_fixture, generate_fixture_id
-from pytest_mock_resources.fixture.postgresql import create_engine_manager
+from pytest_mock_resources.fixture.postgresql import _async_fixture, _sync_fixture
 from pytest_mock_resources.patch.redshift import psycopg2, sqlalchemy
 
 
@@ -74,48 +74,31 @@ def create_redshift_fixture(
     fixture_id = generate_fixture_id(enabled=template_database, name="pg")
 
     ordered_actions = ordered_actions + (REDSHIFT_UDFS,)
+    engine_kwargs_ = engine_kwargs or {}
 
-    def _create_engine_manager(config):
-        root_engine = get_sqlalchemy_engine(
-            config, config.root_database, isolation_level="AUTOCOMMIT"
-        )
-        with root_engine.begin() as conn:
-            return create_engine_manager(
-                conn,
-                config,
-                ordered_actions=ordered_actions,
-                tables=tables,
-                createdb_template=createdb_template,
-                engine_kwargs=engine_kwargs or {},
-                session=session,
-                fixture_id=fixture_id,
-                actions_share_transaction=actions_share_transaction,
-            )
+    engine_manager_kwargs = dict(
+        ordered_actions=ordered_actions,
+        tables=tables,
+        createdb_template=createdb_template,
+        session=session,
+        fixture_id=fixture_id,
+        actions_share_transaction=actions_share_transaction,
+    )
 
     @pytest.fixture(scope=scope)
-    def _sync(pmr_redshift_container, pmr_redshift_config):
-        engine_manager = _create_engine_manager(pmr_redshift_config)
-        database_name = engine_manager.engine.url.database
-
-        for engine in engine_manager.manage_sync():
-            sqlalchemy.register_redshift_behavior(engine_manager.engine)
-            with psycopg2.patch_connect(pmr_redshift_config, database_name):
-                yield engine
-
-    async def _async(pmr_redshift_container, pmr_redshift_config):
-        engine_manager = _create_engine_manager(pmr_redshift_config)
-        database_name = engine_manager.engine.url.database
-
-        async for conn in engine_manager.manage_async():
-            if session:
-                engine = conn.sync_session.connection().engine
-            else:
-                engine = conn.sync_engine
-
+    def _sync(*_, pmr_redshift_container, pmr_redshift_config):
+        for engine, conn in _sync_fixture(
+            pmr_redshift_config, engine_manager_kwargs, engine_kwargs_
+        ):
             sqlalchemy.register_redshift_behavior(engine)
-
-            with psycopg2.patch_connect(pmr_redshift_config, database_name):
+            with psycopg2.patch_connect(pmr_redshift_config, engine.url.database):
                 yield conn
+
+    async def _async(*_, pmr_redshift_container, pmr_redshift_config):
+        fixture = _async_fixture(pmr_redshift_config, engine_manager_kwargs, engine_kwargs_)
+        async for engine, conn in fixture:
+            sqlalchemy.register_redshift_behavior(engine.sync_engine)
+            yield conn
 
     if async_:
         return asyncio_fixture(_async, scope=scope)

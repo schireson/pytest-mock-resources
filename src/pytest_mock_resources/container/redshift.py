@@ -1,11 +1,7 @@
-import sqlalchemy
-
-from pytest_mock_resources.config import DockerContainerConfig, fallback
-from pytest_mock_resources.container.base import ContainerCheckFailed
-from pytest_mock_resources.container.postgres import get_sqlalchemy_engine
+from pytest_mock_resources.container.postgres import PostgresConfig
 
 
-class RedshiftConfig(DockerContainerConfig):
+class RedshiftConfig(PostgresConfig):
     """Define the configuration object for Redshift.
 
     Args:
@@ -23,10 +19,21 @@ class RedshiftConfig(DockerContainerConfig):
             Defaults to :code:`"password"`.
         root_database (str): The name of the root Redshift database to create.
             Defaults to :code:`"dev"`.
+        drivername (str): The sqlalchemy driver to use
+            Defaults to :code:`"postgresql+psycopg2"`.
     """
 
     name = "redshift"
-    _fields = {"image", "host", "port", "ci_port", "username", "password", "root_database"}
+    _fields = {
+        "image",
+        "host",
+        "port",
+        "ci_port",
+        "username",
+        "password",
+        "root_database",
+        "drivername",
+    }
     _fields_defaults = {
         "image": "postgres:9.6.10-alpine",
         "port": 5532,
@@ -34,36 +41,5 @@ class RedshiftConfig(DockerContainerConfig):
         "username": "user",
         "password": "password",
         "root_database": "dev",
+        "drivername": "postgresql+psycopg2",
     }
-
-    @fallback
-    def username(self):
-        raise NotImplementedError()
-
-    @fallback
-    def password(self):
-        raise NotImplementedError()
-
-    @fallback
-    def root_database(self):
-        raise NotImplementedError()
-
-    def ports(self):
-        return {5432: self.port}
-
-    def environment(self):
-        return {
-            "POSTGRES_DB": self.root_database,
-            "POSTGRES_USER": self.username,
-            "POSTGRES_PASSWORD": self.password,
-        }
-
-    def check_fn(self):
-        try:
-            get_sqlalchemy_engine(self, self.root_database)
-        except sqlalchemy.exc.OperationalError:
-            raise ContainerCheckFailed(
-                "Unable to connect to a presumed Redshift test container via given config: {}".format(
-                    self
-                )
-            )

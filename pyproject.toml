@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-mock-resources"
-version = "2.6.7"
+version = "2.6.8"
 description = "A pytest plugin for easily instantiating reproducible mock resources."
 authors = [
     "Omar Khan <oakhan3@gmail.com>",
@@ -25,7 +25,6 @@ include = [
 python = ">=3.7, <4"
 
 pytest = {version = ">=1.0"}
-responses = "*"
 sqlalchemy = {version = ">1.0, !=1.4.0, !=1.4.1, !=1.4.2, !=1.4.3, !=1.4.4, !=1.4.5, !=1.4.6, !=1.4.7, !=1.4.8, !=1.4.9, !=1.4.10, !=1.4.11, !=1.4.12, !=1.4.13, !=1.4.14, !=1.4.15, !=1.4.16, !=1.4.17, !=1.4.18, !=1.4.19, !=1.4.20, !=1.4.21, !=1.4.22, !=1.4.23"}
 
 # extra [postgres]
@@ -47,6 +46,7 @@ redis = {version = "*", optional = true}
 # extra [mysql]
 pymysql = {version = ">=1.0", optional = true}
 
+# extra [docker]
 filelock = {version = "*", optional = true}
 python-on-whales = {version = ">=0.22.0", optional = true}
 
