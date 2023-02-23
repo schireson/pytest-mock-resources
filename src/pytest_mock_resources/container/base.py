@@ -3,14 +3,18 @@ import json
 import pathlib
 import socket
 import time
-from typing import Awaitable, Callable, TypeVar
+import types
+from typing import Awaitable, Callable, Optional, TypeVar
 
 from pytest_mock_resources.hooks import get_pytest_flag, use_multiprocess_safe_mode
 
 try:
-    import responses
+    import responses as _responses
+
+    responses: Optional[types.ModuleType] = _responses
+    del _responses
 except ImportError:
-    responses = None  # type: ignore
+    responses = None
 
 
 DEFAULT_RETRIES = 40

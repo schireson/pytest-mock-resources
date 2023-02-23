@@ -1,7 +1,7 @@
 import sqlalchemy
 import sqlalchemy.exc
 
-from pytest_mock_resources.compat.sqlalchemy import has_pool_pre_ping, URL
+from pytest_mock_resources.compat.sqlalchemy import URL
 from pytest_mock_resources.config import DockerContainerConfig, fallback
 from pytest_mock_resources.container.base import ContainerCheckFailed
 
@@ -106,9 +106,6 @@ def get_sqlalchemy_engine(
         password=config.password,
         database=database_name,
     )
-
-    if has_pool_pre_ping and "pool_pre_ping" not in engine_kwargs:
-        engine_kwargs["pool_pre_ping"] = True
 
     if getattr(url.get_dialect(), "is_async"):
         from sqlalchemy.ext.asyncio import create_async_engine

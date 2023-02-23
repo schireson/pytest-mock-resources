@@ -1,9 +1,10 @@
 import logging
+from typing import cast
 
 import pytest
 import sqlalchemy
 from sqlalchemy import text
-from sqlalchemy.engine import Connection
+from sqlalchemy.engine import Connection, Engine
 
 from pytest_mock_resources.container.base import async_retry, DEFAULT_RETRIES, get_container, retry
 from pytest_mock_resources.container.postgres import get_sqlalchemy_engine, PostgresConfig
@@ -107,28 +108,34 @@ def create_postgres_fixture(
 
 
 def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs):
-    root_engine = get_sqlalchemy_engine(pmr_config, pmr_config.root_database)
+    root_engine = cast(Engine, get_sqlalchemy_engine(pmr_config, pmr_config.root_database))
     retry(root_engine.connect, retries=DEFAULT_RETRIES)
 
     with root_engine.connect() as root_conn:
-        template_database, template_manager, engine_manager = create_engine_manager(
-            root_conn, **engine_manager_kwargs
-        )
-        root_conn.execute(text("commit"))
+        with root_conn.begin() as trans:
+            template_database, template_manager, engine_manager = create_engine_manager(
+                root_conn, **engine_manager_kwargs
+            )
+            trans.commit()
 
     if template_manager:
         assert template_database
 
-        template_engine = get_sqlalchemy_engine(pmr_config, template_database, **engine_kwargs)
-        with template_engine.begin() as conn:
-            template_manager.run_static_actions(conn)
-            conn.execute(text("commit"))
+        template_engine = cast(
+            Engine, get_sqlalchemy_engine(pmr_config, template_database, **engine_kwargs)
+        )
+        with template_engine.connect() as conn:
+            with conn.begin() as trans:
+                template_manager.run_static_actions(conn)
+                trans.commit()
         template_engine.dispose()
 
     # Everything below is normal per-test context. We create a brand new database/engine/manager
     # distinct from what might have been used for the template database.
     with root_engine.connect() as root_conn:
-        database_name = _produce_clean_database(root_conn, createdb_template=template_database)
+        with root_conn.begin() as trans:
+            database_name = _produce_clean_database(root_conn, createdb_template=template_database)
+            trans.commit()
 
     engine = get_sqlalchemy_engine(pmr_config, database_name, **engine_kwargs)
     yield from engine_manager.manage_sync(engine)
@@ -141,10 +148,11 @@ async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs):
     await root_conn.close()
 
     async with root_engine.connect() as root_conn:
-        template_database, template_manager, engine_manager = await root_conn.run_sync(
-            create_engine_manager, **engine_manager_kwargs
-        )
-        await root_conn.execute(text("commit"))
+        async with root_conn.begin() as trans:
+            template_database, template_manager, engine_manager = await root_conn.run_sync(
+                create_engine_manager, **engine_manager_kwargs
+            )
+            await trans.commit()
 
     if template_manager:
         assert template_database
@@ -158,9 +166,11 @@ async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs):
     # Everything below is normal per-test context. We create a brand new database/engine/manager
     # distinct from what might have been used for the template database.
     async with root_engine.connect() as root_conn:
-        database_name = await root_conn.run_sync(
-            _produce_clean_database, createdb_template=template_database
-        )
+        async with root_conn.begin() as trans:
+            database_name = await root_conn.run_sync(
+                _produce_clean_database, createdb_template=template_database
+            )
+            await trans.commit()
 
     await root_engine.dispose()
 
@@ -224,7 +234,12 @@ def create_engine_manager(
 
 
 def _produce_clean_database(
-    root_conn: Connection, createdb_template="template1", database_name=None, ignore_failure=False
+    root_conn: Connection,
+    *,
+    trans=None,
+    createdb_template="template1",
+    database_name=None,
+    ignore_failure=False,
 ):
     if not database_name:
         database_name = _generate_database_name(root_conn)
