@@ -3,10 +3,19 @@ import json
 import pathlib
 import socket
 import time
-
-import responses
+import types
+from typing import Awaitable, Callable, Optional, TypeVar
 
 from pytest_mock_resources.hooks import get_pytest_flag, use_multiprocess_safe_mode
+
+try:
+    import responses as _responses
+
+    responses: Optional[types.ModuleType] = _responses
+    del _responses
+except ImportError:
+    responses = None
+
 
 DEFAULT_RETRIES = 40
 DEFAULT_INTERVAL = 0.5
@@ -16,7 +25,41 @@ class ContainerCheckFailed(Exception):
     """Unable to connect to a Container."""
 
 
-def retry(func=None, *, args=(), kwargs={}, retries=1, interval=DEFAULT_INTERVAL, on_exc=Exception):
+T = TypeVar("T")
+
+
+async def async_retry(
+    func: Callable[..., Awaitable[T]],
+    *,
+    args=(),
+    kwargs={},
+    retries=1,
+    interval=DEFAULT_INTERVAL,
+    on_exc=Exception,
+) -> T:
+    while retries:
+        retries -= 1
+        try:
+            result = await func(*args, **kwargs)
+        except on_exc:
+            if not retries:
+                raise
+            time.sleep(interval)
+        else:
+            return result
+
+    raise NotImplementedError()  # pragma: no cover
+
+
+def retry(
+    func: Callable[..., T],
+    *,
+    args=(),
+    kwargs={},
+    retries=1,
+    interval=DEFAULT_INTERVAL,
+    on_exc=Exception,
+) -> T:
     while retries:
         retries -= 1
         try:
@@ -28,13 +71,15 @@ def retry(func=None, *, args=(), kwargs={}, retries=1, interval=DEFAULT_INTERVAL
         else:
             return result
 
+    raise NotImplementedError()  # pragma: no cover
+
 
 def get_container(pytestconfig, config, *, retries=DEFAULT_RETRIES, interval=DEFAULT_INTERVAL):
-
     multiprocess_safe_mode = use_multiprocess_safe_mode(pytestconfig)
 
-    # XXX: moto library may over-mock responses. SEE: https://github.com/spulec/moto/issues/1026
-    responses.add_passthru("http+docker")
+    if responses:
+        # XXX: moto library may over-mock responses. SEE: https://github.com/spulec/moto/issues/1026
+        responses.add_passthru("http+docker")
 
     # The creation of container can fail and leave us in a situation where it's
     # we will need to know whether it's been created already or not.

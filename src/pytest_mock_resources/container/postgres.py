@@ -1,4 +1,5 @@
 import sqlalchemy
+import sqlalchemy.exc
 
 from pytest_mock_resources.compat.sqlalchemy import URL
 from pytest_mock_resources.config import DockerContainerConfig, fallback
@@ -23,10 +24,21 @@ class PostgresConfig(DockerContainerConfig):
             Defaults to :code:`"password"`.
         root_database (str): The name of the root postgres database to create.
             Defaults to :code:`"dev"`.
+        drivername (str): The sqlalchemy driver to use
+            Defaults to :code:`"postgresql+psycopg2"`.
     """
 
     name = "postgres"
-    _fields = {"image", "host", "port", "ci_port", "username", "password", "root_database"}
+    _fields = {
+        "image",
+        "host",
+        "port",
+        "ci_port",
+        "username",
+        "password",
+        "root_database",
+        "drivername",
+    }
     _fields_defaults = {
         "image": "postgres:9.6.10-alpine",
         "port": 5532,
@@ -34,6 +46,7 @@ class PostgresConfig(DockerContainerConfig):
         "username": "user",
         "password": "password",
         "root_database": "dev",
+        "drivername": "postgresql+psycopg2",
     }
 
     @fallback
@@ -48,6 +61,10 @@ class PostgresConfig(DockerContainerConfig):
     def root_database(self):
         raise NotImplementedError()
 
+    @fallback
+    def drivername(self):
+        raise NotImplementedError()
+
     def ports(self):
         return {5432: self.port}
 
@@ -59,35 +76,42 @@ class PostgresConfig(DockerContainerConfig):
         }
 
     def check_fn(self):
+        import socket
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            get_sqlalchemy_engine(self, self.root_database)
-        except sqlalchemy.exc.OperationalError:
+            s.connect((self.host, self.port))
+        except (ConnectionRefusedError, socket.error):
             raise ContainerCheckFailed(
-                "Unable to connect to a presumed Postgres test container via given config: {}".format(
-                    self
-                )
+                f"Unable to connect to a presumed Postgres test container via given config: {self}"
             )
+        finally:
+            s.close()
 
 
-def get_sqlalchemy_engine(config, database_name, **engine_kwargs):
+def get_sqlalchemy_engine(
+    config, database_name, isolation_level="AUTOCOMMIT", async_=False, **engine_kwargs
+):
+    # For backwards compatibility, our hardcoded default is psycopg2, and async fixtures
+    # will not work with psycopg2, so we instead swap the default to the preferred async driver.
+    drivername = config.drivername
+    if async_ and drivername.endswith("psycopg2"):
+        drivername = drivername.replace("psycopg2", "asyncpg")
+
     url = URL(
-        drivername="postgresql+psycopg2",
+        drivername=drivername,
         host=config.host,
         port=config.port,
         username=config.username,
         password=config.password,
         database=database_name,
-        query={"sslmode": "disable"},
     )
 
-    # Trigger any psycopg2-based import failures
-    from pytest_mock_resources.compat import psycopg2
+    if getattr(url.get_dialect(), "is_async"):
+        from sqlalchemy.ext.asyncio import create_async_engine
 
-    psycopg2.connect
-
-    engine = sqlalchemy.create_engine(url, **engine_kwargs)
-
-    # Verify engine is connected
-    engine.connect()
+        engine = create_async_engine(url, **engine_kwargs, isolation_level=isolation_level)
+    else:
+        engine = sqlalchemy.create_engine(url, **engine_kwargs, isolation_level=isolation_level)
 
     return engine

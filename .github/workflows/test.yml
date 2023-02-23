@@ -22,7 +22,7 @@ jobs:
         # and something in the middle (i.e. what gets run locally).
         python-version: ["3.7", "3.9", "3.11"]
         pytest-asyncio-version: ["0.16.0", "0.19.0"]
-        sqlalchemy-version: ["1.3.0", "1.4.0", "2.0.0b4"]
+        sqlalchemy-version: ["1.3.0", "1.4.0", "2.0.0"]
 
     steps:
       - uses: actions/checkout@v3
@@ -35,7 +35,7 @@ jobs:
       - name: Install poetry
         uses: abatilo/actions-poetry@v2.0.0
         with:
-          poetry-version: 1.2.0
+          poetry-version: 1.2.2
 
       - name: Set up cache
         uses: actions/cache@v3
@@ -79,9 +79,65 @@ jobs:
           pip install tomli coveralls
           coveralls --service=github
 
+  # Tests that postgres async fixture functions without psycopg2 installed.
+  test-asyncpg:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Test our minimum version bound, the highest version available,
+        # and something in the middle (i.e. what gets run locally).
+        python-version: ["3.9"]
+        sqlalchemy-version: ["1.4.0"]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+
+      - name: Install poetry
+        uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: 1.2.2
+
+      - name: Set up cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+
+      - name: Install base dependencies
+        run: poetry run poetry install -E postgres-async
+
+      - name: Install specific sqlalchemy version
+        run: |
+          poetry run pip install 'sqlalchemy~=${{ matrix.sqlalchemy-version }}'
+
+      - run: SQLALCHEMY_WARN_20=1 poetry run coverage run -a -m pytest src tests -vv -m 'asyncio'
+
+      - name: Store test result artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          path: coverage.xml
+
+      - name: Coveralls
+        env:
+          COVERALLS_FLAG_NAME: run-${{ inputs.working-directory }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_PARALLEL: true
+        run: |
+          pip install tomli coveralls
+          coveralls --service=github
+
   finish:
     needs:
       - test
+      - test-asyncpg
     runs-on: ubuntu-latest
     steps:
       - name: Coveralls Finished

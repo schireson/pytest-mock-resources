@@ -6,7 +6,6 @@ from typing import Dict, Iterable, List, Optional, Set, TypeVar, Union
 
 import sqlalchemy
 from sqlalchemy import MetaData, text
-from sqlalchemy.engine import Engine
 from sqlalchemy.orm import scoped_session, Session, sessionmaker
 from sqlalchemy.sql.ddl import CreateSchema
 from sqlalchemy.sql.schema import Table
@@ -88,11 +87,9 @@ T = TypeVar("T", StaticAction, Action)
 
 @dataclass
 class EngineManager:
-    engine: Engine
     dynamic_actions: Iterable[Action] = ()
     tables: Iterable = ()
     session: Union[bool, Session] = False
-    default_schema: Optional[str] = None
     static_actions: Iterable[StaticAction] = ()
     actions_share_transaction: Optional[bool] = None
 
@@ -101,64 +98,58 @@ class EngineManager:
     @classmethod
     def create(
         cls,
-        engine: Engine,
         dynamic_actions: Iterable[Action],
         *,
         tables: Iterable = (),
         session: Union[bool, Session] = False,
-        default_schema: Optional[str] = None,
         static_actions: Iterable[StaticAction] = (),
     ) -> "EngineManager":
         return cls(
-            engine,
             static_actions=normalize_actions(static_actions),
             dynamic_actions=normalize_actions(dynamic_actions),
             tables=tables,
             session=session,
-            default_schema=default_schema,
         )
 
-    def manage_sync(self):
+    def manage_sync(self, engine):
         try:
             if self.session:
                 if isinstance(self.session, sessionmaker):
                     session_factory = self.session
-                    session = session_factory(bind=self.engine)
+                    session = session_factory(bind=engine)
                 elif isinstance(self.session, Session):
                     session = self.session
                 else:
-                    session_factory = scoped_session(sessionmaker(bind=self.engine))
-                    session = session_factory(bind=self.engine)
+                    session_factory = scoped_session(sessionmaker(bind=engine))
+                    session = session_factory(bind=engine)
 
                 try:
                     self.run_actions(session)
                     commit(session)
 
                     if self.actions_share_transaction is False:
-                        self.engine.dispose()
+                        engine.dispose()
 
                     Credentials.assign_from_connection(session)
-                    yield session
+                    yield engine, session
                 finally:
                     session.close()
             else:
-                with self.engine.begin() as conn:
+                with engine.begin() as conn:
                     self.run_actions(conn)
                     commit(conn)
 
                 if self.actions_share_transaction is False:
-                    self.engine.dispose()
+                    engine.dispose()
 
-                Credentials.assign_from_connection(self.engine)
-                yield self.engine
+                Credentials.assign_from_connection(engine)
+                yield engine, engine
 
         finally:
-            self.engine.dispose()
+            engine.dispose()
 
-    async def manage_async(self, session=None):
+    async def manage_async(self, engine, session=None):
         from sqlalchemy.ext.asyncio.session import AsyncSession
-
-        engine = create_async_engine(self.engine.pmr_credentials)
 
         try:
             if self.session:
@@ -177,7 +168,7 @@ class EngineManager:
                         await session.close()
 
                     Credentials.assign_from_connection(engine.sync_engine)
-                    yield session
+                    yield engine, session
             else:
                 async with engine.begin() as conn:
                     await conn.run_sync(self.run_actions)
@@ -187,10 +178,9 @@ class EngineManager:
                     await engine.dispose()
 
                 Credentials.assign_from_connection(engine.sync_engine)
-                yield engine
+                yield engine, engine
         finally:
             await engine.dispose()
-            self.engine.dispose()
 
     def run_actions(self, conn):
         self.run_static_actions(conn)
@@ -211,7 +201,12 @@ class EngineManager:
         all_schemas = {table.schema for table in metadata.tables.values() if table.schema}
 
         for schema in all_schemas:
-            if self.default_schema == schema:
+            if hasattr(conn, "dialect"):
+                dialect = conn.dialect
+            else:
+                dialect = conn.connection().dialect
+
+            if dialect.default_schema_name == schema:
                 continue
 
             statement = CreateSchema(schema)
@@ -330,19 +325,3 @@ def commit(conn):
     except sqlalchemy.exc.InvalidRequestError:
         # In autocommit mode, we wont be able to commit.
         pass
-
-
-def create_async_engine(credentials, isolation_level=None):
-    url = compat.sqlalchemy.URL(
-        drivername="postgresql+asyncpg",
-        username=credentials.username,
-        password=credentials.password,
-        host=credentials.host,
-        port=credentials.port,
-        database=credentials.database,
-        query=dict(ssl="disable"),
-    )
-    options = {}
-    if isolation_level:
-        options["isolation_level"] = isolation_level
-    return compat.sqlalchemy.asyncio.create_async_engine(url, **options)
