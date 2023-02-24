@@ -107,7 +107,7 @@ def get_sqlalchemy_engine(
         database=database_name,
     )
 
-    if getattr(url.get_dialect(), "is_async"):
+    if getattr(url.get_dialect(), "is_async", None):
         from sqlalchemy.ext.asyncio import create_async_engine
 
         engine = create_async_engine(url, **engine_kwargs, isolation_level=isolation_level)
