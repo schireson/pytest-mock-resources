@@ -45,3 +45,13 @@ def test_createdb_template(createdb_template_pg):
     """Assert successful usage of a fixture which sets the `createdb_template` argument."""
     with createdb_template_pg.begin() as conn:
         conn.execute(Thing.__table__.insert().values({"id": 1}))
+
+
+nested_transaction = create_postgres_fixture(Base)
+
+
+def test_nested_transaction(nested_transaction):
+    """Assert success with a fixture relying on being in a transaction (like SAVEPOINT)."""
+    with nested_transaction.begin() as conn:
+        with conn.begin_nested():
+            conn.execute(Thing.__table__.insert().values({"id": 1}))

@@ -113,7 +113,9 @@ def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs):
     conn.close()
     root_engine.dispose()
 
-    root_engine = cast(Engine, get_sqlalchemy_engine(pmr_config, pmr_config.root_database))
+    root_engine = cast(
+        Engine, get_sqlalchemy_engine(pmr_config, pmr_config.root_database, autocommit=True)
+    )
     with root_engine.connect() as root_conn:
         with root_conn.begin() as trans:
             template_database, template_manager, engine_manager = create_engine_manager(
@@ -136,7 +138,9 @@ def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs):
 
     # Everything below is normal per-test context. We create a brand new database/engine/manager
     # distinct from what might have been used for the template database.
-    root_engine = cast(Engine, get_sqlalchemy_engine(pmr_config, pmr_config.root_database))
+    root_engine = cast(
+        Engine, get_sqlalchemy_engine(pmr_config, pmr_config.root_database, autocommit=True)
+    )
     with root_engine.connect() as root_conn:
         with root_conn.begin() as trans:
             database_name = _produce_clean_database(root_conn, createdb_template=template_database)
@@ -148,7 +152,9 @@ def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs):
 
 
 async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs):
-    root_engine = get_sqlalchemy_engine(pmr_config, pmr_config.root_database, async_=True)
+    root_engine = get_sqlalchemy_engine(
+        pmr_config, pmr_config.root_database, async_=True, autocommit=True
+    )
 
     root_conn = await async_retry(root_engine.connect, retries=DEFAULT_RETRIES)
     await root_conn.close()

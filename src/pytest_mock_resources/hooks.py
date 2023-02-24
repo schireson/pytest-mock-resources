@@ -108,7 +108,9 @@ def pytest_sessionfinish(session, exitstatus):
                 try:
                     container = docker.container.inspect(container_id)
                 except Exception:
-                    warnings.warn(f"Unrecognized container {container_id}")
+                    warnings.warn(
+                        f"Unrecognized container {container_id}. You may need to manually delete/edit {fn}"
+                    )
                 else:
                     try:
                         container.kill()
