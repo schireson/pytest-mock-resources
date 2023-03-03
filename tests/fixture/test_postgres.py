@@ -1,6 +1,6 @@
 from sqlalchemy import Column, event, Integer
 
-from pytest_mock_resources import create_postgres_fixture
+from pytest_mock_resources import create_postgres_fixture, PostgresConfig
 from pytest_mock_resources.compat.sqlalchemy import declarative_base
 from pytest_mock_resources.container.postgres import get_sqlalchemy_engine
 from pytest_mock_resources.fixture.postgresql import _produce_clean_database
@@ -55,3 +55,10 @@ def test_nested_transaction(nested_transaction):
     with nested_transaction.begin() as conn:
         with conn.begin_nested():
             conn.execute(Thing.__table__.insert().values({"id": 1}))
+
+
+def test_check_fn_env_based_port(nested_transaction):
+    """Assert check_fn functions with non-int port."""
+    creds = nested_transaction.pmr_credentials
+    config = PostgresConfig(host=creds.host, port=str(creds.port))
+    config.check_fn()
