@@ -49,7 +49,7 @@ def fallback(fn):
 
 
 class DockerContainerConfig:
-    _fields: Iterable = {"image", "host", "port", "ci_port"}
+    _fields: Iterable = {"image", "host", "port", "ci_port", "container_args"}
     _fields_defaults: Dict = {}
 
     def __init__(self, **kwargs):
@@ -106,6 +106,10 @@ class DockerContainerConfig:
             return ci_port
 
         raise NotImplementedError()
+
+    @fallback
+    def container_args(self):
+        return ()
 
     def ports(self):
         return {}
