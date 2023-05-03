@@ -16,7 +16,8 @@ class MotoConfig(DockerContainerConfig):
             Defaults to :code:`5432`.
     """
 
-    name = "postgres"
+    name = "moto"
+
     _fields = {"image", "host", "port"}
     _fields_defaults = {
         "image": "motoserver/moto:4.0.6",

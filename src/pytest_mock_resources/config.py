@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import functools
 import os
 import socket
-from typing import Dict, Iterable
+from typing import ClassVar, Dict, Iterable, Type
 
 _DOCKER_HOST = "host.docker.internal"
 
@@ -49,8 +51,16 @@ def fallback(fn):
 
 
 class DockerContainerConfig:
+    name: ClassVar[str]
+
     _fields: Iterable = {"image", "host", "port", "ci_port", "container_args"}
     _fields_defaults: Dict = {}
+
+    subclasses: Dict[str, Type[DockerContainerConfig]] = {}
+
+    @classmethod
+    def __init_subclass__(cls):
+        DockerContainerConfig.subclasses[cls.name] = cls
 
     def __init__(self, **kwargs):
         for field, value in kwargs.items():
