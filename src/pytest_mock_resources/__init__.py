@@ -1,6 +1,7 @@
 from pytest_mock_resources.container import (
     get_container,
     MongoConfig,
+    MotoConfig,
     MysqlConfig,
     PostgresConfig,
     RedisConfig,
@@ -40,6 +41,7 @@ from pytest_mock_resources.sqlalchemy import Rows, Statements, StaticStatements
 __all__ = [
     "Credentials",
     "MongoConfig",
+    "MotoConfig",
     "MysqlConfig",
     "PostgresConfig",
     "RedisConfig",

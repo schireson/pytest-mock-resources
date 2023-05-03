@@ -1,20 +1,9 @@
-import argparse
-import enum
-from typing import Dict, Type
+from __future__ import annotations
 
-from pytest_mock_resources import (
-    MongoConfig,
-    MysqlConfig,
-    PostgresConfig,
-    RedisConfig,
-    RedshiftConfig,
-)
+import argparse
+
 from pytest_mock_resources.config import DockerContainerConfig
 from pytest_mock_resources.container.base import container_name, get_container
-
-postgres_image = PostgresConfig().image
-mysql_image = MysqlConfig().image
-mongo_image = MongoConfig().image
 
 
 class StubPytestConfig:
@@ -29,28 +18,6 @@ class StubPytestConfig:
         return getattr(self, attr)
 
 
-@enum.unique
-class FixtureType(enum.Enum):
-    mongo = "mongo"
-    mysql = "mysql"
-    postgres = "postgres"
-    redis = "redis"
-    redshift = "redshift"
-
-    @classmethod
-    def options(cls):
-        return ", ".join(fixture_base.value for fixture_base in cls)
-
-
-_container_producers: Dict[FixtureType, Type[DockerContainerConfig]] = {
-    FixtureType.mongo: MongoConfig,
-    FixtureType.mysql: MysqlConfig,
-    FixtureType.postgres: PostgresConfig,
-    FixtureType.redis: RedisConfig,
-    FixtureType.redshift: RedshiftConfig,
-}
-
-
 def main():
     parser = create_parser()
     args = parser.parse_args()
@@ -60,22 +27,27 @@ def main():
     stop = args.stop
     start = not stop
 
-    for fixture_base in args.fixture_bases:
-        fixture_type = FixtureType(fixture_base)
-        execute(fixture_type, pytestconfig, start=start, stop=stop)
+    for fixture in args.fixtures:
+        if fixture not in DockerContainerConfig.subclasses:
+            valid_options = ", ".join(DockerContainerConfig.subclasses)
+            raise argparse.ArgumentError(
+                args.fixtures,
+                f"'{fixture}' invalid. Valid options include: {valid_options}",
+            )
+
+        execute(fixture, pytestconfig, start=start, stop=stop)
 
 
 def create_parser():
-    # TODO: Add an options arg to DOWN a fixture_base's container
     parser = argparse.ArgumentParser(
         description="Premptively run docker containers to speed up initial startup of PMR Fixtures."
     )
     parser.add_argument(
-        "fixture_bases",
-        metavar="Fixture Base",
+        "fixtures",
+        metavar="Fixture",
         type=str,
         nargs="+",
-        help="Available Fixture Bases: {}".format(FixtureType.options()),
+        help="Available Fixtures: {}".format(", ".join(DockerContainerConfig.subclasses)),
     )
     parser.add_argument(
         "--stop", action="store_true", help="Stop previously started PMR containers"
@@ -83,8 +55,8 @@ def create_parser():
     return parser
 
 
-def execute(fixture_type: FixtureType, pytestconfig: StubPytestConfig, start=True, stop=False):
-    config_cls = _container_producers[fixture_type]
+def execute(fixture: str, pytestconfig: StubPytestConfig, start=True, stop=False):
+    config_cls = DockerContainerConfig.subclasses[fixture]
     config = config_cls()
 
     if start:
@@ -95,11 +67,12 @@ def execute(fixture_type: FixtureType, pytestconfig: StubPytestConfig, start=Tru
     if stop:
         from python_on_whales import docker
 
-        name = container_name(fixture_type.value, config.port)
+        assert config.port
+        name = container_name(fixture, int(config.port))
         try:
             container = docker.container.inspect(name)
         except Exception:
-            print(f"Failed to stop {fixture_type.value} container")
+            print(f"Failed to stop {fixture} container")
         else:
             container.kill()
 
