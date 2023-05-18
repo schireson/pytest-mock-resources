@@ -21,7 +21,7 @@ def pmr_mysql_config():
 
 @pytest.fixture(scope="session")
 def pmr_mysql_container(pytestconfig, pmr_mysql_config):
-    yield from get_container(pytestconfig, pmr_mysql_config)
+    yield from get_container(pytestconfig, pmr_mysql_config, interval=1, retries=60)
 
 
 def create_mysql_fixture(
