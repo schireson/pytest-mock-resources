@@ -56,7 +56,10 @@ def create_mysql_fixture(
         )
 
         engine_manager = EngineManager.create(
-            dynamic_actions=ordered_actions, tables=tables, session=session
+            fixture="mysql",
+            dynamic_actions=ordered_actions,
+            tables=tables,
+            session=session,
         )
         for _, conn in engine_manager.manage_sync(engine):
             yield conn

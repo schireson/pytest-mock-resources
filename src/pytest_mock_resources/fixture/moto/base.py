@@ -5,9 +5,11 @@ from dataclasses import dataclass
 
 import pytest
 
+from pytest_mock_resources.action import validate_actions
 from pytest_mock_resources.compat import boto3
 from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.moto import endpoint_url, MotoConfig
+from pytest_mock_resources.fixture.moto.action import apply_ordered_actions, MotoAction
 
 
 @pytest.fixture(scope="session")
@@ -27,7 +29,7 @@ def pmr_moto_container(pytestconfig, pmr_moto_config):
     yield from get_container(pytestconfig, pmr_moto_config)
 
 
-def create_moto_fixture(scope="function"):
+def create_moto_fixture(*ordered_actions: MotoAction, scope="function"):
     """Produce a Moto fixture.
 
     Any number of fixture functions can be created. Under the hood they will all share the same
@@ -48,13 +50,14 @@ def create_moto_fixture(scope="function"):
        the exact URL may be different depending on your host/port config.
 
     Args:
+        ordered_actions: Any number of ordered actions to be run on test setup.
         scope (str): The scope of the fixture can be specified by the user, defaults to "function".
     """
-    # TODO: Add options for declarative creation of AWS objects, like S3 buckets/files.
+    validate_actions(ordered_actions, fixture="moto")
 
     @pytest.fixture(scope=scope)
     def _fixture(pmr_moto_credentials) -> Session:
-        return Session(
+        session = Session(
             boto3.Session(
                 aws_access_key_id=pmr_moto_credentials.aws_access_key_id,
                 aws_secret_access_key=pmr_moto_credentials.aws_secret_access_key,
@@ -62,6 +65,8 @@ def create_moto_fixture(scope="function"):
             ),
             endpoint_url=pmr_moto_credentials.endpoint_url,
         )
+        apply_ordered_actions(session, ordered_actions)
+        return session
 
     return _fixture
 

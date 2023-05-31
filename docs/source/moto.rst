@@ -57,3 +57,46 @@ object. Namely you would generally want to call `.client(...)` or `.resource(...
    A moto dashboard should be available for debugging while the container is running.
    By default it would be available at ``http://localhost:5555/moto-api/#`` (but
    the exact URL may be different depending on your host/port config.
+
+
+Actions
+-------
+Similar to ordered "actions" in other fixtures, moto supports the static creation of
+certain kinds of objects ahead of the actual test execution as well.
+
+For moto, this represents as physical infrastructure/configuration/objects within
+the moto "AWS account" being used by your test.
+
+Per the note above, each test executes in a unique moto "AWS account". This means
+that two ``create_moto_fixture`` fixtures with different infrastructure will be
+completely distinct and not leak state (either between tests or between fixtures).
+
+.. note::
+
+   we will absolutely accept feedback on additional kinds of supported objects
+   to add, the current set is motivated by internal use, but is certainly not exhaustive.
+
+S3
+~~
+Currently: :class:`S3Bucket`, :class:`S3Object`
+
+These objects help reduce boilerplate around setting up buckets/files among tests.
+
+.. code-block:: python
+
+   from pytest_mock_resources import create_moto_fixture, S3Bucket, S3Object
+
+   bucket = S3Bucket("test")
+   moto = create_moto_fixture(
+       S3Bucket("other_bucket"),
+       bucket,
+       bucket.object("test.csv", "a,b,c\n1,2,3"),
+   )
+
+    def test_ls(pmr_moto_credentials):
+        resource = moto.resource("s3")
+        objects = resource.Bucket("test").objects.all()
+        assert len(objects) == 1
+
+        assert objects[0].key == "test.txt"
+        assert objects[0].get()["Body"].read() == b"a,b,c\n1,2,3"

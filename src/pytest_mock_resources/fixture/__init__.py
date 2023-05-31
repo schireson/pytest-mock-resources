@@ -8,6 +8,8 @@ from pytest_mock_resources.fixture.moto import (
     pmr_moto_config,
     pmr_moto_container,
     pmr_moto_credentials,
+    S3Bucket,
+    S3Object,
 )
 from pytest_mock_resources.fixture.mysql import (
     create_mysql_fixture,
@@ -32,6 +34,8 @@ from pytest_mock_resources.fixture.redshift import (
 from pytest_mock_resources.fixture.sqlite import create_sqlite_fixture
 
 __all__ = [
+    "S3Bucket",
+    "S3Object",
     "create_mongo_fixture",
     "create_moto_fixture",
     "create_mysql_fixture",
