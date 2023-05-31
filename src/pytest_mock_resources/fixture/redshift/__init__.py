@@ -88,14 +88,16 @@ def create_redshift_fixture(
     @pytest.fixture(scope=scope)
     def _sync(*_, pmr_redshift_container, pmr_redshift_config):
         for engine, conn in _sync_fixture(
-            pmr_redshift_config, engine_manager_kwargs, engine_kwargs_
+            pmr_redshift_config, engine_manager_kwargs, engine_kwargs_, fixture="redshift"
         ):
             sqlalchemy.register_redshift_behavior(engine)
             with psycopg2.patch_connect(pmr_redshift_config, engine.url.database):
                 yield conn
 
     async def _async(*_, pmr_redshift_container, pmr_redshift_config):
-        fixture = _async_fixture(pmr_redshift_config, engine_manager_kwargs, engine_kwargs_)
+        fixture = _async_fixture(
+            pmr_redshift_config, engine_manager_kwargs, engine_kwargs_, fixture="redshift"
+        )
         async for engine, conn in fixture:
             sqlalchemy.register_redshift_behavior(engine.sync_engine)
             yield conn
