@@ -1,7 +1,7 @@
 Mongo
 =====
 
-Users can test MongoDB dependant code using the `create_mongo_fixture`.
+Users can test MongoDB dependent code using the `create_mongo_fixture`.
 
 Consider the following example:
 

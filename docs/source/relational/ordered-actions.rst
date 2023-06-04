@@ -6,7 +6,7 @@ is often not useful by itself. You'll need to populate that database with
 some minimal amount of schemata and/or data in order to be useful.
 
 To address this, the :code:`create_*_fixture` functions take in an optional number
-of "Ordered Actions" whcih can be used to *setup* the fixture prior to you using it.
+of "Ordered Actions" which can be used to *setup* the fixture prior to you using it.
 As the name might imply, the "actions" are executed, in order, before the test
 body is entered.
 

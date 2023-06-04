@@ -40,7 +40,7 @@ def main():
 
 def create_parser():
     parser = argparse.ArgumentParser(
-        description="Premptively run docker containers to speed up initial startup of PMR Fixtures."
+        description="Preemptively run docker containers to speed up initial startup of PMR Fixtures."
     )
     parser.add_argument(
         "fixtures",

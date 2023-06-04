@@ -42,7 +42,7 @@ def _parse_s3_command(statement):
             (
                 "Possibly malformed SELECT Statement. "
                 "Statement = {statement}"
-                "Redshift fixture only supports S3 Unload statments with the following syntax: "
+                "Redshift fixture only supports S3 Unload statements with the following syntax: "
                 "UNLOAD ('select-statement') TO 's3://object-path/name-prefix'"
                 "authorization 'aws_access_key_id=<aws_access_key_id>;"
                 "aws_secret_access_key=<aws_secret_access_key>'"
@@ -56,7 +56,7 @@ def _parse_s3_command(statement):
             (
                 "Possibly malformed S3 URI Format. "
                 "Statement = {statement}"
-                "Redshift fixture only supports S3 Unload statments with the following syntax: "
+                "Redshift fixture only supports S3 Unload statements with the following syntax: "
                 "UNLOAD ('select-statement') TO 's3://object-path/name-prefix'"
                 "authorization 'aws_access_key_id=<aws_access_key_id>;"
                 "aws_secret_access_key=<aws_secret_access_key>'"
@@ -90,7 +90,7 @@ def _parse_s3_command(statement):
                         (
                             "Possibly malformed AWS Credentials Format. "
                             "Statement = {statement}"
-                            "Redshift fixture only supports S3 Copy statments with the following "
+                            "Redshift fixture only supports S3 Copy statements with the following "
                             "syntax: COPY <table_name> FROM [(column 1, [column2, [..]])] '"
                             "<file path on S3 bucket>' "
                             "credentials 'aws_access_key_id=<aws_access_key_id>;"
@@ -120,7 +120,7 @@ def _parse_s3_command(statement):
                     (
                         "Possibly malformed Delimiter Format. "
                         "Statement = {statement}"
-                        "Redshift fixture only supports S3 Unload statments with the following"
+                        "Redshift fixture only supports S3 Unload statements with the following"
                         "syntax: UNLOAD ('select-statement') TO 's3://object-path/name-prefix'"
                         "authorization 'aws_access_key_id=<aws_access_key_id>;"
                         "aws_secret_access_key=<aws_secret_access_key>'"

@@ -32,7 +32,7 @@ def create_redis_fixture(scope="function"):
     .. note::
 
        If running tests in parallel, the implementation fans out to different redis "database"s,
-       up to a 16 (which is the default container fixed limite). This means you can only run
+       up to a 16 (which is the default container fixed limit). This means you can only run
        up to 16 simultaneous tests.
 
        Additionally, any calls to `flushall` or any other cross-database calls **will** still
