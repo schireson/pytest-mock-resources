@@ -1,6 +1,6 @@
 """Test the ability for non-session container fixtures to dynamically
 
-While these tests can execute in CI, as-is, they wont test fixture
+While these tests can execute in CI, as-is, they won't test fixture
 teardown of containers in CI (where the container is pre-allocated by
 CI). Perhaps something can be worked out using a dind kind of setup.
 """

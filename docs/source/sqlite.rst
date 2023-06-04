@@ -36,7 +36,7 @@ SQLite generally would produce an error upon use of that table, but will now wor
 behave similarly to postgres.
 
 A caveat to this is that SQLite has no notion of a "search path" like in postgres. Therefore,
-programatic use altering the search path from the default "public" (in postgres), or referencing
+programmatic use altering the search path from the default "public" (in postgres), or referencing
 a "public" table as "public.tablename" would not be supported.
 
 

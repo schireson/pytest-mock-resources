@@ -43,7 +43,7 @@ def create_redshift_fixture(
     database server.
 
     Note that, by default, redshift uses a postgres container as the database server
-    and attempts to reintroduce appoximations of Redshift features, such as
+    and attempts to reintroduce approximations of Redshift features, such as
     S3 COPY/UNLOAD, redshift-specific functions, and other specific behaviors.
 
     Arguments:

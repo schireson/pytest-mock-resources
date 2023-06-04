@@ -1,6 +1,6 @@
 """Adapt SQLite to act more in line with typical postgresql usage.
 
-SQLite is a desireable test database target because it introduces much less latency across
+SQLite is a desirable test database target because it introduces much less latency across
 tests, is parallelizable, and has a lower minimum fixed test-startup cost.
 
 Unfortunately, SQLite and postgresql do not behave identically in all cases. However, in
@@ -115,7 +115,7 @@ def make_postgres_like_sqlite_dialect():
             return "BLOB"
 
     class PostgresLikeDialect(SQLiteDialect_pysqlite):
-        """Define the dialect that collects all postgres-like adapations."""
+        """Define the dialect that collects all postgres-like adaptations."""
 
         name = "pmrsqlite"
 

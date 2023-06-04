@@ -12,7 +12,7 @@ will have a local reference to the created `container` object.
 So when it goes to try to clean up its container, any remaining tests in other
 workers may still be attempting to use the container and will fail.
 
-Often this **doesnt** happen because cleanup of session fixtures is the last
+Often this **doesn't** happen because cleanup of session fixtures is the last
 thing to happen. Perhaps the first worker which produces the container is also
 the one which is most likely to complete last. Notably, due to the way (at least
 **our**) CircleCI docker config works, this test will strictly **always** pass

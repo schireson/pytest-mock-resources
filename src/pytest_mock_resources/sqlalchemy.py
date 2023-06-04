@@ -323,5 +323,5 @@ def commit(conn):
 
         return conn.execute(text("COMMIT"))
     except sqlalchemy.exc.InvalidRequestError:
-        # In autocommit mode, we wont be able to commit.
+        # In autocommit mode, we won't be able to commit.
         pass

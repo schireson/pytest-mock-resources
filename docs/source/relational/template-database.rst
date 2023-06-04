@@ -49,7 +49,7 @@ Static Actions
 --------------
 Static actions are actions which are safe to be executed exactly once, because they
 have predictable semantics which both safely be executed once per test session,
-as well as happen in a completely separate transactiona and database, from the
+as well as happen in a completely separate transactions and database, from the
 one handed to the test.
 
 Static actions include:
@@ -86,7 +86,7 @@ Dynamic actions include:
    actions will be executed as though they were dynamic (i.e. per-test-database).
 
    You should therefore prefer to group all static actions before dynamic ones
-   whereever possible to ensure you get the most optimal amortization of actions.
+   wherever possible to ensure you get the most optimal amortization of actions.
 
    For example:
 

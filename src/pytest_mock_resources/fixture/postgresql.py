@@ -18,7 +18,7 @@ class DatabaseExistsError(RuntimeError):
     """Raise when the database being created already exists.
 
     This exception commonly occurs during multiprocess test execution, as a
-    sentinel for gracefully continueing among test workers which attempt to create
+    sentinel for gracefully continuing among test workers which attempt to create
     the same database.
     """
 
