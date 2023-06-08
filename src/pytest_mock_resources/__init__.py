@@ -29,6 +29,8 @@ from pytest_mock_resources.fixture import (
     pmr_redis_container,
     pmr_redshift_config,
     pmr_redshift_container,
+    S3Bucket,
+    S3Object,
 )
 from pytest_mock_resources.hooks import (  # noqa
     pytest_addoption,
@@ -49,6 +51,8 @@ __all__ = [
     "Rows",
     "Statements",
     "StaticStatements",
+    "S3Bucket",
+    "S3Object",
     "create_mongo_fixture",
     "create_moto_fixture",
     "create_mysql_fixture",

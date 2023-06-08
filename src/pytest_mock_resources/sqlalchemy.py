@@ -1,6 +1,6 @@
-import abc
 import fnmatch
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Dict, Iterable, List, Optional, Set, TypeVar, Union
 
@@ -11,32 +11,20 @@ from sqlalchemy.sql.ddl import CreateSchema
 from sqlalchemy.sql.schema import Table
 
 from pytest_mock_resources import compat
+from pytest_mock_resources.action import AbstractAction, validate_actions
 from pytest_mock_resources.credentials import Credentials
 
 log = logging.getLogger(__name__)
 
 
-def invalid_action_exception(action):
-    return ValueError(
-        f"`{action}` invalid: create_<x>_fixture functions accept sqlalchemy.MetaData or actions as inputs."
-    )
-
-
-class AbstractAction(metaclass=abc.ABCMeta):
-    static_safe = False
-
-    @abc.abstractmethod
-    def run(self, conn):
-        """Run an action on a database via the passed-in engine_manager instance."""
-
-
 class Rows(AbstractAction):
+    fixtures = ("mysql", "postgres", "redshift", "sqlite")
     static_safe = True
 
     def __init__(self, *rows):
         self.rows = rows
 
-    def run(self, conn):
+    def apply(self, conn):
         rows = self._get_stateless_rows(self.rows)
 
         if isinstance(conn, Session):
@@ -62,12 +50,13 @@ class Rows(AbstractAction):
 
 
 class Statements(AbstractAction):
+    fixtures = ("mysql", "postgres", "redshift", "sqlite")
     static_safe = False
 
     def __init__(self, *statements):
         self.statements = statements
 
-    def run(self, conn):
+    def apply(self, conn):
         for statement in self.statements:
             if isinstance(statement, str):
                 statement = text(statement)
@@ -100,13 +89,14 @@ class EngineManager:
         cls,
         dynamic_actions: Iterable[Action],
         *,
+        fixture: Optional[str] = None,
         tables: Iterable = (),
         session: Union[bool, Session] = False,
         static_actions: Iterable[StaticAction] = (),
     ) -> "EngineManager":
         return cls(
-            static_actions=normalize_actions(static_actions),
-            dynamic_actions=normalize_actions(dynamic_actions),
+            static_actions=normalize_actions(static_actions, fixture=fixture),
+            dynamic_actions=normalize_actions(dynamic_actions, fixture=fixture),
             tables=tables,
             session=session,
         )
@@ -237,15 +227,21 @@ class EngineManager:
         if isinstance(action, MetaData):
             self.create_ddl(conn, action)
         elif isinstance(action, AbstractAction):
-            action.run(conn)
+            action.apply(conn)
         elif allow_function and callable(action):
             action(conn)
             commit(conn)
-        else:
-            raise invalid_action_exception(action)
 
 
-def normalize_actions(ordered_actions: Iterable[T]) -> Iterable[T]:
+def normalize_actions(
+    ordered_actions: Iterable[T], *, fixture: Optional[str] = None
+) -> Iterable[T]:
+    validate_actions(
+        ordered_actions,
+        fixture=fixture,
+        additional_types=(compat.sqlalchemy.DeclarativeMeta, Callable, MetaData),
+    )
+
     # Keep track of metadata we've seen to ensure it's only added once per
     # instance, regardless of `Row` references.
     unique_metadata: Set[MetaData] = set()
@@ -266,8 +262,6 @@ def normalize_actions(ordered_actions: Iterable[T]) -> Iterable[T]:
                 normalized_actions.append(action)
         elif isinstance(action, AbstractAction) or callable(action):
             normalized_actions.append(action)
-        else:
-            raise invalid_action_exception(action)
 
     return normalized_actions
 

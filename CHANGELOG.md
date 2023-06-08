@@ -1,19 +1,130 @@
 # Changelog
 
-## [Unreleased](https://github.com/schireson/pytest-mock-resources/compare/v2.5.0...HEAD) (2022-09-15)
+## [v2.7.0](https://github.com/schireson/pytest-mock-resources/compare/v2.6.13...v2.7.0) (2023-06-06)
+
+### Features
+
+* Implement moto "ordered actions" for declaring a specific bucket state.
+  ([5d6665e](https://github.com/schireson/pytest-mock-resources/commit/5d6665e340a48c7f3ce7cda4a09793986fd4c318))
+
+### [v2.6.13](https://github.com/schireson/pytest-mock-resources/compare/v2.6.12...v2.6.13) (2023-05-23)
+
+#### Fixes
+
+* Increase time to wait for mysql to spin up. (#190)
+  ([5d94aea](https://github.com/schireson/pytest-mock-resources/commit/5d94aeaf93576d2009f0da3568e0a84e0183f7bc))
+
+### [v2.6.12](https://github.com/schireson/pytest-mock-resources/compare/v2.6.11...v2.6.12) (2023-05-03)
+
+#### Features
+
+* Ensure all fixture types are automatically included in the CLI. (#189)
+  ([df55dde](https://github.com/schireson/pytest-mock-resources/commit/df55dde5281d544bd114ccbaab939932a185a173))
+
+### [v2.6.11](https://github.com/schireson/pytest-mock-resources/compare/v2.6.10...v2.6.11) (2023-03-03)
+
+#### Fixes
+
+* Deal with port as given by an env var, which might be a string. (#186)
+  ([b4ae4e7](https://github.com/schireson/pytest-mock-resources/commit/b4ae4e71c6f8ba7cfa0016f0f17292a879a3a470))
+
+### [v2.6.10](https://github.com/schireson/pytest-mock-resources/compare/v2.6.9...v2.6.10) (2023-02-24)
+
+#### Fixes
+
+* Only set AUTOCOMMIT isolation level during internal fixture setup which requires  
+it.
+  ([fd8d313](https://github.com/schireson/pytest-mock-resources/commit/fd8d313f82aa92fd3d34135e25fc3b74603c9ea5))
+
+### [v2.6.9](https://github.com/schireson/pytest-mock-resources/compare/v2.6.8...v2.6.9) (2023-02-24)
+
+#### Fixes
+
+* Ensure connection gets closed and is compatible with asyncpg. (#184)
+  ([4cc1847](https://github.com/schireson/pytest-mock-resources/commit/4cc184748ed585533694145bf5fabc9ba1b8ce97))
+
+### [v2.6.8](https://github.com/schireson/pytest-mock-resources/compare/v2.6.7...v2.6.8) (2023-02-23)
+
+#### Fixes
+
+* Avoid psycopg2 dependency during the execution of create_postgre… (#183)
+  ([ed488f5](https://github.com/schireson/pytest-mock-resources/commit/ed488f5272e4a1452b1616b89e7c89bba3e6175c))
+
+### [v2.6.7](https://github.com/schireson/pytest-mock-resources/compare/v2.6.6...v2.6.7) (2023-01-19)
+
+#### Fixes
+
+* Remove reliance on undeclared attrs dependency. (#180)
+  ([ac96d42](https://github.com/schireson/pytest-mock-resources/commit/ac96d422cebf78dd511e99e9c45f84298ab4fe95))
+
+### [v2.6.6](https://github.com/schireson/pytest-mock-resources/compare/v2.6.5...v2.6.6) (2023-01-13)
+
+#### Features
+
+* Add engine_kwargs argument to mysql fixture. (#178)
+  ([d522be8](https://github.com/schireson/pytest-mock-resources/commit/d522be82cd3a08b886fb504429b315f30d7280eb))
+
+### [v2.6.5](https://github.com/schireson/pytest-mock-resources/compare/v2.6.4...v2.6.5) (2022-12-27)
+
+#### Fixes
+
+* Address compatibilities with sqlalchemy 2. (#176)
+  ([0415c78](https://github.com/schireson/pytest-mock-resources/commit/0415c7841e439d4120685f7ac995b346e2ab94b9))
+
+### [v2.6.4](https://github.com/schireson/pytest-mock-resources/compare/v2.6.3...v2.6.4) (2022-12-21)
+
+#### Fixes
+
+* Move port selection into the filelock. (#174)
+  ([76c7ed3](https://github.com/schireson/pytest-mock-resources/commit/76c7ed37cb2c6c63e979b881eac6f820ee07eaf5))
+
+### [v2.6.3](https://github.com/schireson/pytest-mock-resources/compare/v2.6.1...v2.6.3) (2022-10-27)
+
+#### Fixes
+
+* Decide on behavior support for multiple redshift statements. (#172)
+  ([e9d5f0f](https://github.com/schireson/pytest-mock-resources/commit/e9d5f0f9d63cb27052bea2ea2d75186623c55f39))
+
+### [v2.6.1](https://github.com/schireson/pytest-mock-resources/compare/v2.6.0...v2.6.1) (2022-10-20)
+
+#### Fixes
+
+* Fix redshift event listener interaction with the session keyword. (#171)
+  ([088b180](https://github.com/schireson/pytest-mock-resources/commit/088b1800948d131a44236c57154e062dfb9cc7b2))
+
+## [v2.6.0](https://github.com/schireson/pytest-mock-resources/compare/v2.5.1...v2.6.0) (2022-10-07)
+
+### Features
+
+* Add support for moto as a fixture. (#169)
+  ([d405c7d](https://github.com/schireson/pytest-mock-resources/commit/d405c7d4739d4d1fc4ed5fe6d41f53472deee214))
 
 ### Fixes
 
-* async engine bug related to engine reuse in a different async loop.
-  ([5135031](https://github.com/schireson/pytest-mock-resources/commit/5135031b0f8d83957b9c899331a85251d459a0ba))
+* Docs build. (#168)
+  ([ee6ea37](https://github.com/schireson/pytest-mock-resources/commit/ee6ea371619ae3ab6b2279495cf421f72d39bdd9))
 
-## [v2.5.0](https://github.com/schireson/pytest-mock-resources/compare/v2.4.4...v2.5.0) (2022-08-24)
+### [v2.5.1](https://github.com/schireson/pytest-mock-resources/compare/v2.5.0...v2.5.1) (2022-09-16)
+
+#### Fixes
+
+* async engine bug related to engine reuse in a different async loop. (#166)
+  ([3254bd8](https://github.com/schireson/pytest-mock-resources/commit/3254bd8f30fd9bd4c435f27c0995a747cc8d5691))
+
+## [v2.5.0](https://github.com/schireson/pytest-mock-resources/compare/v2.4.5...v2.5.0) (2022-08-24)
 
 ### Fixes
 
 * Address incompatibility with strict mode for pytest-asyncio in 0.17.0 and  
 beyond.
   ([ead7243](https://github.com/schireson/pytest-mock-resources/commit/ead724376c398cd25c46acb2578d3b05b53aba16))
+
+### [v2.4.5](https://github.com/schireson/pytest-mock-resources/compare/v2.4.4...v2.4.5) (2022-09-15)
+
+#### Fixes
+
+* async engine bug related to engine reuse in a different async loop.
+  ([15cab91](https://github.com/schireson/pytest-mock-resources/commit/15cab91003f76b6dd3109489b338ea0d46851ed1))
 
 ### [v2.4.4](https://github.com/schireson/pytest-mock-resources/compare/v2.4.3...v2.4.4) (2022-08-12)
 

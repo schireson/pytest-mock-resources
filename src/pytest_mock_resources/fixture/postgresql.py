@@ -107,7 +107,7 @@ def create_postgres_fixture(
         return _sync
 
 
-def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs):
+def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="postgres"):
     root_engine = cast(Engine, get_sqlalchemy_engine(pmr_config, pmr_config.root_database))
     conn = retry(root_engine.connect, retries=DEFAULT_RETRIES)
     conn.close()
@@ -119,7 +119,7 @@ def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs):
     with root_engine.connect() as root_conn:
         with root_conn.begin() as trans:
             template_database, template_manager, engine_manager = create_engine_manager(
-                root_conn, **engine_manager_kwargs
+                root_conn, **engine_manager_kwargs, fixture=fixture
             )
             trans.commit()
     root_engine.dispose()
@@ -151,7 +151,7 @@ def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs):
     yield from engine_manager.manage_sync(engine)
 
 
-async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs):
+async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="postgres"):
     root_engine = get_sqlalchemy_engine(
         pmr_config, pmr_config.root_database, async_=True, autocommit=True
     )
@@ -162,7 +162,7 @@ async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs):
     async with root_engine.connect() as root_conn:
         async with root_conn.begin() as trans:
             template_database, template_manager, engine_manager = await root_conn.run_sync(
-                create_engine_manager, **engine_manager_kwargs
+                create_engine_manager, **engine_manager_kwargs, fixture=fixture
             )
             await trans.commit()
 
@@ -200,8 +200,9 @@ def create_engine_manager(
     createdb_template="template1",
     fixture_id=None,
     actions_share_transaction=None,
+    fixture="postgres",
 ):
-    normalized_actions = normalize_actions(ordered_actions)
+    normalized_actions = normalize_actions(ordered_actions, fixture=fixture)
     static_actions, dynamic_actions = bifurcate_actions(normalized_actions)
 
     template_database = createdb_template
