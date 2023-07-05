@@ -32,10 +32,10 @@ def test_mongo_pmr_credentials(mongo):
     assert mongo.pmr_credentials
 
 
-def test_moto_pmr_credentials(moto, pmr_moto_credentials):
+def test_moto_pmr_credentials(moto):
     assert moto
-    assert pmr_moto_credentials.aws_access_key_id
-    assert pmr_moto_credentials.aws_secret_access_key
+    assert moto.pmr_credentials.aws_access_key_id
+    assert moto.pmr_credentials.aws_secret_access_key
 
 
 def test_mysql_pmr_credentials(mysql):

@@ -21,11 +21,13 @@ A user could test this as follows:
     # tests/some_test.py
 
     from pytest_mock_resources import create_moto_fixture
+    from pytest_mock_resources.fixture.moto import Session
+
     from some_module import list_files
 
     moto = create_moto_fixture()
 
-    def test_list_files(moto):
+    def test_list_files(moto: Session):
         s3_client = moto.client("s3")
         files = list_files(s3_client)
         assert ...
@@ -46,9 +48,13 @@ object. Namely you would generally want to call `.client(...)` or `.resource(...
    .. code-block:: python
 
       import boto3
+      from pytest_mock_resources import create_moto_fixture
+      from pytest_mock_resources.fixture.moto import Session
 
-      def test_list_files(pmr_moto_credentials):
-          kwargs = pmr_moto_credentials.as_kwargs()
+      moto = create_moto_fixture()
+
+      def test_list_files(moto: Session):
+          kwargs = moto.pmr_credentials.as_kwargs()
           s3_client = boto3.client("s3", **kwargs)
 
 
@@ -85,6 +91,7 @@ These objects help reduce boilerplate around setting up buckets/files among test
 .. code-block:: python
 
    from pytest_mock_resources import create_moto_fixture, S3Bucket, S3Object
+   from pytest_mock_resources.fixture.moto import Session
 
    bucket = S3Bucket("test")
    moto = create_moto_fixture(
@@ -93,7 +100,7 @@ These objects help reduce boilerplate around setting up buckets/files among test
        bucket.object("test.csv", "a,b,c\n1,2,3"),
    )
 
-    def test_ls(pmr_moto_credentials):
+    def test_ls(moto: Session):
         resource = moto.resource("s3")
         objects = resource.Bucket("test").objects.all()
         assert len(objects) == 1

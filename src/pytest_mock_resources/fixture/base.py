@@ -1,6 +1,8 @@
 import uuid
+from typing import Union
 
 import pytest
+from typing_extensions import Literal
 
 
 def generate_fixture_id(enabled: bool = True, name=""):
@@ -19,3 +21,12 @@ def asyncio_fixture(async_fixture, scope="function"):
 
     fixture = pytest.fixture(scope=scope)
     return fixture(async_fixture)
+
+
+Scope = Union[
+    Literal["session"],
+    Literal["package"],
+    Literal["module"],
+    Literal["class"],
+    Literal["function"],
+]
