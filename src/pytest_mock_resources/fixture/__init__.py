@@ -7,7 +7,6 @@ from pytest_mock_resources.fixture.moto import (
     create_moto_fixture,
     pmr_moto_config,
     pmr_moto_container,
-    pmr_moto_credentials,
     S3Bucket,
     S3Object,
 )
@@ -47,7 +46,6 @@ __all__ = [
     "pmr_mongo_container",
     "pmr_moto_config",
     "pmr_moto_container",
-    "pmr_moto_credentials",
     "pmr_mysql_config",
     "pmr_mysql_container",
     "pmr_postgres_config",
