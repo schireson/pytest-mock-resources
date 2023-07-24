@@ -103,6 +103,7 @@ class Credentials:
             endpoint_url=url,
             aws_access_key_id="test",
             aws_secret_access_key="test",
+            region_name=region_name,
         )
         response = sts.assume_role(
             RoleArn=f"arn:aws:iam::{account_id}:role/my-role",
