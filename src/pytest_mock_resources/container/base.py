@@ -122,7 +122,9 @@ def wait_for_container(config, *, retries=DEFAULT_RETRIES, interval=DEFAULT_INTE
     The caller must provide a `check_fn` which should `raise ContainerCheckFailed` if
     it finds that the container is not yet up.
     """
-    from python_on_whales import docker
+    from ..whales import get_docker_client
+
+    docker = get_docker_client()
 
     if config.port is None:
         config.set("port", unused_tcp_port())

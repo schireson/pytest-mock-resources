@@ -84,7 +84,9 @@ def pytest_sessionfinish(session, exitstatus):
 
     # docker-based fixtures should be optional based on the selected extras.
     try:
-        from python_on_whales import docker
+        from .whales import get_docker_client
+
+        docker = get_docker_client()
     except ImportError:
         return
 
