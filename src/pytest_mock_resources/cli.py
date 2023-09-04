@@ -76,7 +76,9 @@ def execute(fixture: str, pytestconfig: StubPytestConfig, start=True, stop=False
             pass
 
     if stop:
-        from python_on_whales import docker
+        from .whales import get_docker_client
+
+        docker = get_docker_client()
 
         assert config.port
         name = container_name(fixture, int(config.port))
