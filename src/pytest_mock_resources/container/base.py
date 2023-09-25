@@ -109,7 +109,7 @@ def get_container(pytestconfig, config, *, retries=DEFAULT_RETRIES, interval=DEF
                 interval=interval,
             )
 
-        yield container
+        yield config
     finally:
         cleanup_container = get_pytest_flag(pytestconfig, "pmr_cleanup_container", default=True)
         if cleanup_container and container and not multiprocess_safe_mode:

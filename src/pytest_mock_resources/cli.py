@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib
 
 from pytest_mock_resources.config import DockerContainerConfig
 from pytest_mock_resources.container.base import container_name, get_container
@@ -21,6 +22,10 @@ class StubPytestConfig:
 def main():
     parser = create_parser()
     args = parser.parse_args()
+
+    if args.load:
+        for module in args.load:
+            importlib.import_module(module)
 
     pytestconfig = StubPytestConfig()
 
@@ -51,6 +56,12 @@ def create_parser():
     )
     parser.add_argument(
         "--stop", action="store_true", help="Stop previously started PMR containers"
+    )
+
+    parser.add_argument(
+        "--load",
+        action="append",
+        help="Import a module in order to load 3rd party resources.",
     )
     return parser
 
