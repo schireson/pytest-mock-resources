@@ -4,6 +4,7 @@ import pytest
 
 from pytest_mock_resources.compat import sqlalchemy
 
+is_at_least_sqlalchemy2 = sqlalchemy.version.startswith("2.")
 is_sqlalchemy2 = sqlalchemy.version.startswith("1.4") or sqlalchemy.version.startswith("2.")
 skip_if_sqlalchemy2 = pytest.mark.skipif(
     is_sqlalchemy2,

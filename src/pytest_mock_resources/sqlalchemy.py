@@ -247,9 +247,9 @@ def normalize_actions(
     unique_metadata: Set[MetaData] = set()
     normalized_actions: List[T] = []
     for action in ordered_actions:
-        if isinstance(action, compat.sqlalchemy.DeclarativeMeta):
-            action = action.metadata
-            normalized_actions.append(action)
+        metadata = compat.sqlalchemy.extract_model_base_metadata(action)
+        if metadata:
+            normalized_actions.append(metadata)
 
         elif isinstance(action, Rows):
             new_metadata = {row.metadata for row in action.rows} - unique_metadata
