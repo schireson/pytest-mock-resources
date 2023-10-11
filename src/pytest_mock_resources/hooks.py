@@ -1,3 +1,4 @@
+import os
 import warnings
 
 _resource_kinds = ["postgres", "redshift", "mongo", "redis", "mysql", "moto"]
@@ -16,6 +17,12 @@ def pytest_addoption(parser):
         type="bool",
         default=True,
     )
+    parser.addini(
+        "pmr_docker_client",
+        "Optional docker client name to use: docker, podman, nerdctl",
+        type="string",
+        default=None,
+    )
 
     group = parser.getgroup("collect")
     group.addoption(
@@ -32,19 +39,53 @@ def pytest_addoption(parser):
         help="Optionally disable attempts to cleanup created containers",
         dest="pmr_cleanup_container",
     )
+    group.addoption(
+        "--pmr-docker-client",
+        default=None,
+        help="Optional docker client name to use: docker, podman, nerdctl",
+        dest="pmr_docker_client",
+    )
 
 
 def get_pytest_flag(config, name, *, default=None):
     value = getattr(config.option, name, default)
     if value:
-        return True
+        return value
 
     config_value = config.getini(name)
     return config_value
 
 
 def use_multiprocess_safe_mode(config):
-    return get_pytest_flag(config, "pmr_multiprocess_safe")
+    return bool(get_pytest_flag(config, "pmr_multiprocess_safe"))
+
+
+def get_docker_client_name(config) -> str:
+    pmr_docker_client = os.getenv("PMR_DOCKER_CLIENT")
+    if pmr_docker_client:
+        return pmr_docker_client
+
+    docker_client = get_pytest_flag(config, "pmr_docker_client")
+    if docker_client:
+        return docker_client
+
+    import shutil
+
+    for client_name in ["docker", "podman", "nerdctl"]:
+        if shutil.which(client_name):
+            break
+    else:
+        client_name = "docker"
+
+    config.option.pmr_docker_client = client_name
+    return client_name
+
+
+def get_docker_client(config):
+    from python_on_whales.docker_client import DockerClient
+
+    client_name = get_docker_client_name(config)
+    return DockerClient(client_call=[client_name])
 
 
 def pytest_configure(config):
@@ -84,9 +125,7 @@ def pytest_sessionfinish(session, exitstatus):
 
     # docker-based fixtures should be optional based on the selected extras.
     try:
-        from .whales import get_docker_client
-
-        docker = get_docker_client()
+        docker = get_docker_client(config)
     except ImportError:
         return
 

@@ -54,7 +54,7 @@ python-on-whales = {version = ">=0.22.0", optional = true}
 
 [tool.poetry.dev-dependencies]
 black = "22.3.0"
-botocore = ">=1.31.54"
+botocore = ">=1.31.63"
 coverage = "*"
 flake8 = "*"
 isort = ">=5.0"
@@ -126,7 +126,8 @@ filterwarnings = [
   "error",
   "ignore:There is no current event loop:DeprecationWarning",
   "ignore:stream argument is deprecated. Use stream parameter in request directly:DeprecationWarning",
-  "ignore:Boto3 will no longer support Python 3.7.*::boto3"
+  "ignore:Boto3 will no longer support Python 3.7.*::boto3",
+  "ignore:datetime.datetime.utcnow.*:DeprecationWarning",
 ]
 
 [build-system]
