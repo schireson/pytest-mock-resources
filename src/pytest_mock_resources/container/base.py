@@ -1,12 +1,18 @@
+from __future__ import annotations
+
 import contextlib
 import json
 import pathlib
 import socket
 import time
 import types
-from typing import Awaitable, Callable, Optional, TypeVar
+from typing import Awaitable, Callable, Optional, TYPE_CHECKING, TypeVar
 
-from pytest_mock_resources.hooks import get_pytest_flag, use_multiprocess_safe_mode
+from pytest_mock_resources.hooks import (
+    get_docker_client,
+    get_pytest_flag,
+    use_multiprocess_safe_mode,
+)
 
 try:
     import responses as _responses
@@ -15,6 +21,10 @@ try:
     del _responses
 except ImportError:
     responses = None
+
+if TYPE_CHECKING:
+
+    from python_on_whales.docker_client import DockerClient
 
 
 DEFAULT_RETRIES = 40
@@ -76,6 +86,7 @@ def retry(
 
 def get_container(pytestconfig, config, *, retries=DEFAULT_RETRIES, interval=DEFAULT_INTERVAL):
     multiprocess_safe_mode = use_multiprocess_safe_mode(pytestconfig)
+    docker = get_docker_client(pytestconfig)
 
     if responses:
         # XXX: moto library may over-mock responses. SEE: https://github.com/spulec/moto/issues/1026
@@ -95,6 +106,7 @@ def get_container(pytestconfig, config, *, retries=DEFAULT_RETRIES, interval=DEF
             # wait for the container one process at a time
             with FileLock(str(fn)):
                 container = wait_for_container(
+                    docker,
                     config,
                     retries=retries,
                     interval=interval,
@@ -104,6 +116,7 @@ def get_container(pytestconfig, config, *, retries=DEFAULT_RETRIES, interval=DEF
 
         else:
             container = wait_for_container(
+                docker,
                 config,
                 retries=retries,
                 interval=interval,
@@ -116,14 +129,14 @@ def get_container(pytestconfig, config, *, retries=DEFAULT_RETRIES, interval=DEF
             container.kill()
 
 
-def wait_for_container(config, *, retries=DEFAULT_RETRIES, interval=DEFAULT_INTERVAL):
+def wait_for_container(
+    docker: DockerClient, config, *, retries=DEFAULT_RETRIES, interval=DEFAULT_INTERVAL
+):
     """Wait for evidence that the container is up and healthy.
 
     The caller must provide a `check_fn` which should `raise ContainerCheckFailed` if
     it finds that the container is not yet up.
     """
-    from python_on_whales import docker
-
     if config.port is None:
         config.set("port", unused_tcp_port())
 
@@ -164,7 +177,7 @@ def wait_for_container(config, *, retries=DEFAULT_RETRIES, interval=DEFAULT_INTE
     return None
 
 
-def container_name(name: str, port: int) -> str:
+def container_name(name: str, port) -> str:
     return f"pmr_{name}_{port}"
 
 

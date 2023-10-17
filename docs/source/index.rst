@@ -11,6 +11,7 @@ Welcome to Pytest Mock Resource's documentation!
    Fixture Configuration <config>
    CLI (Startup Lag) <cli>
    CI Support <ci>
+   Docker/Podman/Nerdctl <docker_client>
    API <api>
    Contributing <contributing>
 

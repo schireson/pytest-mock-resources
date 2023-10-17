@@ -5,6 +5,7 @@ import importlib
 
 from pytest_mock_resources.config import DockerContainerConfig
 from pytest_mock_resources.container.base import container_name, get_container
+from pytest_mock_resources.hooks import get_docker_client
 
 
 class StubPytestConfig:
@@ -76,7 +77,7 @@ def execute(fixture: str, pytestconfig: StubPytestConfig, start=True, stop=False
             pass
 
     if stop:
-        from python_on_whales import docker
+        docker = get_docker_client(config)
 
         assert config.port
         name = container_name(fixture, int(config.port))
