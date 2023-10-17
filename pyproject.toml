@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-mock-resources"
-version = "2.9.2"
+version = "2.10.0"
 description = "A pytest plugin for easily instantiating reproducible mock resources."
 authors = [
     "Omar Khan <oakhan3@gmail.com>",
@@ -28,6 +28,7 @@ pytest = {version = ">=1.0"}
 sqlalchemy = {version = ">1.0, !=1.4.0, !=1.4.1, !=1.4.2, !=1.4.3, !=1.4.4, !=1.4.5, !=1.4.6, !=1.4.7, !=1.4.8, !=1.4.9, !=1.4.10, !=1.4.11, !=1.4.12, !=1.4.13, !=1.4.14, !=1.4.15, !=1.4.16, !=1.4.17, !=1.4.18, !=1.4.19, !=1.4.20, !=1.4.21, !=1.4.22, !=1.4.23"}
 
 typing_extensions = "*"
+importlib-metadata = {version = "*", python = "<3.8"}
 
 # extra [postgres]
 psycopg2 = {version = "*", optional = true}
