@@ -54,9 +54,7 @@ def create_parser():
         metavar="Fixture",
         type=str,
         nargs="+",
-        help="Available Fixtures: {}".format(
-            ", ".join(DockerContainerConfig.subclasses)
-        ),
+        help="Available Fixtures: {}".format(", ".join(DockerContainerConfig.subclasses)),
     )
     parser.add_argument(
         "--stop", action="store_true", help="Stop previously started PMR containers"

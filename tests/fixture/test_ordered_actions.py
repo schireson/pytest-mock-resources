@@ -98,8 +98,7 @@ class Test_postgres_session_function:
     Run the test 5 times to ensure fixture is stateless
     """
 
-    @staticmethod
-    def session_function(session):
+    def session_function(session):  # noqa: N805
         session.add(User(name="Fake Name", objects=[Object(name="Boots")]))
 
     postgres_session_function = create_postgres_fixture(Base, session_function, session=True)
@@ -159,8 +158,7 @@ class Test_session_function_async:
     Run the test more than once (i.e. 5 times) to ensure fixture is stateless.
     """
 
-    @staticmethod
-    def async_session_function(session):
+    def async_session_function(session):  # noqa: N805
         session.add(User(name="Fake Name", objects=[Object(name="Boots")]))
 
     postgres_session_function_async = create_postgres_fixture(
