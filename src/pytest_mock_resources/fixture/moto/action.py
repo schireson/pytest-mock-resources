@@ -33,7 +33,7 @@ class S3Object(AbstractAction):
     fixtures: ClassVar[tuple[str, ...]] = ("moto",)
     static_safe: ClassVar[bool] = True
 
-    bucket: Union[str, S3Bucket]
+    bucket: str | S3Bucket
     key: str
     data: ObjectContent
     encoding: str = "utf-8"
@@ -49,7 +49,6 @@ class S3Object(AbstractAction):
         elif isinstance(self.data, io.StringIO):
             data = io.BytesIO(self.data.getvalue().encode(self.encoding))
         elif isinstance(self.data, io.BytesIO):
-
             data = io.BytesIO(self.data.getbuffer().tobytes())
         else:
             raise NotImplementedError()

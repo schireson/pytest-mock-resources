@@ -27,15 +27,13 @@ test: test-parallel
 
 ## Lint
 lint:
-	flake8 src tests || exit 1
-	isort --check-only --diff src tests || exit 1
-	pydocstyle src tests || exit 1
-	black --check src tests || exit 1
-	mypy src tests || exit 1
+	ruff --fix src tests || exit 1
+	ruff format -q src tests || exit 1
+	mypy src tests --show-error-codes || exit 1
 
 format:
-	isort src tests
-	black src tests
+	ruff src tests --fix
+	ruff format src tests
 
 ## Build
 build-package:

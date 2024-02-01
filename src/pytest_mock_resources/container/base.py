@@ -6,7 +6,7 @@ import pathlib
 import socket
 import time
 import types
-from typing import Awaitable, Callable, Optional, TYPE_CHECKING, TypeVar
+from typing import Awaitable, Callable, TYPE_CHECKING, TypeVar
 
 from pytest_mock_resources.hooks import (
     get_docker_client,
@@ -17,13 +17,12 @@ from pytest_mock_resources.hooks import (
 try:
     import responses as _responses
 
-    responses: Optional[types.ModuleType] = _responses
+    responses: types.ModuleType | None = _responses
     del _responses
 except ImportError:
     responses = None
 
 if TYPE_CHECKING:
-
     from python_on_whales.docker_client import DockerClient
 
 
@@ -31,7 +30,7 @@ DEFAULT_RETRIES = 40
 DEFAULT_INTERVAL = 0.5
 
 
-class ContainerCheckFailed(Exception):
+class ContainerCheckFailed(Exception):  # noqa: N818
     """Unable to connect to a Container."""
 
 
@@ -142,11 +141,11 @@ def wait_for_container(
 
     check_fn = config.check_fn
     run_args = (config.image,)
-    run_kwargs = dict(
-        publish=[(dest, source) for source, dest in config.ports().items()],
-        envs=config.environment(),
-        name=container_name(config.name, config.port),
-    )
+    run_kwargs = {
+        "publish": [(dest, source) for source, dest in config.ports().items()],
+        "envs": config.environment(),
+        "name": container_name(config.name, config.port),
+    }
 
     try:
         from python_on_whales.exceptions import DockerException

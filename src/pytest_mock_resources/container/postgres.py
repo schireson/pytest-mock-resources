@@ -1,3 +1,5 @@
+from typing import ClassVar, Iterable
+
 import sqlalchemy
 import sqlalchemy.exc
 
@@ -29,7 +31,7 @@ class PostgresConfig(DockerContainerConfig):
     """
 
     name = "postgres"
-    _fields = {
+    _fields: ClassVar[Iterable] = {
         "image",
         "host",
         "port",
@@ -39,7 +41,7 @@ class PostgresConfig(DockerContainerConfig):
         "root_database",
         "drivername",
     }
-    _fields_defaults = {
+    _fields_defaults: ClassVar[dict] = {
         "image": "postgres:9.6.10-alpine",
         "port": 5532,
         "ci_port": 5432,
@@ -81,7 +83,7 @@ class PostgresConfig(DockerContainerConfig):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             s.connect((self.host, int(self.port)))
-        except (ConnectionRefusedError, socket.error):
+        except (OSError, ConnectionRefusedError):
             raise ContainerCheckFailed(
                 f"Unable to connect to a presumed Postgres test container via given config: {self}"
             )

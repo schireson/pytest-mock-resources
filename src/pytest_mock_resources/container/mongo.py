@@ -1,3 +1,5 @@
+from typing import ClassVar, Iterable
+
 from pytest_mock_resources.compat import pymongo
 from pytest_mock_resources.config import DockerContainerConfig, fallback
 from pytest_mock_resources.container.base import ContainerCheckFailed
@@ -21,8 +23,8 @@ class MongoConfig(DockerContainerConfig):
 
     name = "mongo"
 
-    _fields = {"image", "host", "port", "ci_port", "root_database"}
-    _fields_defaults = {
+    _fields: ClassVar[Iterable] = {"image", "host", "port", "ci_port", "root_database"}
+    _fields_defaults: ClassVar[dict] = {
         "image": "mongo:3.6",
         "port": 28017,
         "ci_port": 27017,
@@ -43,7 +45,5 @@ class MongoConfig(DockerContainerConfig):
             db.command("ismaster")
         except pymongo.errors.ConnectionFailure:
             raise ContainerCheckFailed(
-                "Unable to connect to a presumed MongoDB test container via given config: {}".format(
-                    self
-                )
+                f"Unable to connect to a presumed MongoDB test container via given config: {self}"
             )

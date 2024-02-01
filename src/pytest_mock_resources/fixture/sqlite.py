@@ -68,7 +68,7 @@ utc = UTC()
 
 class PMRDateTime(sqlite_base.DATETIME):
     def bind_processor(self, dialect):
-        processor = super(PMRDateTime, self).bind_processor(dialect)
+        processor = super().bind_processor(dialect)
 
         def process(value):
             if isinstance(value, datetime.datetime):
@@ -76,11 +76,12 @@ class PMRDateTime(sqlite_base.DATETIME):
                     value = value.replace(tzinfo=utc)
                 result = value.astimezone(utc)
                 return processor(result)
+            return None
 
         return process
 
     def result_processor(self, dialect, coltype):
-        processor = super(PMRDateTime, self).result_processor(dialect, coltype)
+        processor = super().result_processor(dialect, coltype)
 
         def process(value):
             result = processor(value)
@@ -111,7 +112,7 @@ def make_postgres_like_sqlite_dialect():
         @compiles(JSON, "pmrsqlite")
         @compiles(JSONB, "pmrsqlite")
         @compiles(sqltypes.JSON, "pmrsqlite")
-        def compile_json(type_, compiler, **kwargs):
+        def compile_json(type_, compiler, **kwargs):  # noqa: N805
             return "BLOB"
 
     class PostgresLikeDialect(SQLiteDialect_pysqlite):
@@ -122,7 +123,7 @@ def make_postgres_like_sqlite_dialect():
         supports_statement_cache = True
         ddl_compiler = PMRSQLiteDDLCompiler
         type_compiler = PostgresLikeTypeCompiler
-        colspecs = {
+        colspecs: dict = {  # noqa: RUF012
             sqltypes.Date: sqlite_base.DATE,
             sqltypes.DateTime: PMRDateTime,
             sqltypes.JSON: sqlite_base.JSON,
@@ -196,7 +197,7 @@ def filter_sqlalchemy_warnings(decimal_warnings_enabled=True):
 def _database_producer():
     i = 1
     while True:
-        yield "db{}".format(i)
+        yield f"db{i}"
         i += 1
 
 
@@ -209,7 +210,7 @@ def create_sqlite_fixture(
     tables=None,
     session=None,
     decimal_warnings=False,
-    postgres_like=True
+    postgres_like=True,
 ):
     """Produce a SQLite fixture.
 
@@ -228,16 +229,15 @@ def create_sqlite_fixture(
         postgres_like: Whether to add extra SQLite features which attempt to mimic postgres
             enough to stand in for it for testing.
     """
-
     dialect_name = "sqlite"
 
     if postgres_like:
         dialect = make_postgres_like_sqlite_dialect()
         dialect_name = dialect.name
         registry = getattr(dialects, "registry")
-        registry.register("sqlite.{}".format(dialect_name), __name__, "PostgresLikeSQLitePDialect")
+        registry.register(f"sqlite.{dialect_name}", __name__, "PostgresLikeSQLitePDialect")
 
-    driver_name = "sqlite+{}".format(dialect_name)
+    driver_name = f"sqlite+{dialect_name}"
 
     @pytest.fixture(scope=scope)
     def _():
@@ -246,7 +246,7 @@ def create_sqlite_fixture(
         # database_name = "file:{}?mode=memory&cache=shared".format(next(_database_names))
         database_name = ""
 
-        raw_engine = create_engine("{}:///{}".format(driver_name, database_name))
+        raw_engine = create_engine(f"{driver_name}:///{database_name}")
 
         # This *must* happen before the connection occurs (implicitly in `EngineManager`).
         event.listen(raw_engine, "connect", enable_foreign_key_checks)

@@ -55,7 +55,7 @@ jobs:
       - name: Install specific pytest-asyncio version
         run: pip install 'pytest-asyncio~=${{ matrix.pytest-asyncio-version }}'
 
-      - if: ${{ matrix.python-version == '3.9' && matrix.sqlalchemy-version == '1.4.0' }}
+      - if: ${{ matrix.python-version == '3.9' && matrix.sqlalchemy-version == '2.0.0' }}
         run: poetry run make lint
 
       - run: poetry run make test-base

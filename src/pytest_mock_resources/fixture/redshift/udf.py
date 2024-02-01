@@ -40,55 +40,58 @@ right_integer = create_udf(
     language=UdfLanguage.SQL.value,
 )
 
-dateadd_kwargs = dict(body="SELECT d + (n::VARCHAR || i)::INTERVAL", language=UdfLanguage.SQL.value)
+dateadd_kwargs = {
+    "body": "SELECT d + (n::VARCHAR || i)::INTERVAL",
+    "language": UdfLanguage.SQL.value,
+}
 
 dateadd_date = create_udf(
     name="DATEADD",
     args="i VARCHAR, n INTEGER, d DATE",
     returns="TIMESTAMP WITHOUT TIME ZONE",
-    **dateadd_kwargs
+    **dateadd_kwargs,
 )
 
 dateadd_timestamp = create_udf(
     name="DATEADD",
     args="i VARCHAR, n INTEGER, d TIMESTAMP WITHOUT TIME ZONE",
     returns="TIMESTAMP WITHOUT TIME ZONE",
-    **dateadd_kwargs
+    **dateadd_kwargs,
 )
 
 dateadd_timestamptz = create_udf(
     name="DATEADD",
     args="i VARCHAR, n INTEGER, d TIMESTAMP WITH TIME ZONE",
     returns="TIMESTAMP WITH TIME ZONE",
-    **dateadd_kwargs
+    **dateadd_kwargs,
 )
 
 date_add_date = create_udf(
     name="DATE_ADD",
     args="i VARCHAR, n INTEGER, d DATE",
     returns="TIMESTAMP WITHOUT TIME ZONE",
-    **dateadd_kwargs
+    **dateadd_kwargs,
 )
 
 date_add_timestamp = create_udf(
     name="DATE_ADD",
     args="i VARCHAR, n INTEGER, d TIMESTAMP WITHOUT TIME ZONE",
     returns="TIMESTAMP WITHOUT TIME ZONE",
-    **dateadd_kwargs
+    **dateadd_kwargs,
 )
 
 date_add_timestamptz = create_udf(
     name="DATE_ADD",
     args="i VARCHAR, n INTEGER, d TIMESTAMP WITH TIME ZONE",
     returns="TIMESTAMP WITH TIME ZONE",
-    **dateadd_kwargs
+    **dateadd_kwargs,
 )
 
 
-datediff_kwargs = dict(
-    returns="BIGINT",
+datediff_kwargs = {
+    "returns": "BIGINT",
     # Credit: https://gist.github.com/JoshuaGross/18b9bb1db8021efc88884cbd8dc8fddb
-    body="""
+    "body": """
        DECLARE
          diff_interval INTERVAL;
          diff INT = 0;
@@ -157,8 +160,8 @@ datediff_kwargs = dict(
 
        END;
     """,
-    language=UdfLanguage.PLPGSQL.value,
-)
+    "language": UdfLanguage.PLPGSQL.value,
+}
 
 datediff_date = create_udf(
     name="DATEDIFF", args="units VARCHAR, start_t DATE, end_t DATE", **datediff_kwargs
@@ -171,7 +174,7 @@ datediff_timestamp = create_udf(
 datediff_timestamptz = create_udf(
     name="DATEDIFF",
     args="units VARCHAR, start_t TIMESTAMP WITH TIME ZONE, end_t TIMESTAMP WITH TIME ZONE",
-    **datediff_kwargs
+    **datediff_kwargs,
 )
 
 REDSHIFT_UDFS = Statements(

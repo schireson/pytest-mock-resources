@@ -102,7 +102,7 @@ class Credentials:
             "sts",
             endpoint_url=url,
             aws_access_key_id="test",
-            aws_secret_access_key="test",
+            aws_secret_access_key="test",  # noqa: S106
             region_name=region_name,
         )
         response = sts.assume_role(

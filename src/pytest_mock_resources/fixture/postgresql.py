@@ -6,10 +6,22 @@ import sqlalchemy
 from sqlalchemy import text
 from sqlalchemy.engine import Connection, Engine
 
-from pytest_mock_resources.container.base import async_retry, DEFAULT_RETRIES, get_container, retry
-from pytest_mock_resources.container.postgres import get_sqlalchemy_engine, PostgresConfig
+from pytest_mock_resources.container.base import (
+    async_retry,
+    DEFAULT_RETRIES,
+    get_container,
+    retry,
+)
+from pytest_mock_resources.container.postgres import (
+    get_sqlalchemy_engine,
+    PostgresConfig,
+)
 from pytest_mock_resources.fixture.base import asyncio_fixture, generate_fixture_id
-from pytest_mock_resources.sqlalchemy import bifurcate_actions, EngineManager, normalize_actions
+from pytest_mock_resources.sqlalchemy import (
+    bifurcate_actions,
+    EngineManager,
+    normalize_actions,
+)
 
 log = logging.getLogger(__name__)
 
@@ -81,14 +93,14 @@ def create_postgres_fixture(
     fixture_id = generate_fixture_id(enabled=template_database, name="pg")
 
     engine_kwargs_ = engine_kwargs or {}
-    engine_manager_kwargs = dict(
-        ordered_actions=ordered_actions,
-        tables=tables,
-        createdb_template=createdb_template,
-        session=session,
-        fixture_id=fixture_id,
-        actions_share_transaction=actions_share_transaction,
-    )
+    engine_manager_kwargs = {
+        "ordered_actions": ordered_actions,
+        "tables": tables,
+        "createdb_template": createdb_template,
+        "session": session,
+        "fixture_id": fixture_id,
+        "actions_share_transaction": actions_share_transaction,
+    }
 
     @pytest.fixture(scope=scope)
     def _sync(*_, pmr_postgres_container, pmr_postgres_config):
@@ -103,8 +115,7 @@ def create_postgres_fixture(
 
     if async_:
         return asyncio_fixture(_async, scope=scope)
-    else:
-        return _sync
+    return _sync
 
 
 def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="postgres"):
@@ -114,7 +125,8 @@ def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="
     root_engine.dispose()
 
     root_engine = cast(
-        Engine, get_sqlalchemy_engine(pmr_config, pmr_config.root_database, autocommit=True)
+        Engine,
+        get_sqlalchemy_engine(pmr_config, pmr_config.root_database, autocommit=True),
     )
     with root_engine.connect() as root_conn:
         with root_conn.begin() as trans:
@@ -128,7 +140,8 @@ def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="
         assert template_database
 
         template_engine = cast(
-            Engine, get_sqlalchemy_engine(pmr_config, template_database, **engine_kwargs)
+            Engine,
+            get_sqlalchemy_engine(pmr_config, template_database, **engine_kwargs),
         )
         with template_engine.connect() as conn:
             with conn.begin() as trans:
@@ -139,7 +152,8 @@ def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="
     # Everything below is normal per-test context. We create a brand new database/engine/manager
     # distinct from what might have been used for the template database.
     root_engine = cast(
-        Engine, get_sqlalchemy_engine(pmr_config, pmr_config.root_database, autocommit=True)
+        Engine,
+        get_sqlalchemy_engine(pmr_config, pmr_config.root_database, autocommit=True),
     )
     with root_engine.connect() as root_conn:
         with root_conn.begin() as trans:
@@ -161,7 +175,11 @@ async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fi
 
     async with root_engine.connect() as root_conn:
         async with root_conn.begin() as trans:
-            template_database, template_manager, engine_manager = await root_conn.run_sync(
+            (
+                template_database,
+                template_manager,
+                engine_manager,
+            ) = await root_conn.run_sync(
                 create_engine_manager, **engine_manager_kwargs, fixture=fixture
             )
             await trans.commit()
@@ -282,6 +300,5 @@ def _generate_database_name(conn):
         pass
 
     result = conn.execute(text("INSERT INTO pytest_mock_resource_db VALUES (DEFAULT) RETURNING id"))
-    id_ = tuple(result)[0][0]
-    database_name = "pytest_mock_resource_db_{}".format(id_)
-    return database_name
+    id_ = next(iter(result))[0]
+    return f"pytest_mock_resource_db_{id_}"

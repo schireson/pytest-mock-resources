@@ -42,7 +42,7 @@ def test_insert_all(mongo):
     ]
     collection.insert_many(to_insert)
     result = collection.find().sort("name")
-    returned = [row for row in result]
+    returned = list(result)
     assert returned == sorted(to_insert, key=lambda x: x["name"])
 
 
@@ -56,7 +56,7 @@ def test_query(mongo):
 
     query = {"address": "Highway 37"}
     result = collection.find(query).sort("name")
-    returned = [row for row in result]
+    returned = list(result)
     assert returned == sorted(to_insert, key=lambda x: x["name"])
 
 
@@ -71,7 +71,7 @@ def test_delete_one(mongo):
     query = {"name": {"$regex": "^J"}}
     collection.delete_one(query)
     result = collection.find().sort("name")
-    returned = [row for row in result]
+    returned = list(result)
 
     assert returned == sorted(to_insert[1:], key=lambda x: x["name"])
 
@@ -88,7 +88,7 @@ def test_delete_all(mongo):
     collection.delete_many(query)
 
     result = collection.find()
-    returned = [row for row in result]
+    returned = list(result)
 
     assert returned == []
 
@@ -108,7 +108,7 @@ def test_multiple_mongos(mongo_1, mongo_2, mongo_3):
         collection.insert_many(to_insert)
 
         result = collection.find().sort("name")
-        returned = [row for row in result]
+        returned = list(result)
 
         assert returned == to_insert
 
@@ -131,6 +131,6 @@ def test_create_custom_connection(mongo):
     collection.insert_many(to_insert)
 
     result = collection.find().sort("name")
-    returned = [row for row in result]
+    returned = list(result)
 
     assert returned == to_insert

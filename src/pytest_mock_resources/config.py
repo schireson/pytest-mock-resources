@@ -3,7 +3,7 @@ from __future__ import annotations
 import functools
 import os
 import socket
-from typing import ClassVar, Dict, Iterable, Type
+from typing import ClassVar, Iterable
 
 _DOCKER_HOST = "host.docker.internal"
 
@@ -23,7 +23,7 @@ def is_docker_host():
 
 
 def get_env_config(name, kind, default=None):
-    env_var = "PMR_{name}_{kind}".format(name=name.upper(), kind=kind.upper())
+    env_var = f"PMR_{name.upper()}_{kind.upper()}"
     return os.environ.get(env_var, default)
 
 
@@ -53,10 +53,10 @@ def fallback(fn):
 class DockerContainerConfig:
     name: ClassVar[str]
 
-    _fields: Iterable = {"image", "host", "port", "ci_port", "container_args"}
-    _fields_defaults: Dict = {}
+    _fields: ClassVar[Iterable] = {"image", "host", "port", "ci_port", "container_args"}
+    _fields_defaults: ClassVar[dict] = {}
 
-    subclasses: Dict[str, Type[DockerContainerConfig]] = {}
+    subclasses: ClassVar[dict[str, type[DockerContainerConfig]]] = {}
 
     @classmethod
     def __init_subclass__(cls):
@@ -67,28 +67,26 @@ class DockerContainerConfig:
             if field not in self._fields:
                 continue
 
-            attr = "_{}".format(field)
+            attr = f"_{field}"
             setattr(self, attr, value)
 
     def __repr__(self):
         cls_name = self.__class__.__name__
         return "{cls_name}({attrs})".format(
             cls_name=cls_name,
-            attrs=", ".join(
-                "{}={}".format(attr, repr(getattr(self, attr))) for attr in self._fields
-            ),
+            attrs=", ".join(f"{attr}={getattr(self, attr)!r}" for attr in self._fields),
         )
 
     def has(self, attr):
-        attr_name = "_{attr}".format(attr=attr)
+        attr_name = f"_{attr}"
         return hasattr(self, attr_name)
 
     def get(self, attr):
-        attr_name = "_{attr}".format(attr=attr)
+        attr_name = f"_{attr}"
         return getattr(self, attr_name)
 
     def set(self, attr, value):
-        attr_name = "_{attr}".format(attr=attr)
+        attr_name = f"_{attr}"
         return setattr(self, attr_name, value)
 
     @fallback

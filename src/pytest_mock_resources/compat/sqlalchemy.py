@@ -19,7 +19,7 @@ if version.startswith("1.4") or version.startswith("2."):
 else:
     from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta
 
-    URL = sqlalchemy.engine.url.URL
+    URL = sqlalchemy.engine.url.URL  # type: ignore[assignment]
 
     asyncio = ImportAdaptor(
         "SQLAlchemy",

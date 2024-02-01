@@ -49,7 +49,7 @@ UNLOAD_TEMPLATE = (
 def fetch_values_from_table_and_assert(engine):
     with engine.connect() as conn:
         execute = conn.execute(text("SELECT * from test_s3_copy_into_redshift"))
-    results = [row for row in execute]
+    results = list(execute)
     assert len(results) == len(original_data)
     for index, val in enumerate(results):
         assert empty_as_string(results[index]) == empty_as_string(original_data[index])
@@ -62,8 +62,6 @@ def fetch_and_assert_psycopg2(cursor):
     for result, original in zip(results, original_data):
         og_data = empty_as_string(original)
         expected_result = tuple(og_data.values())
-        print(result)
-        print(expected_result)
         assert result == expected_result
 
 

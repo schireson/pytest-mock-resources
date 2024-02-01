@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import abc
-from typing import ClassVar, Iterable, Optional
+from typing import ClassVar, Iterable
 
 
 class AbstractAction(metaclass=abc.ABCMeta):
@@ -13,7 +13,7 @@ class AbstractAction(metaclass=abc.ABCMeta):
         """Execute an action against the provided fixture connection."""
 
 
-def validate_actions(actions, *, fixture: Optional[str], additional_types: Iterable = ()):
+def validate_actions(actions, *, fixture: str | None, additional_types: Iterable = ()):
     for action in actions:
         if not isinstance(action, (AbstractAction, *additional_types)):
             extra_types_str = ", ".join(

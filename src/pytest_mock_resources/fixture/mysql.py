@@ -91,8 +91,8 @@ def _create_clean_database(config):
 
         conn.execute(text("INSERT INTO pytest_mock_resource_db VALUES (DEFAULT)"))
         result = conn.execute(text("SELECT LAST_INSERT_ID()"))
-        id_ = tuple(result)[0][0]
-        database_name = "pytest_mock_resource_db_{}".format(id_)
+        id_ = next(iter(result))[0]
+        database_name = f"pytest_mock_resource_db_{id_}"
 
         conn.execute(text(f"CREATE DATABASE {database_name}"))
 

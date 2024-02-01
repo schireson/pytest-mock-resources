@@ -52,8 +52,7 @@ def get_pytest_flag(config, name, *, default=None):
     if value:
         return value
 
-    config_value = config.getini(name)
-    return config_value
+    return config.getini(name)
 
 
 def use_multiprocess_safe_mode(config):
@@ -93,7 +92,7 @@ def pytest_configure(config):
     for resource_kind in _resource_kinds:
         config.addinivalue_line(
             "markers",
-            "{kind}: Tests which make use of {kind} fixtures".format(kind=resource_kind),
+            f"{resource_kind}: Tests which make use of {resource_kind} fixtures",
         )
 
     config._pmr_containers = []
@@ -106,7 +105,7 @@ def pytest_itemcollected(item):
 
     fixturenames = set(item.fixturenames)
     for resource_kind in _resource_kinds:
-        resource_fixture = "pmr_{}_container".format(resource_kind)
+        resource_fixture = f"pmr_{resource_kind}_container"
         if resource_fixture in fixturenames:
             item.add_marker(resource_kind)
 

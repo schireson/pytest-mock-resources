@@ -1,3 +1,5 @@
+from typing import ClassVar, Iterable
+
 import sqlalchemy
 
 from pytest_mock_resources import compat
@@ -26,8 +28,16 @@ class MysqlConfig(DockerContainerConfig):
     """
 
     name = "mysql"
-    _fields = {"image", "host", "port", "ci_port", "username", "password", "root_database"}
-    _fields_defaults = {
+    _fields: ClassVar[Iterable] = {
+        "image",
+        "host",
+        "port",
+        "ci_port",
+        "username",
+        "password",
+        "root_database",
+    }
+    _fields_defaults: ClassVar[dict] = {
         "image": "mysql:5.6",
         "port": 3406,
         "ci_port": 3306,
@@ -64,9 +74,7 @@ class MysqlConfig(DockerContainerConfig):
             get_sqlalchemy_engine(self, self.root_database)
         except sqlalchemy.exc.OperationalError:
             raise ContainerCheckFailed(
-                "Unable to connect to a presumed MySQL test container via given config: {}".format(
-                    self
-                )
+                f"Unable to connect to a presumed MySQL test container via given config: {self}"
             )
 
 

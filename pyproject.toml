@@ -53,19 +53,14 @@ filelock = {version = "*", optional = true}
 python-on-whales = {version = ">=0.22.0", optional = true}
 
 [tool.poetry.dev-dependencies]
-black = "22.3.0"
 botocore = ">=1.31.63"
 coverage = "*"
-flake8 = "*"
-isort = ">=5.0"
 moto = ">=2.3.2"
 mypy = {version = "0.982"}
-pydocstyle = {version = "*"}
 pytest-asyncio = "*"
 pytest-xdist = "*"
 responses = ">=0.23.0"
-sqlalchemy-stubs = {version = "*"}
-sqlalchemy2-stubs = "^0.0.2-alpha.19"
+ruff = "0.1.15"
 types-PyMySQL = "^1.0.2"
 types-dataclasses = "^0.6.5"
 types-filelock = "^3.2.7"
@@ -90,16 +85,37 @@ pytest_mock_resources = "pytest_mock_resources"
 [tool.poetry.scripts]
 pmr = "pytest_mock_resources.cli:main"
 
-[tool.isort]
-profile = 'black'
-known_first_party = 'app,tests'
-line_length = 100
-float_to_top=true
-order_by_type = false
-use_parentheses = true
+[tool.ruff]
+src = ["src", "tests"]
+line-length = 100
 
-[tool.black]
-line_length = 100
+target-version = "py37"
+select = ["C", "D", "E", "F", "I", "N", "Q", "RET", "RUF", "S", "T", "UP", "YTT"]
+ignore = [
+  "D1",
+  "D203",
+  "D204",
+  "D213",
+  "D215",
+  "D400",
+  "D404",
+  "D406",
+  "D407",
+  "D408",
+  "D409",
+  "D413",
+  "C901",
+  "E501",
+  "S101",
+]
+
+[tool.ruff.isort]
+known-first-party = ["pytest_mock_resources", "tests"]
+order-by-type = false
+
+[tool.ruff.per-file-ignores]
+"tests/**/*.py" = ["D", "S", "RUF012", "N801"]
+
 
 [tool.mypy]
 strict_optional = true

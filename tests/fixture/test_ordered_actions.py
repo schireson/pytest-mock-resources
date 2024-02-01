@@ -98,7 +98,7 @@ class Test_postgres_session_function:
     Run the test 5 times to ensure fixture is stateless
     """
 
-    def session_function(session):
+    def session_function(session):  # noqa: N805
         session.add(User(name="Fake Name", objects=[Object(name="Boots")]))
 
     postgres_session_function = create_postgres_fixture(Base, session_function, session=True)
@@ -109,7 +109,7 @@ class Test_postgres_session_function:
         execute = postgres_session_function.execute(text("SELECT * FROM stuffs.object"))
         owner_id = sorted([row[2] for row in execute])[0]
         execute = postgres_session_function.execute(
-            text("SELECT * FROM stuffs.user where id = {id}".format(id=owner_id))
+            text(f"SELECT * FROM stuffs.user where id = {owner_id}")
         )
         result = [row[1] for row in execute]
         assert result == ["Fake Name"]
@@ -158,7 +158,7 @@ class Test_session_function_async:
     Run the test more than once (i.e. 5 times) to ensure fixture is stateless.
     """
 
-    def async_session_function(session):
+    def async_session_function(session):  # noqa: N805
         session.add(User(name="Fake Name", objects=[Object(name="Boots")]))
 
     postgres_session_function_async = create_postgres_fixture(
@@ -173,14 +173,15 @@ class Test_session_function_async:
         execute = await postgres_session_function_async.execute(text("SELECT * FROM stuffs.object"))
         owner_id = sorted([row[2] for row in execute])[0]
         execute = await postgres_session_function_async.execute(
-            text("SELECT * FROM stuffs.user where id = {id}".format(id=owner_id))
+            text(f"SELECT * FROM stuffs.user where id = {owner_id}")
         )
         result = [row[1] for row in execute]
         assert result == ["Fake Name"]
 
 
 engine_function = create_postgres_fixture(
-    Base, lambda engine: engine.execute(text("insert into stuffs.user (name) values ('fake')"))
+    Base,
+    lambda engine: engine.execute(text("insert into stuffs.user (name) values ('fake')")),
 )
 
 
