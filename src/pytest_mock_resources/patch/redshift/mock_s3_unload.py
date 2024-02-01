@@ -23,7 +23,7 @@ def mock_s3_unload_command(statement, cursor):
 def _parse_s3_command(statement):
     """Format and Parse 'UNLOAD' command."""
     statement = strip(statement)
-    params = dict()
+    params = {}
 
     # deleting 'unload'
     tokens = statement.split()[1:]

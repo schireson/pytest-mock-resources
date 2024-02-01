@@ -40,7 +40,7 @@ right_integer = create_udf(
     language=UdfLanguage.SQL.value,
 )
 
-dateadd_kwargs = dict(body="SELECT d + (n::VARCHAR || i)::INTERVAL", language=UdfLanguage.SQL.value)
+dateadd_kwargs = {"body": "SELECT d + (n::VARCHAR || i)::INTERVAL", "language": UdfLanguage.SQL.value}
 
 dateadd_date = create_udf(
     name="DATEADD",
@@ -85,10 +85,10 @@ date_add_timestamptz = create_udf(
 )
 
 
-datediff_kwargs = dict(
-    returns="BIGINT",
+datediff_kwargs = {
+    "returns": "BIGINT",
     # Credit: https://gist.github.com/JoshuaGross/18b9bb1db8021efc88884cbd8dc8fddb
-    body="""
+    "body": """
        DECLARE
          diff_interval INTERVAL;
          diff INT = 0;
@@ -157,8 +157,8 @@ datediff_kwargs = dict(
 
        END;
     """,
-    language=UdfLanguage.PLPGSQL.value,
-)
+    "language": UdfLanguage.PLPGSQL.value,
+}
 
 datediff_date = create_udf(
     name="DATEDIFF", args="units VARCHAR, start_t DATE, end_t DATE", **datediff_kwargs

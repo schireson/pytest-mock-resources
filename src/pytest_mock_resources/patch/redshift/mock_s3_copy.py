@@ -29,7 +29,7 @@ def mock_s3_copy_command(statement, cursor):
 def _parse_s3_command(statement):
     """Format, Parse and call patched 'COPY' command."""
     statement = strip(statement)
-    params = dict()
+    params = {}
 
     # deleting copy
     tokens = statement.split()[1:]

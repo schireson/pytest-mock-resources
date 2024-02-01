@@ -61,9 +61,8 @@ def receive_before_cursor_execute(_, cursor, statement: str, parameters, context
 def parse_multiple_statements(statement: str):
     """Split the given sql statement into a list of individual sql statements."""
     processed_statement = _preprocess(statement)
-    statements_list = [str(statement) for statement in sqlparse.split(processed_statement)]
+    return [str(statement) for statement in sqlparse.split(processed_statement)]
 
-    return statements_list
 
 
 def _preprocess(statement: str):

@@ -81,14 +81,14 @@ def create_postgres_fixture(
     fixture_id = generate_fixture_id(enabled=template_database, name="pg")
 
     engine_kwargs_ = engine_kwargs or {}
-    engine_manager_kwargs = dict(
-        ordered_actions=ordered_actions,
-        tables=tables,
-        createdb_template=createdb_template,
-        session=session,
-        fixture_id=fixture_id,
-        actions_share_transaction=actions_share_transaction,
-    )
+    engine_manager_kwargs = {
+        "ordered_actions": ordered_actions,
+        "tables": tables,
+        "createdb_template": createdb_template,
+        "session": session,
+        "fixture_id": fixture_id,
+        "actions_share_transaction": actions_share_transaction,
+    }
 
     @pytest.fixture(scope=scope)
     def _sync(*_, pmr_postgres_container, pmr_postgres_config):
@@ -282,6 +282,5 @@ def _generate_database_name(conn):
         pass
 
     result = conn.execute(text("INSERT INTO pytest_mock_resource_db VALUES (DEFAULT) RETURNING id"))
-    id_ = tuple(result)[0][0]
-    database_name = f"pytest_mock_resource_db_{id_}"
-    return database_name
+    id_ = next(iter(result))[0]
+    return f"pytest_mock_resource_db_{id_}"

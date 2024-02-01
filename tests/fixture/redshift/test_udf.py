@@ -75,7 +75,7 @@ class TestUdf:
         with redshift.begin() as conn:
             result = conn.execute(
                 text("SELECT DATE_ADD(:interval_str, :num, :date_or_datetime);"),
-                dict(interval_str=interval_str, num=num, date_or_datetime=date_or_datetime),
+                {"interval_str": interval_str, "num": num, "date_or_datetime": date_or_datetime},
             )
 
             result = result.fetchall()
@@ -159,11 +159,11 @@ class TestUdf:
         with redshift.connect() as conn:
             result = conn.execute(
                 text("SELECT DATEDIFF(:interval_str, :date_or_datetime_1, :date_or_datetime_2);"),
-                dict(
-                    interval_str=interval_str,
-                    date_or_datetime_1=date_or_datetime_1,
-                    date_or_datetime_2=date_or_datetime_2,
-                ),
+                {
+                    "interval_str": interval_str,
+                    "date_or_datetime_1": date_or_datetime_1,
+                    "date_or_datetime_2": date_or_datetime_2,
+                },
             )
 
             result = result.fetchall()
@@ -175,11 +175,11 @@ class TestUdf:
         with redshift.connect() as conn:
             result = conn.execute(
                 text("SELECT DATEDIFF(:interval_str, :date_or_datetime_2, :date_or_datetime_1);"),
-                dict(
-                    interval_str=interval_str,
-                    date_or_datetime_2=date_or_datetime_2,
-                    date_or_datetime_1=date_or_datetime_1,
-                ),
+                {
+                    "interval_str": interval_str,
+                    "date_or_datetime_2": date_or_datetime_2,
+                    "date_or_datetime_1": date_or_datetime_1,
+                },
             )
 
             result = result.fetchall()
@@ -192,11 +192,11 @@ class TestUdf:
         with redshift.connect() as conn, pytest.raises(InternalError):
             conn.execute(
                 text("SELECT DATEDIFF(:interval_str, :date_or_datetime_2, :date_or_datetime_1);"),
-                dict(
-                    interval_str="invalid",
-                    date_or_datetime_2=date(2018, 1, 1),
-                    date_or_datetime_1=date(2018, 1, 1),
-                ),
+                {
+                    "interval_str": "invalid",
+                    "date_or_datetime_2": date(2018, 1, 1),
+                    "date_or_datetime_1": date(2018, 1, 1),
+                },
             )
 
     def test_left_integer(self, redshift):

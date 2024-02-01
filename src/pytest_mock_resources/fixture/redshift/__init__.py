@@ -72,17 +72,17 @@ def create_redshift_fixture(
 
     fixture_id = generate_fixture_id(enabled=template_database, name="pg")
 
-    ordered_actions = ordered_actions + (REDSHIFT_UDFS,)
+    ordered_actions = (*ordered_actions, REDSHIFT_UDFS)
     engine_kwargs_ = engine_kwargs or {}
 
-    engine_manager_kwargs = dict(
-        ordered_actions=ordered_actions,
-        tables=tables,
-        createdb_template=createdb_template,
-        session=session,
-        fixture_id=fixture_id,
-        actions_share_transaction=actions_share_transaction,
-    )
+    engine_manager_kwargs = {
+        "ordered_actions": ordered_actions,
+        "tables": tables,
+        "createdb_template": createdb_template,
+        "session": session,
+        "fixture_id": fixture_id,
+        "actions_share_transaction": actions_share_transaction,
+    }
 
     @pytest.fixture(scope=scope)
     def _sync(*_, pmr_redshift_container, pmr_redshift_config):

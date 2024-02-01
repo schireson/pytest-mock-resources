@@ -33,7 +33,7 @@ class S3Object(AbstractAction):
     fixtures: ClassVar[tuple[str, ...]] = ("moto",)
     static_safe: ClassVar[bool] = True
 
-    bucket: Union[str, S3Bucket]
+    bucket: str | S3Bucket
     key: str
     data: ObjectContent
     encoding: str = "utf-8"

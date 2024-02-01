@@ -52,8 +52,7 @@ def get_pytest_flag(config, name, *, default=None):
     if value:
         return value
 
-    config_value = config.getini(name)
-    return config_value
+    return config.getini(name)
 
 
 def use_multiprocess_safe_mode(config):

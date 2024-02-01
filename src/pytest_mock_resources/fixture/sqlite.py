@@ -68,7 +68,7 @@ utc = UTC()
 
 class PMRDateTime(sqlite_base.DATETIME):
     def bind_processor(self, dialect):
-        processor = super(PMRDateTime, self).bind_processor(dialect)
+        processor = super().bind_processor(dialect)
 
         def process(value):
             if isinstance(value, datetime.datetime):
@@ -76,11 +76,12 @@ class PMRDateTime(sqlite_base.DATETIME):
                     value = value.replace(tzinfo=utc)
                 result = value.astimezone(utc)
                 return processor(result)
+            return None
 
         return process
 
     def result_processor(self, dialect, coltype):
-        processor = super(PMRDateTime, self).result_processor(dialect, coltype)
+        processor = super().result_processor(dialect, coltype)
 
         def process(value):
             result = processor(value)
