@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import argparse
-import importlib
 import sys
 
 from pytest_mock_resources.config import DockerContainerConfig
 from pytest_mock_resources.container.base import container_name, get_container
 from pytest_mock_resources.hooks import get_docker_client
+from pytest_mock_resources.plugin import find_entrypoints, load_entrypoints
 
 
 class StubPytestConfig:
@@ -22,12 +22,13 @@ class StubPytestConfig:
 
 
 def main():
+    entrypoints = find_entrypoints()
+    load_entrypoints(entrypoints)
+
     parser = create_parser()
     args = parser.parse_args()
 
-    if args.load:
-        for module in args.load:
-            importlib.import_module(module)
+    load_entrypoints(args.load)
 
     pytestconfig = StubPytestConfig()
 
