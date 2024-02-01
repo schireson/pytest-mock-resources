@@ -68,7 +68,6 @@ def create_redshift_fixture(
             asynchronous fixtures (the way v2-style/async features work in SQLAlchemy can lead
             to bad default behavior).
     """
-
     from pytest_mock_resources.fixture.redshift.udf import REDSHIFT_UDFS
 
     fixture_id = generate_fixture_id(enabled=template_database, name="pg")

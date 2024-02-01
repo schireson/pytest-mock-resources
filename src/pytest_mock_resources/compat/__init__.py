@@ -1,7 +1,7 @@
 from pytest_mock_resources.compat.import_ import ImportAdaptor
 
 # isort: split
-from pytest_mock_resources.compat import sqlalchemy  # noqa
+from pytest_mock_resources.compat import sqlalchemy
 
 try:
     import psycopg2

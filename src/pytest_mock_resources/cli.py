@@ -6,6 +6,7 @@ import importlib
 from pytest_mock_resources.config import DockerContainerConfig
 from pytest_mock_resources.container.base import container_name, get_container
 from pytest_mock_resources.hooks import get_docker_client
+from pytest_mock_resources.plugin import find_entrypoints, load_entrypoints
 
 
 class StubPytestConfig:

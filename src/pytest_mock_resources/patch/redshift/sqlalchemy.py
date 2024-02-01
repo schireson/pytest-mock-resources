@@ -10,7 +10,6 @@ from pytest_mock_resources.patch.redshift.mock_s3_unload import mock_s3_unload_c
 
 def register_redshift_behavior(engine):
     """Substitute the default execute method with a custom execute for copy and unload command."""
-
     event.listen(engine, "before_execute", receive_before_execute, retval=True)
     event.listen(engine, "before_cursor_execute", receive_before_cursor_execute, retval=True)
 

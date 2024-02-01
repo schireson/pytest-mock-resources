@@ -306,7 +306,7 @@ def identify_matching_tables(metadata, table_specifier):
 
     table_names = ", ".join(sorted(metadata.tables.keys()))
     raise ValueError(
-        'Could not identify any tables matching "{}" from: {}'.format(table_specifier, table_names)
+        f'Could not identify any tables matching "{table_specifier}" from: {table_names}'
     )
 
 

@@ -283,5 +283,5 @@ def _generate_database_name(conn):
 
     result = conn.execute(text("INSERT INTO pytest_mock_resource_db VALUES (DEFAULT) RETURNING id"))
     id_ = tuple(result)[0][0]
-    database_name = "pytest_mock_resource_db_{}".format(id_)
+    database_name = f"pytest_mock_resource_db_{id_}"
     return database_name

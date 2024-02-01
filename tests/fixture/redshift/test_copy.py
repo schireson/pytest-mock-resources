@@ -101,9 +101,7 @@ def test_s3_copy_from_gzip(redshift):
         )
         conn.create_bucket(Bucket="mybucket")
 
-        temp_file_name = "file_{time_in_mills}.csv.gz".format(
-            time_in_mills=int(round(time.time() * 1000))
-        )
+        temp_file_name = f"file_{int(round(time.time() * 1000))}.csv.gz"
 
         file = get_data_csv(
             original_data, data_columns, is_gzipped=True, path_or_buf=temp_file_name
@@ -224,11 +222,11 @@ def test_ignores_sqlalchmey_text_obj(redshift):
         with redshift.begin() as conn:
             conn.execute(
                 text(
-                    (
+                    
                         "INSERT INTO test_s3_copy_into_redshift(i, f, c, v)"
                         " values(3342, 32434.0, 'a', 'gfhsdgaf'), (3343, 0, 'b', NULL), "
                         "(0, 32434.0, NULL, 'gfhsdgaf')"
-                    )
+                    
                 )
             )
 

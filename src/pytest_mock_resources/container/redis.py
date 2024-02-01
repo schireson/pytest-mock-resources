@@ -35,7 +35,5 @@ class RedisConfig(DockerContainerConfig):
             client.ping()
         except redis.ConnectionError:
             raise ContainerCheckFailed(
-                "Unable to connect to a presumed Redis test container via given config: {}".format(
-                    self
-                )
+                f"Unable to connect to a presumed Redis test container via given config: {self}"
             )

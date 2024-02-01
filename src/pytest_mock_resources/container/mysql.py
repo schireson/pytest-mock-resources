@@ -64,9 +64,7 @@ class MysqlConfig(DockerContainerConfig):
             get_sqlalchemy_engine(self, self.root_database)
         except sqlalchemy.exc.OperationalError:
             raise ContainerCheckFailed(
-                "Unable to connect to a presumed MySQL test container via given config: {}".format(
-                    self
-                )
+                f"Unable to connect to a presumed MySQL test container via given config: {self}"
             )
 
 

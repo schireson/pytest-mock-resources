@@ -35,9 +35,7 @@ class MotoConfig(DockerContainerConfig):
             requests.get(url)
         except requests.exceptions.RequestException:
             raise ContainerCheckFailed(
-                "Unable to connect to a presumed moto test container via given config: {}".format(
-                    self
-                )
+                f"Unable to connect to a presumed moto test container via given config: {self}"
             )
 
 

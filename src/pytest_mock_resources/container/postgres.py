@@ -81,7 +81,7 @@ class PostgresConfig(DockerContainerConfig):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             s.connect((self.host, int(self.port)))
-        except (ConnectionRefusedError, socket.error):
+        except (OSError, ConnectionRefusedError):
             raise ContainerCheckFailed(
                 f"Unable to connect to a presumed Postgres test container via given config: {self}"
             )

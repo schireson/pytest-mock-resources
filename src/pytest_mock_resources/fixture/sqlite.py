@@ -196,7 +196,7 @@ def filter_sqlalchemy_warnings(decimal_warnings_enabled=True):
 def _database_producer():
     i = 1
     while True:
-        yield "db{}".format(i)
+        yield f"db{i}"
         i += 1
 
 
@@ -228,16 +228,15 @@ def create_sqlite_fixture(
         postgres_like: Whether to add extra SQLite features which attempt to mimic postgres
             enough to stand in for it for testing.
     """
-
     dialect_name = "sqlite"
 
     if postgres_like:
         dialect = make_postgres_like_sqlite_dialect()
         dialect_name = dialect.name
         registry = getattr(dialects, "registry")
-        registry.register("sqlite.{}".format(dialect_name), __name__, "PostgresLikeSQLitePDialect")
+        registry.register(f"sqlite.{dialect_name}", __name__, "PostgresLikeSQLitePDialect")
 
-    driver_name = "sqlite+{}".format(dialect_name)
+    driver_name = f"sqlite+{dialect_name}"
 
     @pytest.fixture(scope=scope)
     def _():
@@ -246,7 +245,7 @@ def create_sqlite_fixture(
         # database_name = "file:{}?mode=memory&cache=shared".format(next(_database_names))
         database_name = ""
 
-        raw_engine = create_engine("{}:///{}".format(driver_name, database_name))
+        raw_engine = create_engine(f"{driver_name}:///{database_name}")
 
         # This *must* happen before the connection occurs (implicitly in `EngineManager`).
         event.listen(raw_engine, "connect", enable_foreign_key_checks)

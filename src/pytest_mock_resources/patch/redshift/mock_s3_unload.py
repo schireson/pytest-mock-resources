@@ -39,29 +39,29 @@ def _parse_s3_command(statement):
     params["select_statement"] = select_statement
     if error_flag:
         raise ValueError(
-            (
+            
                 "Possibly malformed SELECT Statement. "
-                "Statement = {statement}"
+                f"Statement = {statement}"
                 "Redshift fixture only supports S3 Unload statements with the following syntax: "
                 "UNLOAD ('select-statement') TO 's3://object-path/name-prefix'"
                 "authorization 'aws_access_key_id=<aws_access_key_id>;"
                 "aws_secret_access_key=<aws_secret_access_key>'"
                 "[GZIP] [DELIMITER [ AS ] 'delimiter-char']"
-            ).format(statement=statement)
+            
         )
 
     # Fetching s3_uri
     if tokens.pop(0).lower() != "to":
         raise ValueError(
-            (
+            
                 "Possibly malformed S3 URI Format. "
-                "Statement = {statement}"
+                f"Statement = {statement}"
                 "Redshift fixture only supports S3 Unload statements with the following syntax: "
                 "UNLOAD ('select-statement') TO 's3://object-path/name-prefix'"
                 "authorization 'aws_access_key_id=<aws_access_key_id>;"
                 "aws_secret_access_key=<aws_secret_access_key>'"
                 "[GZIP] [DELIMITER [ AS ] 'delimiter-char']"
-            ).format(statement=statement)
+            
         )
     params["s3_uri"] = strip(tokens.pop(0))
 
@@ -87,9 +87,9 @@ def _parse_s3_command(statement):
                     params["aws_secret_access_key"] = credentials.split("=")[-1]
                 else:
                     raise ValueError(
-                        (
+                        
                             "Possibly malformed AWS Credentials Format. "
-                            "Statement = {statement}"
+                            f"Statement = {statement}"
                             "Redshift fixture only supports S3 Copy statements with the following "
                             "syntax: COPY <table_name> FROM [(column 1, [column2, [..]])] '"
                             "<file path on S3 bucket>' "
@@ -98,7 +98,7 @@ def _parse_s3_command(statement):
                             "Supportred AWS credentials format: "
                             "[with ]credentials[ AS] 'aws_secret_access_key=y; aws_access_key_id=x'"
                             " No Support for additional credential formats, eg IAM roles, etc, yet."
-                        ).format(statement=statement)
+                        
                     )
 
     # Fetching GZIP Flag
@@ -117,15 +117,15 @@ def _parse_s3_command(statement):
                     params["delimiter"] = strip(tokens[index + 2])
             except IndexError:
                 raise ValueError(
-                    (
+                    
                         "Possibly malformed Delimiter Format. "
-                        "Statement = {statement}"
+                        f"Statement = {statement}"
                         "Redshift fixture only supports S3 Unload statements with the following"
                         "syntax: UNLOAD ('select-statement') TO 's3://object-path/name-prefix'"
                         "authorization 'aws_access_key_id=<aws_access_key_id>;"
                         "aws_secret_access_key=<aws_secret_access_key>'"
                         "[GZIP] [DELIMITER [ AS ] 'delimiter-char']"
-                    ).format(statement=statement)
+                    
                 )
     return params
 

@@ -43,7 +43,5 @@ class MongoConfig(DockerContainerConfig):
             db.command("ismaster")
         except pymongo.errors.ConnectionFailure:
             raise ContainerCheckFailed(
-                "Unable to connect to a presumed MongoDB test container via given config: {}".format(
-                    self
-                )
+                f"Unable to connect to a presumed MongoDB test container via given config: {self}"
             )

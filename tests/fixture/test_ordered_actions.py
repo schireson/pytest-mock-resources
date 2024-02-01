@@ -109,7 +109,7 @@ class Test_postgres_session_function:
         execute = postgres_session_function.execute(text("SELECT * FROM stuffs.object"))
         owner_id = sorted([row[2] for row in execute])[0]
         execute = postgres_session_function.execute(
-            text("SELECT * FROM stuffs.user where id = {id}".format(id=owner_id))
+            text(f"SELECT * FROM stuffs.user where id = {owner_id}")
         )
         result = [row[1] for row in execute]
         assert result == ["Fake Name"]
@@ -173,7 +173,7 @@ class Test_session_function_async:
         execute = await postgres_session_function_async.execute(text("SELECT * FROM stuffs.object"))
         owner_id = sorted([row[2] for row in execute])[0]
         execute = await postgres_session_function_async.execute(
-            text("SELECT * FROM stuffs.user where id = {id}".format(id=owner_id))
+            text(f"SELECT * FROM stuffs.user where id = {owner_id}")
         )
         result = [row[1] for row in execute]
         assert result == ["Fake Name"]
