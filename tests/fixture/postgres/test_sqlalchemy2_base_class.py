@@ -2,7 +2,7 @@ from tests import is_at_least_sqlalchemy2
 
 if is_at_least_sqlalchemy2:
     from sqlalchemy import Column, Integer
-    from sqlalchemy.orm import DeclarativeBase  # type: ignore
+    from sqlalchemy.orm import DeclarativeBase
 
     from pytest_mock_resources import create_postgres_fixture
 

@@ -1,3 +1,5 @@
+from typing import ClassVar, Iterable
+
 from pytest_mock_resources.container.postgres import PostgresConfig
 
 
@@ -24,7 +26,7 @@ class RedshiftConfig(PostgresConfig):
     """
 
     name = "redshift"
-    _fields = {
+    _fields: ClassVar[Iterable] = {
         "image",
         "host",
         "port",
@@ -34,7 +36,7 @@ class RedshiftConfig(PostgresConfig):
         "root_database",
         "drivername",
     }
-    _fields_defaults = {
+    _fields_defaults: ClassVar[dict] = {
         "image": "postgres:9.6.10-alpine",
         "port": 5532,
         "ci_port": 5432,

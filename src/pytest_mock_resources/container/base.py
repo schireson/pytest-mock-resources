@@ -23,7 +23,6 @@ except ImportError:
     responses = None
 
 if TYPE_CHECKING:
-
     from python_on_whales.docker_client import DockerClient
 
 
@@ -31,7 +30,7 @@ DEFAULT_RETRIES = 40
 DEFAULT_INTERVAL = 0.5
 
 
-class ContainerCheckFailed(Exception):
+class ContainerCheckFailed(Exception):  # noqa: N818
     """Unable to connect to a Container."""
 
 

@@ -6,10 +6,22 @@ import sqlalchemy
 from sqlalchemy import text
 from sqlalchemy.engine import Connection, Engine
 
-from pytest_mock_resources.container.base import async_retry, DEFAULT_RETRIES, get_container, retry
-from pytest_mock_resources.container.postgres import get_sqlalchemy_engine, PostgresConfig
+from pytest_mock_resources.container.base import (
+    async_retry,
+    DEFAULT_RETRIES,
+    get_container,
+    retry,
+)
+from pytest_mock_resources.container.postgres import (
+    get_sqlalchemy_engine,
+    PostgresConfig,
+)
 from pytest_mock_resources.fixture.base import asyncio_fixture, generate_fixture_id
-from pytest_mock_resources.sqlalchemy import bifurcate_actions, EngineManager, normalize_actions
+from pytest_mock_resources.sqlalchemy import (
+    bifurcate_actions,
+    EngineManager,
+    normalize_actions,
+)
 
 log = logging.getLogger(__name__)
 
@@ -103,8 +115,7 @@ def create_postgres_fixture(
 
     if async_:
         return asyncio_fixture(_async, scope=scope)
-    else:
-        return _sync
+    return _sync
 
 
 def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="postgres"):
@@ -114,7 +125,8 @@ def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="
     root_engine.dispose()
 
     root_engine = cast(
-        Engine, get_sqlalchemy_engine(pmr_config, pmr_config.root_database, autocommit=True)
+        Engine,
+        get_sqlalchemy_engine(pmr_config, pmr_config.root_database, autocommit=True),
     )
     with root_engine.connect() as root_conn:
         with root_conn.begin() as trans:
@@ -128,7 +140,8 @@ def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="
         assert template_database
 
         template_engine = cast(
-            Engine, get_sqlalchemy_engine(pmr_config, template_database, **engine_kwargs)
+            Engine,
+            get_sqlalchemy_engine(pmr_config, template_database, **engine_kwargs),
         )
         with template_engine.connect() as conn:
             with conn.begin() as trans:
@@ -139,7 +152,8 @@ def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="
     # Everything below is normal per-test context. We create a brand new database/engine/manager
     # distinct from what might have been used for the template database.
     root_engine = cast(
-        Engine, get_sqlalchemy_engine(pmr_config, pmr_config.root_database, autocommit=True)
+        Engine,
+        get_sqlalchemy_engine(pmr_config, pmr_config.root_database, autocommit=True),
     )
     with root_engine.connect() as root_conn:
         with root_conn.begin() as trans:
@@ -161,7 +175,11 @@ async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fi
 
     async with root_engine.connect() as root_conn:
         async with root_conn.begin() as trans:
-            template_database, template_manager, engine_manager = await root_conn.run_sync(
+            (
+                template_database,
+                template_manager,
+                engine_manager,
+            ) = await root_conn.run_sync(
                 create_engine_manager, **engine_manager_kwargs, fixture=fixture
             )
             await trans.commit()

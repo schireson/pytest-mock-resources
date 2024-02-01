@@ -64,7 +64,6 @@ def parse_multiple_statements(statement: str):
     return [str(statement) for statement in sqlparse.split(processed_statement)]
 
 
-
 def _preprocess(statement: str):
     """Preprocess the input statement."""
     statement = statement.strip()

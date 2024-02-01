@@ -112,7 +112,7 @@ def make_postgres_like_sqlite_dialect():
         @compiles(JSON, "pmrsqlite")
         @compiles(JSONB, "pmrsqlite")
         @compiles(sqltypes.JSON, "pmrsqlite")
-        def compile_json(type_, compiler, **kwargs):
+        def compile_json(type_, compiler, **kwargs):  # noqa: N805
             return "BLOB"
 
     class PostgresLikeDialect(SQLiteDialect_pysqlite):
@@ -123,7 +123,7 @@ def make_postgres_like_sqlite_dialect():
         supports_statement_cache = True
         ddl_compiler = PMRSQLiteDDLCompiler
         type_compiler = PostgresLikeTypeCompiler
-        colspecs = {
+        colspecs: dict = {  # noqa: RUF012
             sqltypes.Date: sqlite_base.DATE,
             sqltypes.DateTime: PMRDateTime,
             sqltypes.JSON: sqlite_base.JSON,
@@ -210,7 +210,7 @@ def create_sqlite_fixture(
     tables=None,
     session=None,
     decimal_warnings=False,
-    postgres_like=True
+    postgres_like=True,
 ):
     """Produce a SQLite fixture.
 

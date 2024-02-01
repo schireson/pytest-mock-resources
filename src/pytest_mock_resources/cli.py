@@ -2,18 +2,18 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import sys
 
 from pytest_mock_resources.config import DockerContainerConfig
 from pytest_mock_resources.container.base import container_name, get_container
 from pytest_mock_resources.hooks import get_docker_client
-from pytest_mock_resources.plugin import find_entrypoints, load_entrypoints
 
 
 class StubPytestConfig:
     pmr_multiprocess_safe = False
     pmr_cleanup_container = False
 
-    class option:
+    class option:  # noqa: N801
         pmr_multiprocess_safe = False
         pmr_cleanup_container = False
 
@@ -54,7 +54,9 @@ def create_parser():
         metavar="Fixture",
         type=str,
         nargs="+",
-        help="Available Fixtures: {}".format(", ".join(DockerContainerConfig.subclasses)),
+        help="Available Fixtures: {}".format(
+            ", ".join(DockerContainerConfig.subclasses)
+        ),
     )
     parser.add_argument(
         "--stop", action="store_true", help="Stop previously started PMR containers"
@@ -85,7 +87,7 @@ def execute(fixture: str, pytestconfig: StubPytestConfig, start=True, stop=False
         try:
             container = docker.container.inspect(name)
         except Exception:
-            print(f"Failed to stop {fixture} container")
+            sys.stderr.write(f"Failed to stop {fixture} container\n")
         else:
             container.kill()
 

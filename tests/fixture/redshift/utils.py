@@ -62,8 +62,6 @@ def fetch_and_assert_psycopg2(cursor):
     for result, original in zip(results, original_data):
         og_data = empty_as_string(original)
         expected_result = tuple(og_data.values())
-        print(result)
-        print(expected_result)
         assert result == expected_result
 
 

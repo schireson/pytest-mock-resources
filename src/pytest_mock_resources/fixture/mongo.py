@@ -55,7 +55,7 @@ def _create_clean_database(config):
     new_database = root_client[db_id]
 
     #  Create a user as that databases owner
-    password = "password"  # nosec
+    password = "password"  # noqa: S105
     new_database.command("createUser", db_id, pwd=password, roles=["dbOwner"])
 
     #  pass back an authenticated db connection

@@ -222,11 +222,9 @@ def test_ignores_sqlalchmey_text_obj(redshift):
         with redshift.begin() as conn:
             conn.execute(
                 text(
-                    
-                        "INSERT INTO test_s3_copy_into_redshift(i, f, c, v)"
-                        " values(3342, 32434.0, 'a', 'gfhsdgaf'), (3343, 0, 'b', NULL), "
-                        "(0, 32434.0, NULL, 'gfhsdgaf')"
-                    
+                    "INSERT INTO test_s3_copy_into_redshift(i, f, c, v)"
+                    " values(3342, 32434.0, 'a', 'gfhsdgaf'), (3343, 0, 'b', NULL), "
+                    "(0, 32434.0, NULL, 'gfhsdgaf')"
                 )
             )
 

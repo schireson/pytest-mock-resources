@@ -98,6 +98,7 @@ class Test_postgres_session_function:
     Run the test 5 times to ensure fixture is stateless
     """
 
+    @staticmethod
     def session_function(session):
         session.add(User(name="Fake Name", objects=[Object(name="Boots")]))
 
@@ -158,6 +159,7 @@ class Test_session_function_async:
     Run the test more than once (i.e. 5 times) to ensure fixture is stateless.
     """
 
+    @staticmethod
     def async_session_function(session):
         session.add(User(name="Fake Name", objects=[Object(name="Boots")]))
 
@@ -180,7 +182,8 @@ class Test_session_function_async:
 
 
 engine_function = create_postgres_fixture(
-    Base, lambda engine: engine.execute(text("insert into stuffs.user (name) values ('fake')"))
+    Base,
+    lambda engine: engine.execute(text("insert into stuffs.user (name) values ('fake')")),
 )
 
 

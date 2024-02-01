@@ -1,3 +1,5 @@
+from typing import ClassVar, Iterable
+
 from pytest_mock_resources.config import DockerContainerConfig
 from pytest_mock_resources.container.base import ContainerCheckFailed
 
@@ -18,8 +20,8 @@ class MotoConfig(DockerContainerConfig):
 
     name = "moto"
 
-    _fields = {"image", "host", "port"}
-    _fields_defaults = {
+    _fields: ClassVar[Iterable] = {"image", "host", "port"}
+    _fields_defaults: ClassVar[dict] = {
         "image": "motoserver/moto:4.0.6",
         "port": 5555,
     }
@@ -32,7 +34,7 @@ class MotoConfig(DockerContainerConfig):
 
         try:
             url = endpoint_url(self)
-            requests.get(url)
+            requests.get(url, timeout=60)
         except requests.exceptions.RequestException:
             raise ContainerCheckFailed(
                 f"Unable to connect to a presumed moto test container via given config: {self}"

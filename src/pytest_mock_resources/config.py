@@ -53,10 +53,10 @@ def fallback(fn):
 class DockerContainerConfig:
     name: ClassVar[str]
 
-    _fields: Iterable = {"image", "host", "port", "ci_port", "container_args"}
-    _fields_defaults: dict = {}
+    _fields: ClassVar[Iterable] = {"image", "host", "port", "ci_port", "container_args"}
+    _fields_defaults: ClassVar[dict] = {}
 
-    subclasses: dict[str, type[DockerContainerConfig]] = {}
+    subclasses: ClassVar[dict[str, type[DockerContainerConfig]]] = {}
 
     @classmethod
     def __init_subclass__(cls):
@@ -74,9 +74,7 @@ class DockerContainerConfig:
         cls_name = self.__class__.__name__
         return "{cls_name}({attrs})".format(
             cls_name=cls_name,
-            attrs=", ".join(
-                f"{attr}={getattr(self, attr)!r}" for attr in self._fields
-            ),
+            attrs=", ".join(f"{attr}={getattr(self, attr)!r}" for attr in self._fields),
         )
 
     def has(self, attr):

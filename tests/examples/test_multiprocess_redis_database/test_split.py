@@ -34,7 +34,6 @@ def run_test(redis, pytestconfig):
     worker_id = int(pytestconfig.workerinput["workerid"][2:])
     database = redis.connection_pool.get_connection("set").db
     assert worker_id == database
-    print(worker_id, database)
 
     redis.set("foo", "bar")
     time.sleep(random.randrange(1, 10) / 10)

@@ -58,14 +58,12 @@ def _parse_s3_command(statement):
     # Fetching s3_uri
     if tokens.pop(0).lower() != "from":
         raise ValueError(
-            
-                "Possibly malformed S3 URI Format. "
-                f"Statement = {statement}"
-                "Redshift fixture only supports S3 Copy statements with the following syntax: "
-                "COPY <table_name> FROM [(column 1, [column2, [..]])] '<file path on S3 bucket>' "
-                "credentials 'aws_access_key_id=<aws_access_key_id>;"
-                "aws_secret_access_key=<aws_secret_access_key>'"
-            
+            "Possibly malformed S3 URI Format. "
+            f"Statement = {statement}"
+            "Redshift fixture only supports S3 Copy statements with the following syntax: "
+            "COPY <table_name> FROM [(column 1, [column2, [..]])] '<file path on S3 bucket>' "
+            "credentials 'aws_access_key_id=<aws_access_key_id>;"
+            "aws_secret_access_key=<aws_secret_access_key>'"
         )
     params["s3_uri"] = strip(tokens.pop(0))
     empty_as_null = False
@@ -92,18 +90,16 @@ def _parse_s3_command(statement):
                     params["aws_secret_access_key"] = credentials.split("=")[-1]
                 else:
                     raise ValueError(
-                        
-                            "Possibly malformed AWS Credentials Format. "
-                            f"Statement = {statement}"
-                            "Redshift fixture only supports S3 Copy statements with the following "
-                            "syntax: COPY <table_name> FROM [(column 1, [column2, [..]])] '"
-                            "<file path on S3 bucket>' "
-                            "credentials 'aws_access_key_id=<aws_access_key_id>;"
-                            "aws_secret_access_key=<aws_secret_access_key>' "
-                            "Supportred AWS credentials format: "
-                            "[with ]credentials[ AS] 'aws_secret_access_key=y; aws_access_key_id=x'"
-                            " No Support for additional credential formats, eg IAM roles, etc, yet."
-                        
+                        "Possibly malformed AWS Credentials Format. "
+                        f"Statement = {statement}"
+                        "Redshift fixture only supports S3 Copy statements with the following "
+                        "syntax: COPY <table_name> FROM [(column 1, [column2, [..]])] '"
+                        "<file path on S3 bucket>' "
+                        "credentials 'aws_access_key_id=<aws_access_key_id>;"
+                        "aws_secret_access_key=<aws_secret_access_key>' "
+                        "Supportred AWS credentials format: "
+                        "[with ]credentials[ AS] 'aws_secret_access_key=y; aws_access_key_id=x'"
+                        " No Support for additional credential formats, eg IAM roles, etc, yet."
                     )
         if "emptyasnull" == token.lower():
             empty_as_null = True

@@ -1,3 +1,5 @@
+from typing import ClassVar, Iterable
+
 from pytest_mock_resources.compat import redis
 from pytest_mock_resources.config import DockerContainerConfig
 from pytest_mock_resources.container.base import ContainerCheckFailed
@@ -19,8 +21,8 @@ class RedisConfig(DockerContainerConfig):
 
     name = "redis"
 
-    _fields = {"image", "host", "port", "ci_port"}
-    _fields_defaults = {
+    _fields: ClassVar[Iterable] = {"image", "host", "port", "ci_port"}
+    _fields_defaults: ClassVar[dict] = {
         "image": "redis:5.0.7",
         "port": 6380,
         "ci_port": 6379,

@@ -49,7 +49,6 @@ class S3Object(AbstractAction):
         elif isinstance(self.data, io.StringIO):
             data = io.BytesIO(self.data.getvalue().encode(self.encoding))
         elif isinstance(self.data, io.BytesIO):
-
             data = io.BytesIO(self.data.getbuffer().tobytes())
         else:
             raise NotImplementedError()

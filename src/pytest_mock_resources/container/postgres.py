@@ -1,3 +1,5 @@
+from typing import ClassVar, Iterable
+
 import sqlalchemy
 import sqlalchemy.exc
 
@@ -29,7 +31,7 @@ class PostgresConfig(DockerContainerConfig):
     """
 
     name = "postgres"
-    _fields = {
+    _fields: ClassVar[Iterable] = {
         "image",
         "host",
         "port",
@@ -39,7 +41,7 @@ class PostgresConfig(DockerContainerConfig):
         "root_database",
         "drivername",
     }
-    _fields_defaults = {
+    _fields_defaults: ClassVar[dict] = {
         "image": "postgres:9.6.10-alpine",
         "port": 5532,
         "ci_port": 5432,
