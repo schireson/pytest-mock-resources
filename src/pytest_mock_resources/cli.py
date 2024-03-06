@@ -12,6 +12,7 @@ from pytest_mock_resources.plugin import find_entrypoints, load_entrypoints
 class StubPytestConfig:
     pmr_multiprocess_safe = False
     pmr_cleanup_container = False
+    pmr_docker_client = None
 
     class option:  # noqa: N801
         pmr_multiprocess_safe = False
@@ -28,7 +29,8 @@ def main():
     parser = create_parser()
     args = parser.parse_args()
 
-    load_entrypoints(args.load)
+    if args.load:
+        load_entrypoints(args.load)
 
     pytestconfig = StubPytestConfig()
 
