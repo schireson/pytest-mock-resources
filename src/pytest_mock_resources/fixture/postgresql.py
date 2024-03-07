@@ -1,13 +1,13 @@
-import importlib.resources
 import inspect
 import logging
-from typing import cast
+from typing import cast, TYPE_CHECKING
 
 import pytest
 import sqlalchemy
 from sqlalchemy import text
 from sqlalchemy.engine import Connection, Engine
 
+from pytest_mock_resources.compat import get_resource
 from pytest_mock_resources.container.base import (
     async_retry,
     DEFAULT_RETRIES,
@@ -28,6 +28,9 @@ from pytest_mock_resources.sqlalchemy import (
     EngineManager,
     normalize_actions,
 )
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncEngine
 
 log = logging.getLogger(__name__)
 
@@ -280,11 +283,9 @@ def _async_scope_fixture(
     cleanup_databases: bool = False,
     name="postgres",
 ):
-    from sqlalchemy.ext.asyncio import AsyncEngine
-
     async def fixture(pmr_postgres_config):
         root_engine = cast(
-            AsyncEngine,
+            "AsyncEngine",
             get_sqlalchemy_engine(
                 pmr_postgres_config,
                 pmr_postgres_config.root_database,
@@ -314,7 +315,7 @@ def _async_scope_fixture(
             assert template_database
 
             engine = cast(
-                AsyncEngine,
+                "AsyncEngine",
                 get_sqlalchemy_engine(
                     pmr_postgres_config, template_database, **engine_kwargs, async_=True
                 ),
@@ -342,10 +343,8 @@ async def _async_fixture(
     engine_manager: EngineManager,
     cleanup_databases: bool = False,
 ):
-    from sqlalchemy.ext.asyncio import AsyncEngine
-
     root_engine = cast(
-        AsyncEngine,
+        "AsyncEngine",
         get_sqlalchemy_engine(
             pmr_config,
             pmr_config.root_database,
@@ -480,13 +479,10 @@ def _sync_drop_database(conn: Connection, database_name: str):
 
 
 def find_caller_globals():
-    ignore_paths = (
-        str(importlib.resources.files("pytest_mock_resources")),
-        str(importlib.resources.files("pdb")),
-    )
+    ignore_path = get_resource("pytest_mock_resources")
     stack = inspect.stack()
     for item in stack:
-        if item.filename.startswith(ignore_paths):
+        if item.filename.startswith(ignore_path) or item.filename.endswith("pdb.py"):
             continue
 
         frame = item.frame
