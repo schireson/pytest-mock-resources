@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-mock-resources"
-version = "2.10.1"
+version = "2.11.0"
 description = "A pytest plugin for easily instantiating reproducible mock resources."
 authors = [
     "Omar Khan <oakhan3@gmail.com>",
@@ -54,11 +54,12 @@ filelock = {version = "*", optional = true}
 python-on-whales = {version = ">=0.22.0", optional = true}
 
 [tool.poetry.dev-dependencies]
-botocore = ">=1.31.63"
+botocore = "1.31.63"
 coverage = "*"
 moto = ">=2.3.2"
 mypy = {version = "0.982"}
 pytest-asyncio = "*"
+pytest-order = "^1.2.0"
 pytest-xdist = "*"
 responses = ">=0.23.0"
 ruff = "0.1.15"
@@ -145,6 +146,7 @@ filterwarnings = [
   "ignore:stream argument is deprecated. Use stream parameter in request directly:DeprecationWarning",
   "ignore:Boto3 will no longer support Python 3.7.*::boto3",
   "ignore:datetime.datetime.utcnow.*:DeprecationWarning",
+  "ignore:unclosed.*:ResourceWarning",
 ]
 
 [build-system]

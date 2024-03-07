@@ -147,6 +147,7 @@ class Test_postgres_ordered_actions_async:
     ):
         async with postgres_ordered_actions_async.begin() as conn:
             execute = await conn.execute(text("SELECT * FROM user1"))
+        await postgres_ordered_actions_async.dispose()
 
         result = sorted([row[0] for row in execute])
         assert ["Gump1", "Harold1"] == result

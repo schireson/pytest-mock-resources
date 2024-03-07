@@ -1,5 +1,56 @@
 # Changelog
 
+## [v2.11.0](https://github.com/schireson/pytest-mock-resources/compare/v2.10.1...v2.11.0) (2024-03-07)
+
+### Features
+
+* Add flag to clean up postgres databases.
+  ([eeef1ec](https://github.com/schireson/pytest-mock-resources/commit/eeef1ec05748f3c6de9b903cea257ce263df1598))
+
+### [v2.10.1](https://github.com/schireson/pytest-mock-resources/compare/v2.10.0...v2.10.1) (2024-03-06)
+
+#### Fixes
+
+* cli loading mechanism. (#203)
+  ([978190f](https://github.com/schireson/pytest-mock-resources/commit/978190f878f0a4c1613e32604bc29d1e1438b2a0))
+
+## [v2.10.0](https://github.com/schireson/pytest-mock-resources/compare/v2.9.2...v2.10.0) (2024-02-01)
+
+### Features
+
+* Add way for 3rd party resources to register into the PMR cli. (#199)
+  ([23e40ad](https://github.com/schireson/pytest-mock-resources/commit/23e40adad366f4bf941228aa70f311462f417d38))
+* Implement support for "client_call" in python on whales, with a… (#198)
+  ([4d08df2](https://github.com/schireson/pytest-mock-resources/commit/4d08df2c49ec18878233d510f66d8643a19499c7))
+
+### [v2.9.2](https://github.com/schireson/pytest-mock-resources/compare/v2.9.1...v2.9.2) (2023-09-25)
+
+#### Fixes
+
+* Ensure base model compatibility with DeclarativeBase subclasses. (#197)
+  ([670295c](https://github.com/schireson/pytest-mock-resources/commit/670295c48ef989879834c7dae3359a2c92211a23))
+* Yield config rather than the container. (#196)
+  ([eafaf36](https://github.com/schireson/pytest-mock-resources/commit/eafaf3613b118d8c6d4b2642af560b5e2cd606fc))
+
+### [v2.9.1](https://github.com/schireson/pytest-mock-resources/compare/v2.9.0...v2.9.1) (2023-07-24)
+
+#### Fixes
+
+* Set the region when creating the client to assume roles. (#194)
+  ([2236bbe](https://github.com/schireson/pytest-mock-resources/commit/2236bbe3232bb9f4ba946e2db9c1f55cb27060c9))
+
+## [v2.9.0](https://github.com/schireson/pytest-mock-resources/compare/v2.7.0...v2.9.0) (2023-07-12)
+
+### Features
+
+* Implement moto "ordered actions" for declaring a specific bucket state. (#191)
+  ([14c09b8](https://github.com/schireson/pytest-mock-resources/commit/14c09b8f942ca911c81e42f9dd8d81f3095fbd0c))
+
+### Fixes
+
+* Adjust moto fixtures to work correctly with scopes and to propag… (#193)
+  ([ef68ba9](https://github.com/schireson/pytest-mock-resources/commit/ef68ba9fb88b3f0ddac08391a312ac080782db14))
+
 ## [v2.7.0](https://github.com/schireson/pytest-mock-resources/compare/v2.6.13...v2.7.0) (2023-06-06)
 
 ### Features

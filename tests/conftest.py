@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 
 pytest_plugins = "pytester"
@@ -7,3 +9,8 @@ pytest_plugins = "pytester"
 @pytest.fixture(autouse=True)
 def set_aws_region(monkeypatch):
     monkeypatch.setenv("AWS_DEFAULT_REGION", "us-east-1")
+
+
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger("botocore").setLevel(logging.WARNING)
+logging.getLogger("filelock").setLevel(logging.WARNING)

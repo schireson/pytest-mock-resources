@@ -1,3 +1,6 @@
+import importlib.resources
+import sys
+
 from pytest_mock_resources.compat.import_ import ImportAdaptor
 
 # isort: split
@@ -68,6 +71,13 @@ try:
     import pymysql
 except ImportError:
     pymysql = ImportAdaptor("pymysql", "mysql")
+
+
+def get_resource(package: str) -> str:
+    if sys.version_info >= (3, 9):
+        return str(importlib.resources.files(package))
+
+    return str(importlib.resources.path(package, "").__enter__())
 
 
 __all__ = [
