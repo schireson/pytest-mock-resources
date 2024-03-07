@@ -12,6 +12,12 @@ def pytest_addoption(parser):
         default=False,
     )
     parser.addini(
+        "pmr_cleanup",
+        "Optionally cleanup created fixture resources.",
+        type="bool",
+        default=False,
+    )
+    parser.addini(
         "pmr_cleanup_container",
         "Optionally disable attempts to cleanup created containers",
         type="bool",
@@ -31,6 +37,13 @@ def pytest_addoption(parser):
         default=False,
         help="Enable multiprocess-safe mode",
         dest="pmr_multiprocess_safe",
+    )
+    group.addoption(
+        "--pmr-cleanup",
+        action="store_true",
+        default=False,
+        help="Optionally cleanup created fixture resources.",
+        dest="pmr_cleanup",
     )
     group.addoption(
         "--pmr-cleanup-container",

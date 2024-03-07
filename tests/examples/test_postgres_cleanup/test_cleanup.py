@@ -1,3 +1,4 @@
+import pytest
 from sqlalchemy import Column, String, text
 
 from pytest_mock_resources import create_postgres_fixture, Rows
@@ -16,9 +17,11 @@ rows = Rows(User(name="Harold"), User(name="Gump"))
 
 
 pg_clean = create_postgres_fixture(Base, rows, session=True, cleanup_databases=True)
+database_name = None
 
 
 def test_to_be_cleaned_up(pg_clean):
+    global database_name
     database_name = pg_clean.pmr_credentials.database
 
     names = [u.name for u in pg_clean.query(User).all()]
@@ -27,3 +30,16 @@ def test_to_be_cleaned_up(pg_clean):
     names = pg_clean.execute(text("SELECT datname FROM pg_database")).all()
     unique_names = {name for (name,) in names}
     assert database_name in unique_names
+
+
+@pytest.mark.order(after="test_to_be_cleaned_up")
+def test_database_cleaned_up(pg_clean):
+    global database_name
+
+    assert database_name is not None
+
+    assert database_name != pg_clean.pmr_credentials.database
+
+    names = pg_clean.execute(text("SELECT datname FROM pg_database")).all()
+    unique_names = {name for (name,) in names}
+    assert database_name not in unique_names

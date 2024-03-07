@@ -57,7 +57,7 @@ python-on-whales = {version = ">=0.22.0", optional = true}
 botocore = "1.31.63"
 coverage = "*"
 moto = ">=2.3.2"
-mypy = {version = "0.982"}
+mypy = {version = "1.4.0"}
 pytest-asyncio = "*"
 pytest-order = "^1.2.0"
 pytest-xdist = "*"

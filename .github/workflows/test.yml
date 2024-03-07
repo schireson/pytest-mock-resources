@@ -16,7 +16,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         # Test our minimum version bound, the highest version available,
         # and something in the middle (i.e. what gets run locally).

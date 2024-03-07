@@ -103,6 +103,8 @@ def create_redshift_fixture(
         name=scope_fixture_name,
         cleanup_databases=cleanup_databases,
         async_=async_,
+        container_fixture="pmr_redshift_container",
+        config_fixture="pmr_redshift_container",
     )
 
     if async_:
@@ -113,8 +115,9 @@ def create_redshift_fixture(
                 engine_manager_kwargs,
                 engine_kwargs=engine_kwargs_,
                 cleanup_databases=cleanup_databases,
+                config_fixture="pmr_redshift_config",
             )
-            async for template_database, engine_manager in fixture_scope(pmr_redshift_config):
+            async for template_database, engine_manager in fixture_scope(request):
                 fixture = _async_fixture(
                     pmr_redshift_config,
                     engine_kwargs_,

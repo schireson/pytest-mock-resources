@@ -18,7 +18,7 @@ test-base:
 		-m 'not postgres and not redshift and not mongo and not redis and not mysql and not moto'
 
 test-parallel:
-	SQLALCHEMY_WARN_20=1 coverage run -m pytest -n 4 src tests -vv --pmr-multiprocess-safe
+	SQLALCHEMY_WARN_20=1 coverage run -m pytest -n 4 src tests -vv --pmr-multiprocess-safe --dist=loadfile
 
 test: test-parallel
 	SQLALCHEMY_WARN_20=1 coverage run -a -m pytest src tests -vv

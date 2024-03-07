@@ -17,7 +17,9 @@ rows = Rows(User(name="Harold"), User(name="Gump"))
 
 
 pg_clean = create_postgres_fixture(Base, rows, session=True, cleanup_databases=True, async_=True)
-pg_no_clean = create_postgres_fixture(Base, rows, session=True, async_=True)
+pg_no_clean = create_postgres_fixture(
+    Base, rows, session=True, cleanup_databases=False, async_=True
+)
 
 
 database_name = None
