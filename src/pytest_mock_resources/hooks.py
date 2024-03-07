@@ -130,7 +130,10 @@ def pytest_sessionfinish(session, exitstatus):
 
     # We ought to avoid performing deep imports here, this file is auto-loaded
     # by pytest plugin machinery.
-    from pytest_mock_resources.container.base import get_tmp_root, load_container_lockfile
+    from pytest_mock_resources.container.base import (
+        get_tmp_root,
+        load_container_lockfile,
+    )
 
     # Kind of a neat side-effect of using the below lock file is that if past
     # PMR runs failed to clean up their container, subsequent runs. Ironically

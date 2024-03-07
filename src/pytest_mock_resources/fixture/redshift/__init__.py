@@ -2,8 +2,17 @@ import pytest
 
 from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.redshift import RedshiftConfig
-from pytest_mock_resources.fixture.base import asyncio_fixture, generate_fixture_id
-from pytest_mock_resources.fixture.postgresql import _async_fixture, _sync_fixture
+from pytest_mock_resources.fixture.base import (
+    asyncio_fixture,
+    generate_fixture_id,
+    Scope,
+)
+from pytest_mock_resources.fixture.postgresql import (
+    _async_fixture,
+    _async_scope_fixture,
+    _sync_fixture,
+    register_scope_fixture,
+)
 from pytest_mock_resources.patch.redshift import psycopg2, sqlalchemy
 
 
@@ -28,7 +37,7 @@ def pmr_redshift_container(pytestconfig, pmr_redshift_config):
 
 def create_redshift_fixture(
     *ordered_actions,
-    scope="function",
+    scope: Scope = "function",
     tables=None,
     session=None,
     async_=False,
@@ -36,6 +45,7 @@ def create_redshift_fixture(
     engine_kwargs=None,
     template_database=True,
     actions_share_transaction=None,
+    cleanup_databases=False,
 ):
     """Produce a Redshift fixture.
 
@@ -67,10 +77,13 @@ def create_redshift_fixture(
             fixtures for backwards compatibility; and disabled by default for
             asynchronous fixtures (the way v2-style/async features work in SQLAlchemy can lead
             to bad default behavior).
+        cleanup_databases: Defaults to `False`. When `True` PMR-created databases will be deleted
+            after dependent tests have completed.
     """
     from pytest_mock_resources.fixture.redshift.udf import REDSHIFT_UDFS
 
     fixture_id = generate_fixture_id(enabled=template_database, name="pg")
+    scope_fixture_name = f"pmr_redshift_scope_{fixture_id}"
 
     ordered_actions = (*ordered_actions, REDSHIFT_UDFS)
     engine_kwargs_ = engine_kwargs or {}
@@ -84,29 +97,48 @@ def create_redshift_fixture(
         "actions_share_transaction": actions_share_transaction,
     }
 
+    register_scope_fixture(
+        engine_manager_kwargs,
+        engine_kwargs=engine_kwargs_,
+        name=scope_fixture_name,
+        cleanup_databases=cleanup_databases,
+        async_=async_,
+    )
+
+    if async_:
+
+        @pytest.mark.usefixtures(scope_fixture_name)
+        async def _async(*_, pmr_redshift_container, pmr_redshift_config, request):
+            fixture_scope = _async_scope_fixture(
+                engine_manager_kwargs,
+                engine_kwargs=engine_kwargs_,
+                cleanup_databases=cleanup_databases,
+            )
+            async for template_database, engine_manager in fixture_scope(pmr_redshift_config):
+                fixture = _async_fixture(
+                    pmr_redshift_config,
+                    engine_kwargs_,
+                    template_database,
+                    engine_manager,
+                )
+                async for engine, conn in fixture:
+                    sqlalchemy.register_redshift_behavior(engine.sync_engine)
+                    yield conn
+
+        return asyncio_fixture(_async, scope=scope)
+
+    @pytest.mark.usefixtures(scope_fixture_name)
     @pytest.fixture(scope=scope)
-    def _sync(*_, pmr_redshift_container, pmr_redshift_config):
+    def _sync(*_, pmr_redshift_container, pmr_redshift_config, request):
+        template_database, engine_manager = request.getfixturevalue(scope_fixture_name)
         for engine, conn in _sync_fixture(
             pmr_redshift_config,
-            engine_manager_kwargs,
             engine_kwargs_,
-            fixture="redshift",
+            template_database,
+            engine_manager,
         ):
             sqlalchemy.register_redshift_behavior(engine)
             with psycopg2.patch_connect(pmr_redshift_config, engine.url.database):
                 yield conn
 
-    async def _async(*_, pmr_redshift_container, pmr_redshift_config):
-        fixture = _async_fixture(
-            pmr_redshift_config,
-            engine_manager_kwargs,
-            engine_kwargs_,
-            fixture="redshift",
-        )
-        async for engine, conn in fixture:
-            sqlalchemy.register_redshift_behavior(engine.sync_engine)
-            yield conn
-
-    if async_:
-        return asyncio_fixture(_async, scope=scope)
     return _sync
