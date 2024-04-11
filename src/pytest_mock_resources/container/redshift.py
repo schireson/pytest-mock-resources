@@ -43,5 +43,5 @@ class RedshiftConfig(PostgresConfig):
         "username": "user",
         "password": "password",
         "root_database": "dev",
-        "drivername": "postgresql+psycopg2",
+        "drivername": None,
     }

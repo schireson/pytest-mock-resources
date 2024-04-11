@@ -1,4 +1,5 @@
-from typing import ClassVar, Iterable
+import sys
+from typing import ClassVar, Iterable, Optional
 
 import sqlalchemy
 import sqlalchemy.exc
@@ -6,6 +7,11 @@ import sqlalchemy.exc
 from pytest_mock_resources.compat.sqlalchemy import URL
 from pytest_mock_resources.config import DockerContainerConfig, fallback
 from pytest_mock_resources.container.base import ContainerCheckFailed
+
+if sys.version_info < (3, 8):
+    from importlib_metadata import Distribution
+else:
+    from importlib.metadata import Distribution
 
 
 class PostgresConfig(DockerContainerConfig):
@@ -48,7 +54,7 @@ class PostgresConfig(DockerContainerConfig):
         "username": "user",
         "password": "password",
         "root_database": "dev",
-        "drivername": "postgresql+psycopg2",
+        "drivername": None,
     }
 
     @fallback
@@ -94,9 +100,7 @@ class PostgresConfig(DockerContainerConfig):
 def get_sqlalchemy_engine(config, database_name, async_=False, autocommit=False, **engine_kwargs):
     # For backwards compatibility, our hardcoded default is psycopg2, and async fixtures
     # will not work with psycopg2, so we instead swap the default to the preferred async driver.
-    drivername = config.drivername
-    if async_ and drivername.endswith("psycopg2"):
-        drivername = drivername.replace("psycopg2", "asyncpg")
+    drivername = detect_driver(config.drivername, async_=async_)
 
     url = URL(
         drivername=drivername,
@@ -118,3 +122,23 @@ def get_sqlalchemy_engine(config, database_name, async_=False, autocommit=False,
         engine = sqlalchemy.create_engine(url, **engine_kwargs)
 
     return engine
+
+
+def detect_driver(drivername: Optional[str] = None, async_: bool = False) -> str:
+    if drivername:
+        return drivername
+
+    if any(Distribution.discover(name="psycopg")):
+        return "postgresql+psycopg"
+
+    if async_:
+        if any(Distribution.discover(name="asyncpg")):
+            return "postgresql+asyncpg"
+    else:
+        if any(Distribution.discover(name="psycopg2")):
+            return "postgresql+psycopg2"
+
+    raise ValueError(  # pragma: no cover
+        "No suitable driver found for Postgres. Please install `psycopg`, `psycopg2`, "
+        "`asyncpg`, or explicitly configure the `drivername=` field of `PostgresConfig`."
+    )
