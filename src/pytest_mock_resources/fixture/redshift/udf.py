@@ -92,7 +92,7 @@ date_add_timestamptz = create_udf(
     **dateadd_kwargs,
 )
 
-len = create_udf(
+len_varchar = create_udf(
     name="LEN",
     args="s VARCHAR",
     returns="INTEGER",
@@ -204,5 +204,5 @@ REDSHIFT_UDFS = Statements(
     datediff_timestamptz,
     left_integer,
     right_integer,
-    len,
+    len_varchar,
 )
