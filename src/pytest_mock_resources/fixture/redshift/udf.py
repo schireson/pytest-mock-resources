@@ -19,7 +19,12 @@ def create_udf(name, args, returns, body, language, schema="public"):
 
     return text(
         _template.format(
-            schema=schema, name=name, args=args, returns=returns, body=body, language=language
+            schema=schema,
+            name=name,
+            args=args,
+            returns=returns,
+            body=body,
+            language=language,
         )
     )
 
@@ -85,6 +90,14 @@ date_add_timestamptz = create_udf(
     args="i VARCHAR, n INTEGER, d TIMESTAMP WITH TIME ZONE",
     returns="TIMESTAMP WITH TIME ZONE",
     **dateadd_kwargs,
+)
+
+len_varchar = create_udf(
+    name="LEN",
+    args="s VARCHAR",
+    returns="INTEGER",
+    body="SELECT LENGTH(s)",
+    language=UdfLanguage.SQL.value,
 )
 
 
@@ -168,7 +181,9 @@ datediff_date = create_udf(
 )
 
 datediff_timestamp = create_udf(
-    name="DATEDIFF", args="units VARCHAR, start_t TIMESTAMP, end_t TIMESTAMP", **datediff_kwargs
+    name="DATEDIFF",
+    args="units VARCHAR, start_t TIMESTAMP, end_t TIMESTAMP",
+    **datediff_kwargs,
 )
 
 datediff_timestamptz = create_udf(
@@ -189,4 +204,5 @@ REDSHIFT_UDFS = Statements(
     datediff_timestamptz,
     left_integer,
     right_integer,
+    len_varchar,
 )
