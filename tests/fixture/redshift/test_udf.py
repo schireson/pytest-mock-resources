@@ -75,7 +75,11 @@ class TestUdf:
         with redshift.begin() as conn:
             result = conn.execute(
                 text("SELECT DATE_ADD(:interval_str, :num, :date_or_datetime);"),
-                {"interval_str": interval_str, "num": num, "date_or_datetime": date_or_datetime},
+                {
+                    "interval_str": interval_str,
+                    "num": num,
+                    "date_or_datetime": date_or_datetime,
+                },
             )
 
             result = result.fetchall()
@@ -216,3 +220,64 @@ class TestUdf:
             result = conn.execute(text("SELECT len('1234')"))
             result = result.fetchone()
             assert result[0] == 4
+
+    @pytest.mark.parametrize(
+        "from_,to,date_,expected",
+        [
+            (
+                "UTC",
+                "America/New_York",
+                "2018-01-01 00:00:00",
+                datetime(2017, 12, 31, 19, 0, 0),
+            ),
+            (
+                "America/New_York",
+                "UTC",
+                "2018-01-01 00:00:00",
+                datetime(2018, 1, 1, 5, 0, 0),
+            ),
+            (
+                "UTC",
+                "Europe/Paris",
+                "2024-06-01 10:00:00",
+                datetime(2024, 6, 1, 12, 0, 0),
+            ),
+            (
+                "UTC",
+                "UTC",
+                "2018-01-01 00:00:00",
+                datetime(2018, 1, 1, 0, 0, 0),
+            ),
+        ],
+    )
+    def test_convert_timezone(self, redshift, from_, to, date_, expected):
+        with redshift.connect() as conn:
+            result = conn.execute(text(f"SELECT CONVERT_TIMEZONE('{from_}', '{to}', '{date_}')"))
+            result = result.fetchone()
+            assert result[0] == expected
+
+    @pytest.mark.parametrize(
+        "to,date_,expected",
+        [
+            (
+                "America/New_York",
+                "2018-01-01 00:00:00",
+                datetime(2017, 12, 31, 19, 0, 0),
+            ),
+            (
+                "UTC",
+                "2018-01-01 00:00:00",
+                datetime(2018, 1, 1, 0, 0, 0),
+            ),
+            (
+                "Europe/Paris",
+                "2024-06-01 10:00:00",
+                datetime(2024, 6, 1, 12, 0, 0),
+            ),
+        ],
+    )
+    def test_convert_timezone_no_source(self, redshift, to, date_, expected):
+        with redshift.connect() as conn:
+            result = conn.execute(text(f"SELECT CONVERT_TIMEZONE('{to}', '{date_}')"))
+            result = result.fetchone()
+            assert result[0] == expected

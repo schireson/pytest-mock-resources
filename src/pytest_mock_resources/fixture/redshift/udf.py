@@ -100,6 +100,22 @@ len_varchar = create_udf(
     language=UdfLanguage.SQL.value,
 )
 
+convert_timezone = create_udf(
+    name="CONVERT_TIMEZONE",
+    args="source_tz VARCHAR, target_tz VARCHAR, ts TIMESTAMP",
+    returns="TIMESTAMP",
+    body="SELECT ts AT TIME ZONE source_tz AT TIME ZONE target_tz",
+    language=UdfLanguage.SQL.value,
+)
+
+convert_timezone_no_source = create_udf(
+    name="CONVERT_TIMEZONE",
+    args="target_tz VARCHAR, ts TIMESTAMP",
+    returns="TIMESTAMP",
+    body="SELECT ts AT TIME ZONE 'UTC' AT TIME ZONE target_tz",
+    language=UdfLanguage.SQL.value,
+)
+
 
 datediff_kwargs = {
     "returns": "BIGINT",
@@ -205,4 +221,6 @@ REDSHIFT_UDFS = Statements(
     left_integer,
     right_integer,
     len_varchar,
+    convert_timezone,
+    convert_timezone_no_source,
 )
