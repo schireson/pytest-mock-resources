@@ -210,3 +210,9 @@ class TestUdf:
             result = conn.execute(text("SELECT RIGHT(1234, 2)"))
             result = result.fetchone()
             assert result[0] == 34
+
+    def test_len(self, redshift):
+        with redshift.connect() as conn:
+            result = conn.execute(text("SELECT len('1234')"))
+            result = result.fetchone()
+            assert result[0] == 4
