@@ -17,6 +17,8 @@ class RedisConfig(DockerContainerConfig):
             Defaults to :code:`6380`.
         ci_port (int): The port to bind the container to when a CI environment is detected.
             Defaults to :code:`6379`.
+        decode_responses (bool): Whether to decode responses from the server on the client.
+            Defaults to :code:`False`.
     """
 
     name = "redis"
