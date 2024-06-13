@@ -1,4 +1,5 @@
 import pytest
+
 from pytest_mock_resources.compat import redis
 from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.redis import RedisConfig
