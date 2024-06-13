@@ -1,4 +1,5 @@
 import pytest
+
 from pytest_mock_resources import create_redis_fixture
 from pytest_mock_resources.compat import redis
 
@@ -255,9 +256,7 @@ class TestLists:
         _list_setup(redis_client)
         assert redis_client.llen("dbs") == 5
         assert redis_client.lindex("dbs", 1) == ("mysql" if is_decoded else b"mysql")
-        assert redis_client.lpop("dbs") == (
-            "mysql_lite" if is_decoded else b"mysql_lite"
-        )
+        assert redis_client.lpop("dbs") == ("mysql_lite" if is_decoded else b"mysql_lite")
 
         redis_client.rpush("dbs", "RabbitMQ")
         assert redis_client.rpop("dbs") == ("RabbitMQ" if is_decoded else b"RabbitMQ")
@@ -265,7 +264,5 @@ class TestLists:
         redis_client.ltrim("dbs", 1, -1)
         rest = redis_client.lrange("dbs", 0, -1)
         assert rest == (
-            ["postgres", "redis", "mongo"]
-            if is_decoded
-            else [b"postgres", b"redis", b"mongo"]
+            ["postgres", "redis", "mongo"] if is_decoded else [b"postgres", b"redis", b"mongo"]
         )
