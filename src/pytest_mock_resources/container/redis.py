@@ -26,11 +26,13 @@ class RedisConfig(DockerContainerConfig):
         "host",
         "port",
         "ci_port",
+        "decode_responses",
     }
     _fields_defaults: ClassVar[dict] = {
         "image": "redis:5.0.7",
         "port": 6380,
         "ci_port": 6379,
+        "decode_responses": False,
     }
 
     def ports(self):

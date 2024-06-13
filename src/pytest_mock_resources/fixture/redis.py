@@ -1,5 +1,4 @@
 import pytest
-
 from pytest_mock_resources.compat import redis
 from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.redis import RedisConfig
@@ -67,7 +66,7 @@ def create_redis_fixture(scope="function", decode_responses: bool = False):
             host=pmr_redis_config.host,
             port=pmr_redis_config.port,
             db=database_number,
-            decode_responses=decode_responses,
+            decode_responses=decode_responses or pmr_redis_config.decode_responses,
         )
         db.flushdb()
 
