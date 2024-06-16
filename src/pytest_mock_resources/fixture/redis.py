@@ -1,5 +1,4 @@
 import pytest
-
 from pytest_mock_resources.compat import redis
 from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.redis import RedisConfig
@@ -23,7 +22,7 @@ def pmr_redis_container(pytestconfig, pmr_redis_config):
     yield from get_container(pytestconfig, pmr_redis_config)
 
 
-def create_redis_fixture(scope="function"):
+def create_redis_fixture(scope="function", decode_responses: bool = False):
     """Produce a Redis fixture.
 
     Any number of fixture functions can be created. Under the hood they will all share the same
@@ -44,6 +43,7 @@ def create_redis_fixture(scope="function"):
 
     Args:
         scope (str): The scope of the fixture can be specified by the user, defaults to "function".
+        decode_responses (bool): Whether to decode the responses from redis.
 
     Raises:
         KeyError: If any additional arguments are provided to the function than what is necessary.
@@ -62,7 +62,12 @@ def create_redis_fixture(scope="function"):
                 "The redis fixture currently only supports up to 16 parallel executions"
             )
 
-        db = redis.Redis(host=pmr_redis_config.host, port=pmr_redis_config.port, db=database_number)
+        db = redis.Redis(
+            host=pmr_redis_config.host,
+            port=pmr_redis_config.port,
+            db=database_number,
+            decode_responses=decode_responses or pmr_redis_config.decode_responses,
+        )
         db.flushdb()
 
         Credentials.assign_from_credentials(

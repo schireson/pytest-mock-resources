@@ -2,6 +2,7 @@ from pytest_mock_resources import create_redis_fixture
 from pytest_mock_resources.compat import redis
 
 redis_client = create_redis_fixture()
+redis_client_decode = create_redis_fixture(decode_responses=True)
 
 
 def _sets_setup(redis_client):
@@ -40,6 +41,65 @@ class TestGeneric:
         r.set("foo", "bar")
         value = r.get("foo").decode("utf-8")
         assert value == "bar"
+
+
+class TestStringsDecoded:
+    def test_set(self, redis_client_decode):
+        redis_client_decode.set("foo", "bar")
+        value = redis_client_decode.get("foo")
+        assert value == "bar"
+
+    def test_append(self, redis_client_decode):
+        redis_client_decode.set("foo", "bar")
+        redis_client_decode.append("foo", "baz")
+        value = redis_client_decode.get("foo")
+        assert value == "barbaz"
+
+    def test_int_operations(self, redis_client_decode):
+        redis_client_decode.set("foo", 1)
+        redis_client_decode.incr("foo")
+        value = int(redis_client_decode.get("foo"))
+        assert value == 2
+
+        redis_client_decode.decr("foo")
+        value = int(redis_client_decode.get("foo"))
+        assert value == 1
+
+        redis_client_decode.incrby("foo", 4)
+        value = int(redis_client_decode.get("foo"))
+        assert value == 5
+
+        redis_client_decode.decrby("foo", 3)
+        value = int(redis_client_decode.get("foo"))
+        assert value == 2
+
+    def test_float_operations(self, redis_client_decode):
+        redis_client_decode.set("foo", 1.2)
+        value = float(redis_client_decode.get("foo"))
+        assert value == 1.2
+
+        redis_client_decode.incrbyfloat("foo", 4.1)
+        value = float(redis_client_decode.get("foo"))
+        assert value == 5.3
+
+        redis_client_decode.incrbyfloat("foo", -3.1)
+        value = float(redis_client_decode.get("foo"))
+        assert value == 2.2
+
+    def test_multiple_keys(self, redis_client_decode):
+        test_mapping = {"foo": "bar", "baz": 1, "flo": 1.2}
+        redis_client_decode.mset(test_mapping)
+        assert redis_client_decode.get("foo") == "bar"
+        assert int(redis_client_decode.get("baz")) == 1
+        assert float(redis_client_decode.get("flo")) == 1.2
+
+    def test_querries(self, redis_client_decode):
+        test_mapping = {"foo1": "bar1", "foo2": "bar2", "flo": "flo"}
+        redis_client_decode.mset(test_mapping)
+        foo_keys = redis_client_decode.keys("foo*")
+        assert "foo1" in foo_keys
+        assert "foo2" in foo_keys
+        assert "flo" not in foo_keys
 
 
 class TestStrings:

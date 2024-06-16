@@ -135,7 +135,9 @@ def detect_driver(drivername: Optional[str] = None, async_: bool = False) -> str
         if any(Distribution.discover(name="asyncpg")):
             return "postgresql+asyncpg"
     else:
-        if any(Distribution.discover(name="psycopg2")) or any(Distribution.discover(name="psycopg2-binary")):
+        if any(Distribution.discover(name="psycopg2")) or any(
+            Distribution.discover(name="psycopg2-binary")
+        ):
             return "postgresql+psycopg2"
 
     raise ValueError(  # pragma: no cover
