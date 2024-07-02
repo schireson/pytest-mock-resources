@@ -19,3 +19,21 @@ def test_multiprocess_container_cleanup_race_condition(pytester):
     args = ["-vv", "-n", "2", "--pmr-multiprocess-safe", "test_split.py"]
     result = pytester.inline_run(*args)
     result.assertoutcome(passed=2, skipped=0, failed=0)
+
+
+@pytest.mark.postgres
+def test_postgres_cleanup(pytester):
+    pytester.copy_example()
+
+    args = ["-vv", "--pmr-multiprocess-safe", "test_cleanup.py"]
+    result = pytester.inline_run(*args)
+    result.assertoutcome(passed=2, skipped=0, failed=0)
+
+
+@pytest.mark.postgres
+def test_postgres_no_cleanup(pytester):
+    pytester.copy_example()
+
+    args = ["-vv", "--pmr-multiprocess-safe", "test_cleanup.py"]
+    result = pytester.inline_run(*args)
+    result.assertoutcome(passed=2, skipped=0, failed=0)

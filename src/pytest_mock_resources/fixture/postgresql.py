@@ -1,11 +1,15 @@
+from __future__ import annotations
+
+import inspect
 import logging
-from typing import cast
+from typing import cast, TYPE_CHECKING
 
 import pytest
 import sqlalchemy
 from sqlalchemy import text
 from sqlalchemy.engine import Connection, Engine
 
+from pytest_mock_resources.compat import get_resource
 from pytest_mock_resources.container.base import (
     async_retry,
     DEFAULT_RETRIES,
@@ -16,12 +20,20 @@ from pytest_mock_resources.container.postgres import (
     get_sqlalchemy_engine,
     PostgresConfig,
 )
-from pytest_mock_resources.fixture.base import asyncio_fixture, generate_fixture_id
+from pytest_mock_resources.fixture.base import (
+    asyncio_fixture,
+    generate_fixture_id,
+    Scope,
+)
+from pytest_mock_resources.hooks import get_pytest_flag
 from pytest_mock_resources.sqlalchemy import (
     bifurcate_actions,
     EngineManager,
     normalize_actions,
 )
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncEngine
 
 log = logging.getLogger(__name__)
 
@@ -54,7 +66,7 @@ def pmr_postgres_container(pytestconfig, pmr_postgres_config: PostgresConfig):
 
 def create_postgres_fixture(
     *ordered_actions,
-    scope="function",
+    scope: Scope = "function",
     tables=None,
     session=None,
     async_=False,
@@ -62,6 +74,7 @@ def create_postgres_fixture(
     engine_kwargs=None,
     template_database=True,
     actions_share_transaction=None,
+    cleanup_databases: bool | None = None,
 ):
     """Produce a Postgres fixture.
 
@@ -89,8 +102,12 @@ def create_postgres_fixture(
             fixtures for backwards compatibility; and disabled by default for
             asynchronous fixtures (the way v2-style/async features work in SQLAlchemy can lead
             to bad default behavior).
+        cleanup_databases: When `True` created databases will be deleted after dependent tests
+            have completed. Defaults to `None` which causes it to refer to the `pmr_cleanup`/`--pmr-cleanup`
+            pytest-level config (this defaults to `False`).
     """
     fixture_id = generate_fixture_id(enabled=template_database, name="pg")
+    scope_fixture_name = f"pmr_postgres_scope_{fixture_id}"
 
     engine_kwargs_ = engine_kwargs or {}
     engine_manager_kwargs = {
@@ -102,53 +119,160 @@ def create_postgres_fixture(
         "actions_share_transaction": actions_share_transaction,
     }
 
+    register_scope_fixture(
+        engine_manager_kwargs,
+        engine_kwargs=engine_kwargs_,
+        name=scope_fixture_name,
+        cleanup_databases=cleanup_databases,
+        async_=async_,
+        container_fixture="pmr_postgres_container",
+        config_fixture="pmr_postgres_config",
+    )
+
+    if async_:
+
+        async def _async(*_, pmr_postgres_container, pmr_postgres_config, request):
+            cleanup = resolve_cleanup(request.config, cleanup_databases)
+
+            fixture_scope = _async_scope_fixture(
+                engine_manager_kwargs,
+                engine_kwargs=engine_kwargs_,
+                cleanup_databases=cleanup,
+                config_fixture="pmr_postgres_config",
+            )
+            async for template_database, engine_manager in fixture_scope(request):
+                fixture = _async_fixture(
+                    pmr_postgres_config,
+                    engine_kwargs_,
+                    template_database,
+                    engine_manager.copy(),
+                    cleanup_databases=cleanup,
+                )
+                async for _, conn in fixture:
+                    yield conn
+
+        usefixture = pytest.mark.usefixtures(scope_fixture_name)
+        return usefixture(asyncio_fixture(_async, scope=scope))
+
+    @pytest.mark.usefixtures(scope_fixture_name)
     @pytest.fixture(scope=scope)
-    def _sync(*_, pmr_postgres_container, pmr_postgres_config):
-        fixture = _sync_fixture(pmr_postgres_config, engine_manager_kwargs, engine_kwargs_)
+    def _sync(*_, pmr_postgres_container, pmr_postgres_config, request):
+        cleanup = resolve_cleanup(request.config, cleanup_databases)
+        template_database, engine_manager = request.getfixturevalue(scope_fixture_name)
+
+        fixture = _sync_fixture(
+            pmr_postgres_config,
+            engine_kwargs_,
+            template_database,
+            engine_manager.copy(),
+            cleanup_databases=cleanup,
+        )
         for _, conn in fixture:
             yield conn
 
-    async def _async(*_, pmr_postgres_container, pmr_postgres_config):
-        fixture = _async_fixture(pmr_postgres_config, engine_manager_kwargs, engine_kwargs_)
-        async for _, conn in fixture:
-            yield conn
-
-    if async_:
-        return asyncio_fixture(_async, scope=scope)
     return _sync
 
 
-def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="postgres"):
-    root_engine = cast(Engine, get_sqlalchemy_engine(pmr_config, pmr_config.root_database))
-    conn = retry(root_engine.connect, retries=DEFAULT_RETRIES)
-    conn.close()
-    root_engine.dispose()
+def register_scope_fixture(
+    engine_manager_kwargs,
+    engine_kwargs,
+    *,
+    name,
+    cleanup_databases: bool | None = None,
+    async_: bool = False,
+    container_fixture: str,
+    config_fixture: str,
+):
+    if async_:
+        scope_fixture = _async_scope_fixture
+        fixture_fn = asyncio_fixture
+    else:
+        scope_fixture = _sync_scope_fixture
+        fixture_fn = pytest.fixture  # type: ignore
 
-    root_engine = cast(
-        Engine,
-        get_sqlalchemy_engine(pmr_config, pmr_config.root_database, autocommit=True),
-    )
-    with root_engine.connect() as root_conn:
-        with root_conn.begin() as trans:
-            template_database, template_manager, engine_manager = create_engine_manager(
-                root_conn, **engine_manager_kwargs, fixture=fixture
-            )
-            trans.commit()
-    root_engine.dispose()
-
-    if template_manager:
-        assert template_database
-
-        template_engine = cast(
-            Engine,
-            get_sqlalchemy_engine(pmr_config, template_database, **engine_kwargs),
+    caller_globals = find_caller_globals()
+    if name not in caller_globals:
+        fixture = fixture_fn(
+            scope_fixture(
+                engine_manager_kwargs,
+                engine_kwargs=engine_kwargs,
+                cleanup_databases=cleanup_databases,
+                config_fixture=config_fixture,
+            ),
+            scope="session",
+            name=name,
         )
-        with template_engine.connect() as conn:
-            with conn.begin() as trans:
-                template_manager.run_static_actions(conn)
-                trans.commit()
-        template_engine.dispose()
+        fixture_uses = pytest.mark.usefixtures(container_fixture, config_fixture)
+        caller_globals[name] = fixture_uses(fixture)
 
+
+def _sync_scope_fixture(
+    engine_manager_kwargs,
+    *,
+    engine_kwargs: dict,
+    config_fixture: str,
+    cleanup_databases: bool | None = None,
+    name="postgres",
+):
+    def fixture(request):
+        cleanup = resolve_cleanup(request.config, cleanup_databases)
+
+        pmr_config = request.getfixturevalue(config_fixture)
+
+        root_engine = cast(
+            Engine,
+            get_sqlalchemy_engine(pmr_config, pmr_config.root_database),
+        )
+        conn = retry(root_engine.connect, retries=DEFAULT_RETRIES)
+        conn.close()
+        root_engine.dispose()
+
+        root_engine = cast(
+            Engine,
+            get_sqlalchemy_engine(pmr_config, pmr_config.root_database, autocommit=True),
+        )
+        with root_engine.connect() as root_conn:
+            with root_conn.begin() as trans:
+                (
+                    template_database,
+                    template_manager,
+                    engine_manager,
+                ) = create_engine_manager(root_conn, **engine_manager_kwargs, fixture=name)
+                trans.commit()
+        root_engine.dispose()
+
+        if template_manager:
+            assert template_database
+
+            template_engine = cast(
+                Engine,
+                get_sqlalchemy_engine(pmr_config, template_database, **engine_kwargs),
+            )
+            with template_engine.connect() as conn:
+                with conn.begin() as trans:
+                    template_manager.run_static_actions(conn)
+                    trans.commit()
+            template_engine.dispose()
+
+        try:
+            yield template_database, engine_manager
+        finally:
+            if cleanup and template_database.startswith("pmr_template"):
+                with root_engine.connect() as root_conn:
+                    _sync_drop_database(root_conn, template_database)
+                root_engine.dispose()
+
+    return fixture
+
+
+def _sync_fixture(
+    pmr_config,
+    engine_kwargs,
+    template_database: Scope,
+    engine_manager: EngineManager,
+    *,
+    cleanup_databases: bool = False,
+):
     # Everything below is normal per-test context. We create a brand new database/engine/manager
     # distinct from what might have been used for the template database.
     root_engine = cast(
@@ -162,37 +286,94 @@ def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="
     root_engine.dispose()
 
     engine = get_sqlalchemy_engine(pmr_config, database_name, **engine_kwargs)
-    yield from engine_manager.manage_sync(engine)
+    try:
+        yield from engine_manager.manage_sync(engine)
+    finally:
+        if cleanup_databases:
+            with root_engine.connect() as root_conn:
+                _sync_drop_database(root_conn, database_name)
+            root_engine.dispose()
 
 
-async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="postgres"):
-    root_engine = get_sqlalchemy_engine(
-        pmr_config, pmr_config.root_database, async_=True, autocommit=True
-    )
+def _async_scope_fixture(
+    engine_manager_kwargs,
+    *,
+    engine_kwargs: dict,
+    config_fixture: str,
+    cleanup_databases: bool | None = None,
+    name="postgres",
+):
+    async def fixture(request):
+        cleanup = resolve_cleanup(request.config, cleanup_databases)
 
-    root_conn = await async_retry(root_engine.connect, retries=DEFAULT_RETRIES)
-    await root_conn.close()
+        pmr_config = request.getfixturevalue(config_fixture)
 
-    async with root_engine.connect() as root_conn:
-        async with root_conn.begin() as trans:
-            (
-                template_database,
-                template_manager,
-                engine_manager,
-            ) = await root_conn.run_sync(
-                create_engine_manager, **engine_manager_kwargs, fixture=fixture
+        root_engine = cast(
+            "AsyncEngine",
+            get_sqlalchemy_engine(
+                pmr_config,
+                pmr_config.root_database,
+                async_=True,
+                autocommit=True,
+            ),
+        )
+
+        root_conn = await async_retry(root_engine.connect, retries=DEFAULT_RETRIES)
+        await root_conn.close()
+
+        async with root_engine.connect() as root_conn:
+            async with root_conn.begin() as trans:
+                (
+                    template_database,
+                    template_manager,
+                    engine_manager,
+                ) = await root_conn.run_sync(
+                    create_engine_manager,
+                    **engine_manager_kwargs,
+                    fixture=name,
+                    allow_existing=True,
+                )
+                await trans.commit()
+
+        if template_manager:
+            assert template_database
+
+            engine = cast(
+                "AsyncEngine",
+                get_sqlalchemy_engine(pmr_config, template_database, **engine_kwargs, async_=True),
             )
-            await trans.commit()
+            async with engine.begin() as conn:
+                await conn.run_sync(template_manager.run_static_actions)
+                await conn.commit()
+            await engine.dispose()
 
-    if template_manager:
-        assert template_database
+        try:
+            yield template_database, engine_manager
+        finally:
+            if cleanup and template_database.startswith("pmr_template"):
+                async with root_engine.connect() as root_conn:
+                    await root_conn.run_sync(_sync_drop_database, template_database)
+                await root_engine.dispose()
 
-        engine = get_sqlalchemy_engine(pmr_config, template_database, **engine_kwargs, async_=True)
-        async with engine.begin() as conn:
-            await conn.run_sync(template_manager.run_static_actions)
-            await conn.commit()
-        await engine.dispose()
+    return fixture
 
+
+async def _async_fixture(
+    pmr_config,
+    engine_kwargs,
+    template_database: str,
+    engine_manager: EngineManager,
+    cleanup_databases: bool = False,
+):
+    root_engine = cast(
+        "AsyncEngine",
+        get_sqlalchemy_engine(
+            pmr_config,
+            pmr_config.root_database,
+            async_=True,
+            autocommit=True,
+        ),
+    )
     # Everything below is normal per-test context. We create a brand new database/engine/manager
     # distinct from what might have been used for the template database.
     async with root_engine.connect() as root_conn:
@@ -205,8 +386,15 @@ async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fi
     await root_engine.dispose()
 
     engine = get_sqlalchemy_engine(pmr_config, database_name, **engine_kwargs, async_=True)
-    async for engine, conn in engine_manager.manage_async(engine):
-        yield engine, conn
+
+    try:
+        async for engine, conn in engine_manager.manage_async(engine):
+            yield engine, conn
+    finally:
+        if cleanup_databases:
+            async with root_engine.connect() as root_conn:
+                await root_conn.run_sync(_sync_drop_database, database_name)
+            await root_engine.dispose()
 
 
 def create_engine_manager(
@@ -219,6 +407,7 @@ def create_engine_manager(
     fixture_id=None,
     actions_share_transaction=None,
     fixture="postgres",
+    allow_existing: bool = False,
 ):
     normalized_actions = normalize_actions(ordered_actions, fixture=fixture)
     static_actions, dynamic_actions = bifurcate_actions(normalized_actions)
@@ -233,17 +422,18 @@ def create_engine_manager(
                 database_name=fixture_id,
                 ignore_failure=True,
             )
-        except DatabaseExistsError:
-            # This implies it's been created during a prior test, and the template should already be
-            # populated.
-            pass
-        else:
+
             template_manager = EngineManager(
                 dynamic_actions,
                 static_actions=static_actions,
                 session=session,
                 tables=tables,
             )
+        except DatabaseExistsError:
+            # This implies it's been created during a prior test, and the template should already be
+            # populated.
+            if not allow_existing:
+                raise
 
         # The template to be used needs to be changed for the downstream database to the template
         # we created earlier.
@@ -283,7 +473,7 @@ def _produce_clean_database(
     except (sqlalchemy.exc.IntegrityError, sqlalchemy.exc.ProgrammingError):
         if not ignore_failure:
             raise
-        raise DatabaseExistsError()
+        raise DatabaseExistsError(database_name)
 
     return database_name
 
@@ -302,3 +492,29 @@ def _generate_database_name(conn):
     result = conn.execute(text("INSERT INTO pytest_mock_resource_db VALUES (DEFAULT) RETURNING id"))
     id_ = next(iter(result))[0]
     return f"pytest_mock_resource_db_{id_}"
+
+
+def _sync_drop_database(conn: Connection, database_name: str):
+    with conn.begin() as trans:
+        conn.execute(text(f"DROP DATABASE {database_name}"))
+        trans.commit()
+
+
+def find_caller_globals():
+    """Return the stackframe of the calling function of the `create_<x_fixture` call."""
+    ignore_path = get_resource("pytest_mock_resources")
+    stack = inspect.stack()
+    for item in stack:
+        if item.filename.startswith(ignore_path) or item.filename.endswith("pdb.py"):
+            continue
+
+        frame = item.frame
+        return frame.f_globals
+
+    raise RuntimeError("Could not find calling frame.")  # pragma: no cover
+
+
+def resolve_cleanup(config, value: bool | None) -> bool:
+    if value is None:
+        return get_pytest_flag(config, "pmr_cleanup")
+    return value

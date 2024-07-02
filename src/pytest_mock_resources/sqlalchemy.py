@@ -1,7 +1,7 @@
 import fnmatch
 import logging
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Dict, Iterable, List, Optional, Set, TypeVar, Union
 
 import sqlalchemy
@@ -83,6 +83,9 @@ class EngineManager:
     actions_share_transaction: Optional[bool] = None
 
     _ddl_created: Dict[MetaData, bool] = field(default_factory=dict)
+
+    def copy(self):
+        return replace(self, _ddl_created={})
 
     @classmethod
     def create(

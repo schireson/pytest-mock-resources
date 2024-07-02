@@ -12,6 +12,12 @@ def pytest_addoption(parser):
         default=False,
     )
     parser.addini(
+        "pmr_cleanup",
+        "Optionally cleanup created fixture resources.",
+        type="bool",
+        default=False,
+    )
+    parser.addini(
         "pmr_cleanup_container",
         "Optionally disable attempts to cleanup created containers",
         type="bool",
@@ -31,6 +37,13 @@ def pytest_addoption(parser):
         default=False,
         help="Enable multiprocess-safe mode",
         dest="pmr_multiprocess_safe",
+    )
+    group.addoption(
+        "--pmr-cleanup",
+        action="store_true",
+        default=False,
+        help="Optionally cleanup created fixture resources.",
+        dest="pmr_cleanup",
     )
     group.addoption(
         "--pmr-cleanup-container",
@@ -130,7 +143,10 @@ def pytest_sessionfinish(session, exitstatus):
 
     # We ought to avoid performing deep imports here, this file is auto-loaded
     # by pytest plugin machinery.
-    from pytest_mock_resources.container.base import get_tmp_root, load_container_lockfile
+    from pytest_mock_resources.container.base import (
+        get_tmp_root,
+        load_container_lockfile,
+    )
 
     # Kind of a neat side-effect of using the below lock file is that if past
     # PMR runs failed to clean up their container, subsequent runs. Ironically

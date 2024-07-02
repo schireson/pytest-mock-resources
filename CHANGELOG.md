@@ -1,6 +1,13 @@
 # Changelog
 
-## [v2.12.0](https://github.com/schireson/pytest-mock-resources/compare/v2.11.0...v2.12.0) (2024-06-19)
+## [Unreleased](https://github.com/schireson/pytest-mock-resources/compare/v2.12.0...HEAD) (2024-07-02)
+
+### Features
+
+* Add flag to clean up postgres databases.
+([b25714d](https://github.com/schireson/pytest-mock-resources/commit/b25714d3ad2aaca71a810e2468574e00245fc30c))
+
+## [v2.12.0](https://github.com/schireson/pytest-mock-resources/compare/v2.11.0...v2.12.0) (2024-06-20)
 
 ### Features
 
