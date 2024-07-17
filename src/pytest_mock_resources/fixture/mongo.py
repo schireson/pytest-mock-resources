@@ -1,3 +1,5 @@
+from typing import List
+
 import pytest
 
 from pytest_mock_resources.compat import pymongo
@@ -41,6 +43,20 @@ def create_mongo_fixture(scope="function"):
 
 
 def _create_clean_database(config):
+    if _replication_enabled(config):
+        with pymongo.MongoClient(config.host, 27017, directConnection=True) as repl_client:
+            container_args: List[str] = config.container_args
+            repl_config = {
+                "_id": container_args[container_args.index("--replSet") + 1],
+                # without telling mongo the host, it attempts to use the container id
+                "members": [{"_id": 0, "host": f"{config.host}:27017"}],
+            }
+            repl_client.admin.command(
+                "replSetInitiate",
+                repl_config,
+                read_preference=pymongo.ReadPreference.PRIMARY_PREFERRED,
+            )
+
     root_client = pymongo.MongoClient(config.host, config.port)
     root_db = root_client[config.root_database]
 
@@ -74,3 +90,7 @@ def _create_clean_database(config):
         database=db_id,
     )
     return limited_db
+
+
+def _replication_enabled(config: MongoConfig):
+    return any(arg == "--replSet" for arg in config.container_args or [])

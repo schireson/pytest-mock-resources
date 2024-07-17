@@ -8,6 +8,7 @@ import time
 import types
 from typing import Awaitable, Callable, TYPE_CHECKING, TypeVar
 
+from pytest_mock_resources.config import DockerContainerConfig
 from pytest_mock_resources.hooks import (
     get_docker_client,
     get_pytest_flag,
@@ -129,7 +130,11 @@ def get_container(pytestconfig, config, *, retries=DEFAULT_RETRIES, interval=DEF
 
 
 def wait_for_container(
-    docker: DockerClient, config, *, retries=DEFAULT_RETRIES, interval=DEFAULT_INTERVAL
+    docker: DockerClient,
+    config: DockerContainerConfig,
+    *,
+    retries=DEFAULT_RETRIES,
+    interval=DEFAULT_INTERVAL,
 ):
     """Wait for evidence that the container is up and healthy.
 
@@ -158,7 +163,9 @@ def wait_for_container(
     except ContainerCheckFailed:
         # In the event it doesn't exist, we attempt to start the container
         try:
-            container = docker.run(*run_args, **run_kwargs, detach=True, remove=True)
+            container = docker.run(
+                *run_args, **run_kwargs, command=config.container_args, detach=True, remove=True
+            )
         except DockerException as e:
             container = None
             # This sometimes happens if multiple container fixtures race for the first

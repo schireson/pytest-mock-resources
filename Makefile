@@ -13,27 +13,27 @@ install:
 
 ## Test
 test-base:
-	SQLALCHEMY_WARN_20=1 coverage run -a -m \
+	SQLALCHEMY_WARN_20=1 poetry run coverage run -a -m \
 		pytest src tests -vv \
 		-m 'not postgres and not redshift and not mongo and not redis and not mysql and not moto'
 
 test-parallel:
-	SQLALCHEMY_WARN_20=1 coverage run -m pytest -n 4 src tests -vv --pmr-multiprocess-safe
+	SQLALCHEMY_WARN_20=1 poetry run coverage run -m pytest -n 4 src tests -vv --pmr-multiprocess-safe
 
 test: test-parallel
-	SQLALCHEMY_WARN_20=1 coverage run -a -m pytest src tests -vv
-	coverage report
-	coverage xml
+	SQLALCHEMY_WARN_20=1 poetry run coverage run -a -m pytest src tests -vv
+	poetry run coverage report
+	poetry run coverage xml
 
 ## Lint
 lint:
-	ruff --fix src tests || exit 1
-	ruff format -q src tests || exit 1
-	mypy src tests --show-error-codes || exit 1
+	poetry run ruff --fix src tests || exit 1
+	poetry run ruff format -q src tests || exit 1
+	poetry run mypy src tests --show-error-codes || exit 1
 
 format:
-	ruff src tests --fix
-	ruff format src tests
+	poetry run ruff src tests --fix
+	poetry run ruff format src tests
 
 ## Build
 build-package:
@@ -47,3 +47,10 @@ build: build-package
 
 publish: build
 	poetry publish -u __token__ -p '${PYPI_PASSWORD}' --no-interaction
+
+.PHONY: prerelease
+prerelease:
+	poetry version prerelease
+	git add pyproject.toml
+	git commit -m "Release version $$(poetry version --short)"
+	git tag $$(poetry version --short)

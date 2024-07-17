@@ -23,7 +23,14 @@ class MongoConfig(DockerContainerConfig):
 
     name = "mongo"
 
-    _fields: ClassVar[Iterable] = {"image", "host", "port", "ci_port", "root_database"}
+    _fields: ClassVar[Iterable] = {
+        "image",
+        "host",
+        "port",
+        "ci_port",
+        "root_database",
+        "container_args",
+    }
     _fields_defaults: ClassVar[dict] = {
         "image": "mongo:3.6",
         "port": 28017,

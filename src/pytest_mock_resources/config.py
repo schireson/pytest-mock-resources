@@ -117,7 +117,7 @@ class DockerContainerConfig:
 
     @fallback
     def container_args(self):
-        return ()
+        return []
 
     def ports(self):
         return {}
