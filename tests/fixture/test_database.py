@@ -91,6 +91,7 @@ def test_create_custom_connection(postgres_3):
 
     with engine.connect() as conn:
         conn.execute(text("select 1"))
+    engine.dispose()
 
 
 def test_create_custom_connection_from_dict(postgres_3):
@@ -103,6 +104,7 @@ def test_create_custom_connection_from_dict(postgres_3):
 
     with engine.connect() as conn:
         conn.execute(text("select 1"))
+    engine.dispose()
 
 
 def test_create_custom_connection_url(postgres_3):
@@ -110,6 +112,7 @@ def test_create_custom_connection_url(postgres_3):
     engine = create_engine(url, isolation_level="AUTOCOMMIT")
     with engine.connect() as conn:
         conn.execute(text("select 1"))
+    engine.dispose()
 
 
 def test_bad_actions(postgres):

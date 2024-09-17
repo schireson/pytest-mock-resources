@@ -17,6 +17,7 @@ from pytest_mock_resources.container.postgres import (
     PostgresConfig,
 )
 from pytest_mock_resources.fixture.base import asyncio_fixture, generate_fixture_id, Scope
+from pytest_mock_resources.hooks import should_cleanup
 from pytest_mock_resources.sqlalchemy import (
     bifurcate_actions,
     EngineManager,
@@ -114,6 +115,7 @@ def create_postgres_fixture(
     engine_kwargs=None,
     template_database=True,
     actions_share_transaction=None,
+    cleanup_database: Optional[bool] = None,
 ):
     """Produce a Postgres fixture.
 
@@ -141,6 +143,10 @@ def create_postgres_fixture(
             fixtures for backwards compatibility; and disabled by default for
             asynchronous fixtures (the way v2-style/async features work in SQLAlchemy can lead
             to bad default behavior).
+        cleanup_database: Whether to clean up the database after the test completes. Defaults to `None`,
+            which defers the decision to the pmr_cleanup/--pmr-cleanup pytest options (which default to True).
+            Note this does not currently clean up any "template" databases produced in service
+            of the fixture.
     """
     fixture_id = generate_fixture_id(enabled=template_database, name="pg")
 
@@ -155,13 +161,23 @@ def create_postgres_fixture(
     }
 
     @pytest.fixture(scope=scope)
-    def _sync(*_, pmr_postgres_container, pmr_postgres_config):
-        fixture = _sync_fixture(pmr_postgres_config, engine_manager_kwargs, engine_kwargs_)
+    def _sync(*_, pmr_postgres_container, pmr_postgres_config, pytestconfig):
+        fixture = _sync_fixture(
+            pmr_postgres_config,
+            engine_manager_kwargs,
+            engine_kwargs_,
+            cleanup_database=should_cleanup(pytestconfig, cleanup_database),
+        )
         for _, conn in fixture:
             yield conn
 
-    async def _async(*_, pmr_postgres_container, pmr_postgres_config):
-        fixture = _async_fixture(pmr_postgres_config, engine_manager_kwargs, engine_kwargs_)
+    async def _async(*_, pmr_postgres_container, pmr_postgres_config, pytestconfig):
+        fixture = _async_fixture(
+            pmr_postgres_config,
+            engine_manager_kwargs,
+            engine_kwargs_,
+            cleanup_database=should_cleanup(pytestconfig, cleanup_database),
+        )
         async for _, conn in fixture:
             yield conn
 
@@ -170,7 +186,14 @@ def create_postgres_fixture(
     return _sync
 
 
-def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="postgres"):
+def _sync_fixture(
+    pmr_config,
+    engine_manager_kwargs,
+    engine_kwargs,
+    *,
+    fixture="postgres",
+    cleanup_database: bool = True,
+):
     root_engine = cast(Engine, get_sqlalchemy_engine(pmr_config, pmr_config.root_database))
     conn = retry(root_engine.connect, retries=DEFAULT_RETRIES)
     conn.close()
@@ -216,10 +239,27 @@ def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="
     engine = get_sqlalchemy_engine(pmr_config, database_name, **engine_kwargs)
     yield from engine_manager.manage_sync(engine)
 
+    if cleanup_database:
+        with root_engine.connect() as root_conn:
+            with root_conn.begin() as trans:
+                _drop_database(root_conn, database_name)
+                trans.commit()
+        root_engine.dispose()
 
-async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="postgres"):
-    root_engine = get_sqlalchemy_engine(
-        pmr_config, pmr_config.root_database, async_=True, autocommit=True
+
+async def _async_fixture(
+    pmr_config,
+    engine_manager_kwargs,
+    engine_kwargs,
+    *,
+    fixture="postgres",
+    cleanup_database: bool = True,
+):
+    from sqlalchemy.ext.asyncio import AsyncEngine
+
+    root_engine = cast(
+        AsyncEngine,
+        get_sqlalchemy_engine(pmr_config, pmr_config.root_database, async_=True, autocommit=True),
     )
 
     root_conn = await async_retry(root_engine.connect, retries=DEFAULT_RETRIES)
@@ -239,7 +279,10 @@ async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fi
     if template_manager:
         assert template_database
 
-        engine = get_sqlalchemy_engine(pmr_config, template_database, **engine_kwargs, async_=True)
+        engine = cast(
+            AsyncEngine,
+            get_sqlalchemy_engine(pmr_config, template_database, **engine_kwargs, async_=True),
+        )
         async with engine.begin() as conn:
             await conn.run_sync(template_manager.run_static_actions)
             await conn.commit()
@@ -259,6 +302,13 @@ async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fi
     engine = get_sqlalchemy_engine(pmr_config, database_name, **engine_kwargs, async_=True)
     async for engine, conn in engine_manager.manage_async(engine):
         yield engine, conn
+
+    if cleanup_database:
+        async with root_engine.connect() as root_conn:
+            async with root_conn.begin() as trans:
+                await root_conn.run_sync(_drop_database, database_name)
+                await trans.commit()
+        await root_engine.dispose()
 
 
 def create_engine_manager(
@@ -354,6 +404,16 @@ def _generate_database_name(conn):
     result = conn.execute(text("INSERT INTO pytest_mock_resource_db VALUES (DEFAULT) RETURNING id"))
     id_ = next(iter(result))[0]
     return f"pytest_mock_resource_db_{id_}"
+
+
+def _drop_database(root_conn: Connection, database_name: str):
+    with_force = ""
+
+    assert root_conn.dialect.server_version_info
+    if root_conn.dialect.server_version_info >= (13, 0):
+        with_force = " WITH FORCE"
+
+    root_conn.execute(text(f"DROP DATABASE {database_name}{with_force}"))
 
 
 pmr_postgres_config = create_postgres_config_fixture()
