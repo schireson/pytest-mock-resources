@@ -16,6 +16,8 @@ from pytest_mock_resources.fixture.mysql import (
     pmr_mysql_container,
 )
 from pytest_mock_resources.fixture.postgresql import (
+    create_postgres_config_fixture,
+    create_postgres_container_fixture,
     create_postgres_fixture,
     pmr_postgres_config,
     pmr_postgres_container,
@@ -39,6 +41,8 @@ __all__ = [
     "create_moto_fixture",
     "create_mysql_fixture",
     "create_postgres_fixture",
+    "create_postgres_config_fixture",
+    "create_postgres_container_fixture",
     "create_redis_fixture",
     "create_redshift_fixture",
     "create_sqlite_fixture",

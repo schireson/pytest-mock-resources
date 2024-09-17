@@ -1,5 +1,5 @@
 import logging
-from typing import cast
+from typing import cast, Optional
 
 import pytest
 import sqlalchemy
@@ -16,12 +16,22 @@ from pytest_mock_resources.container.postgres import (
     get_sqlalchemy_engine,
     PostgresConfig,
 )
-from pytest_mock_resources.fixture.base import asyncio_fixture, generate_fixture_id
+from pytest_mock_resources.fixture.base import asyncio_fixture, generate_fixture_id, Scope
 from pytest_mock_resources.sqlalchemy import (
     bifurcate_actions,
     EngineManager,
     normalize_actions,
 )
+
+__all__ = [
+    "DatabaseExistsError",
+    "PostgresConfig",
+    "create_postgres_config_fixture",
+    "create_postgres_container_fixture",
+    "create_postgres_fixture",
+    "pmr_postgres_config",
+    "pmr_postgres_container",
+]
 
 log = logging.getLogger(__name__)
 
@@ -35,26 +45,68 @@ class DatabaseExistsError(RuntimeError):
     """
 
 
-@pytest.fixture(scope="session")
-def pmr_postgres_config():
-    """Override this fixture with a :class:`PostgresConfig` instance to specify different defaults.
+def create_postgres_config_fixture(
+    config: Optional[PostgresConfig] = None, *, scope: Scope = "session"
+):
+    """Create a fixture for a :class:`PostgresConfig` instance.
+
+    Arguments:
+        config: A postgres configuration instance to use as the default.
+        scope: The scope of the fixture. Defaults to "session".
+
+    >>> pmr_postgres_config = create_postgres_config_fixture(PostgresConfig(), scope="session")
+
+    is exactly equivalent to
+
+    >>> @pytest.fixture(scope="session")
+    ... def pmr_postgres_config():
+    ...    return PostgresConfig()
+    """
+    if config is None:
+        config = PostgresConfig()
+
+    @pytest.fixture(scope=scope)
+    def fixture():
+        """Override this fixture with a :class:`PostgresConfig` instance to specify different defaults.
+
+        Examples:
+            >>> @pytest.fixture(scope='session')
+            ... def pmr_postgres_config():
+            ...     return PostgresConfig(image="postgres:9.6.10", root_database="foo")
+        """
+        return config
+
+    return fixture
+
+
+def create_postgres_container_fixture(
+    *, config: Optional[PostgresConfig] = None, scope: Scope = "session"
+):
+    """Create a fixture for the underlying postgres container.
+
+    This fixture factory is primarily useful as a mechanism to adjust the container's fixture scope,
+    which would only otherwise be possible by inlining the default fixture's source implementation.
 
     Examples:
-        >>> @pytest.fixture(scope='session')
-        ... def pmr_postgres_config():
-        ...     return PostgresConfig(image="postgres:9.6.10", root_database="foo")
+        >>> pmr_postgres_container = create_postgres_container_fixture(scope="function")
+
+    Arguments:
+        config: A postgres configuration instance to use as the default. When left unspecified, defaults
+            to the `pmr_postgres_config` fixture.
+        scope: The scope of the fixture. Defaults to "session".
     """
-    return PostgresConfig()
 
+    @pytest.fixture(scope=scope)
+    def fixture(pytestconfig, pmr_postgres_config: PostgresConfig):
+        postgres_config = config or pmr_postgres_config
+        yield from get_container(pytestconfig, postgres_config)
 
-@pytest.fixture(scope="session")
-def pmr_postgres_container(pytestconfig, pmr_postgres_config: PostgresConfig):
-    yield from get_container(pytestconfig, pmr_postgres_config)
+    return fixture
 
 
 def create_postgres_fixture(
     *ordered_actions,
-    scope="function",
+    scope: Scope = "function",
     tables=None,
     session=None,
     async_=False,
@@ -302,3 +354,7 @@ def _generate_database_name(conn):
     result = conn.execute(text("INSERT INTO pytest_mock_resource_db VALUES (DEFAULT) RETURNING id"))
     id_ = next(iter(result))[0]
     return f"pytest_mock_resource_db_{id_}"
+
+
+pmr_postgres_config = create_postgres_config_fixture()
+pmr_postgres_container = create_postgres_container_fixture()
