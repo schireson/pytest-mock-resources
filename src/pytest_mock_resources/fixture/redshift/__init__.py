@@ -3,7 +3,7 @@ import pytest
 from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.redshift import RedshiftConfig
 from pytest_mock_resources.fixture.base import asyncio_fixture, generate_fixture_id
-from pytest_mock_resources.fixture.postgresql import _async_fixture, _sync_fixture
+from pytest_mock_resources.fixture.postgresql import _async_fixture, _get_engine
 from pytest_mock_resources.patch.redshift import psycopg2, sqlalchemy
 
 
@@ -86,7 +86,7 @@ def create_redshift_fixture(
 
     @pytest.fixture(scope=scope)
     def _sync(*_, pmr_redshift_container, pmr_redshift_config):
-        for engine, conn in _sync_fixture(
+        for engine, conn in _get_engine(
             pmr_redshift_config,
             engine_manager_kwargs,
             engine_kwargs_,
@@ -96,6 +96,7 @@ def create_redshift_fixture(
             with psycopg2.patch_connect(pmr_redshift_config, engine.url.database):
                 yield conn
 
+    @asyncio_fixture(scope=scope)
     async def _async(*_, pmr_redshift_container, pmr_redshift_config):
         fixture = _async_fixture(
             pmr_redshift_config,
@@ -108,5 +109,5 @@ def create_redshift_fixture(
             yield conn
 
     if async_:
-        return asyncio_fixture(_async, scope=scope)
+        return _async
     return _sync

@@ -12,15 +12,18 @@ def generate_fixture_id(enabled: bool = True, name=""):
     return None
 
 
-def asyncio_fixture(async_fixture, scope="function"):
-    # pytest-asyncio in versions >=0.17 force you to use a `pytest_asyncio.fixture`
-    # call instead of `pytest.fixture`. Given that this would introduce an unnecessary
-    # dependency on pytest-asyncio (when there are other alternatives) seems less than
-    # ideal, so instead we can just set the flag that they set, as the indicator.
-    async_fixture._force_asyncio_fixture = True
+def asyncio_fixture(*, scope="function"):
+    def wrapper(async_fixture):
+        # pytest-asyncio in versions >=0.17 force you to use a `pytest_asyncio.fixture`
+        # call instead of `pytest.fixture`. Given that this would introduce an unnecessary
+        # dependency on pytest-asyncio (when there are other alternatives) seems less than
+        # ideal, so instead we can just set the flag that they set, as the indicator.
+        async_fixture._force_asyncio_fixture = True
 
-    fixture = pytest.fixture(scope=scope)
-    return fixture(async_fixture)
+        fixture = pytest.fixture(scope=scope)
+        return fixture(async_fixture)
+
+    return wrapper
 
 
 Scope = Union[

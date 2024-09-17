@@ -104,29 +104,40 @@ def create_postgres_fixture(
 
     @pytest.fixture(scope=scope)
     def _sync(*_, pmr_postgres_container, pmr_postgres_config):
-        fixture = _sync_fixture(pmr_postgres_config, engine_manager_kwargs, engine_kwargs_)
-        for _, conn in fixture:
+        engine_manager, engine = _get_engine(
+            pmr_postgres_config, engine_manager_kwargs, engine_kwargs_, async_=False
+        )
+        for _, conn in engine_manager.manage_sync(engine):
             yield conn
 
+    @asyncio_fixture(scope=scope)
     async def _async(*_, pmr_postgres_container, pmr_postgres_config):
-        fixture = _async_fixture(pmr_postgres_config, engine_manager_kwargs, engine_kwargs_)
-        async for _, conn in fixture:
+        engine_manager, engine = _get_engine(
+            pmr_postgres_config, engine_manager_kwargs, engine_kwargs_, async_=True
+        )
+        async for _, conn in engine_manager.manage_async(engine):
             yield conn
 
     if async_:
-        return asyncio_fixture(_async, scope=scope)
+        return _async
     return _sync
 
 
-def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="postgres"):
-    root_engine = cast(Engine, get_sqlalchemy_engine(pmr_config, pmr_config.root_database))
+def _get_engine(
+    pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="postgres", async_: bool = False
+):
+    root_engine = cast(
+        Engine, get_sqlalchemy_engine(pmr_config, pmr_config.root_database, async_driver=async_)
+    )
     conn = retry(root_engine.connect, retries=DEFAULT_RETRIES)
     conn.close()
     root_engine.dispose()
 
     root_engine = cast(
         Engine,
-        get_sqlalchemy_engine(pmr_config, pmr_config.root_database, autocommit=True),
+        get_sqlalchemy_engine(
+            pmr_config, pmr_config.root_database, autocommit=True, async_driver=async_
+        ),
     )
     with root_engine.connect() as root_conn:
         with root_conn.begin() as trans:
@@ -141,7 +152,9 @@ def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="
 
         template_engine = cast(
             Engine,
-            get_sqlalchemy_engine(pmr_config, template_database, **engine_kwargs),
+            get_sqlalchemy_engine(
+                pmr_config, template_database, async_driver=async_, **engine_kwargs
+            ),
         )
         with template_engine.connect() as conn:
             with conn.begin() as trans:
@@ -153,7 +166,9 @@ def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="
     # distinct from what might have been used for the template database.
     root_engine = cast(
         Engine,
-        get_sqlalchemy_engine(pmr_config, pmr_config.root_database, autocommit=True),
+        get_sqlalchemy_engine(
+            pmr_config, pmr_config.root_database, autocommit=True, async_driver=async_
+        ),
     )
     with root_engine.connect() as root_conn:
         with root_conn.begin() as trans:
@@ -161,13 +176,15 @@ def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="
             trans.commit()
     root_engine.dispose()
 
-    engine = get_sqlalchemy_engine(pmr_config, database_name, **engine_kwargs)
-    yield from engine_manager.manage_sync(engine)
+    engine = get_sqlalchemy_engine(
+        pmr_config, database_name, **engine_kwargs, async_engine=async_, async_driver=async_
+    )
+    return engine_manager, engine
 
 
 async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="postgres"):
     root_engine = get_sqlalchemy_engine(
-        pmr_config, pmr_config.root_database, async_=True, autocommit=True
+        pmr_config, pmr_config.root_database, async_engine=True, autocommit=True
     )
 
     root_conn = await async_retry(root_engine.connect, retries=DEFAULT_RETRIES)
@@ -187,7 +204,9 @@ async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fi
     if template_manager:
         assert template_database
 
-        engine = get_sqlalchemy_engine(pmr_config, template_database, **engine_kwargs, async_=True)
+        engine = get_sqlalchemy_engine(
+            pmr_config, template_database, **engine_kwargs, async_engine=True
+        )
         async with engine.begin() as conn:
             await conn.run_sync(template_manager.run_static_actions)
             await conn.commit()
@@ -204,7 +223,7 @@ async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fi
 
     await root_engine.dispose()
 
-    engine = get_sqlalchemy_engine(pmr_config, database_name, **engine_kwargs, async_=True)
+    engine = get_sqlalchemy_engine(pmr_config, database_name, **engine_kwargs, async_engine=True)
     async for engine, conn in engine_manager.manage_async(engine):
         yield engine, conn
 

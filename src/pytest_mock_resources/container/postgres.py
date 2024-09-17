@@ -97,10 +97,18 @@ class PostgresConfig(DockerContainerConfig):
             s.close()
 
 
-def get_sqlalchemy_engine(config, database_name, async_=False, autocommit=False, **engine_kwargs):
+def get_sqlalchemy_engine(
+    config,
+    database_name,
+    *,
+    async_engine=False,
+    async_driver: bool = False,
+    autocommit=False,
+    **engine_kwargs,
+):
     # For backwards compatibility, our hardcoded default is psycopg2, and async fixtures
     # will not work with psycopg2, so we instead swap the default to the preferred async driver.
-    drivername = detect_driver(config.drivername, async_=async_)
+    drivername = detect_driver(config.drivername, async_=async_driver)
 
     url = URL(
         drivername=drivername,
@@ -114,12 +122,12 @@ def get_sqlalchemy_engine(config, database_name, async_=False, autocommit=False,
     if autocommit:
         engine_kwargs["isolation_level"] = "AUTOCOMMIT"
 
-    if getattr(url.get_dialect(), "is_async", None):
+    if async_engine:
         from sqlalchemy.ext.asyncio import create_async_engine
 
         engine = create_async_engine(url, **engine_kwargs)
     else:
-        engine = sqlalchemy.create_engine(url, **engine_kwargs)
+        engine = sqlalchemy.create_engine(url, **engine_kwargs)  # type: ignore
 
     return engine
 
