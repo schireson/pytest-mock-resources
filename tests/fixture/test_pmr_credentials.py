@@ -119,3 +119,4 @@ def verify_relational(connection, credentials, session=False):
     manual_engine = create_engine(credentials.as_url())
     with manual_engine.connect() as conn:
         conn.execute(text("select * from foo"))
+    manual_engine.dispose()
