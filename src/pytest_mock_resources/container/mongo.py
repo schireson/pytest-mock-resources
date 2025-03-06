@@ -40,7 +40,7 @@ class MongoConfig(DockerContainerConfig):
 
     def check_fn(self):
         try:
-            client = pymongo.MongoClient(self.host, self.port, timeoutMS=500)
+            client = pymongo.MongoClient(self.host, self.port, timeoutMS=1000)
             db = client[self.root_database]
             db.command("ismaster")
         except (pymongo.errors.ConnectionFailure, pymongo.errors.PyMongoError):
