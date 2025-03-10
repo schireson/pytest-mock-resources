@@ -142,6 +142,7 @@ def copy_fn_to_test_create_engine_patch(redshift):
             )
 
         fetch_values_from_table_and_assert(engine)
+        engine.dispose()
 
 
 def copy_fn_to_test_psycopg2_connect_patch(config):
@@ -203,6 +204,7 @@ def unload_fn_to_test_create_engine_patch(redshift):
             )
 
         fetch_values_from_s3_and_assert(engine, is_gzipped=False)
+        engine.dispose()
 
 
 def unload_fn_to_test_psycopg2_connect_patch(config):

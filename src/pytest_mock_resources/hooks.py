@@ -1,5 +1,6 @@
 import os
 import warnings
+from typing import Optional
 
 _resource_kinds = ["postgres", "redshift", "mongo", "redis", "mysql", "moto"]
 
@@ -18,6 +19,12 @@ def pytest_addoption(parser):
         default=True,
     )
     parser.addini(
+        "pmr_cleanup",
+        "Optionally cleanup created fixture resources.",
+        type="bool",
+        default=False,
+    )
+    parser.addini(
         "pmr_docker_client",
         "Optional docker client name to use: docker, podman, nerdctl",
         type="string",
@@ -28,16 +35,37 @@ def pytest_addoption(parser):
     group.addoption(
         "--pmr-multiprocess-safe",
         action="store_true",
-        default=False,
+        default=None,
         help="Enable multiprocess-safe mode",
         dest="pmr_multiprocess_safe",
     )
     group.addoption(
         "--pmr-cleanup-container",
         action="store_true",
-        default=True,
+        default=None,
         help="Optionally disable attempts to cleanup created containers",
         dest="pmr_cleanup_container",
+    )
+    group.addoption(
+        "--no-pmr-cleanup-container",
+        action="store_false",
+        default=None,
+        help="Optionally disable attempts to cleanup created containers",
+        dest="pmr_cleanup_container",
+    )
+    group.addoption(
+        "--pmr-cleanup",
+        action="store_true",
+        default=None,
+        help="Optionally cleanup created fixture resources.",
+        dest="pmr_cleanup",
+    )
+    group.addoption(
+        "--no-pmr-cleanup",
+        action="store_false",
+        default=None,
+        help="Optionally cleanup created fixture resources.",
+        dest="pmr_cleanup",
     )
     group.addoption(
         "--pmr-docker-client",
@@ -49,7 +77,7 @@ def pytest_addoption(parser):
 
 def get_pytest_flag(config, name, *, default=None):
     value = getattr(config.option, name, default)
-    if value:
+    if value is not None:
         return value
 
     return config.getini(name)
@@ -57,6 +85,12 @@ def get_pytest_flag(config, name, *, default=None):
 
 def use_multiprocess_safe_mode(config):
     return bool(get_pytest_flag(config, "pmr_multiprocess_safe"))
+
+
+def should_cleanup(config, value: Optional[bool] = None) -> bool:
+    if value is None:
+        return bool(get_pytest_flag(config, "pmr_cleanup"))
+    return value
 
 
 def get_docker_client_name(config) -> str:
