@@ -68,7 +68,7 @@ jobs:
       - name: Store test result artifacts
         uses: actions/upload-artifact@v4
         with:
-          path: coverage-${{ matrix.python-version }}-${{ matrix.pytest-asyncio-version }-${{ matrix.sqlalchemy-version }}}.xml
+          path: coverage-${{ matrix.python-version }}-${{ matrix.pytest-asyncio-version }}-${{ matrix.sqlalchemy-version }}.xml
 
       - name: Coveralls
         env:
@@ -123,7 +123,7 @@ jobs:
       - name: Store test result artifacts
         uses: actions/upload-artifact@v4
         with:
-          path: coverage-${{ matrix.python-version }}-${{ matrix.pytest-asyncio-version }-${{ matrix.sqlalchemy-version }}}-asyncpg.xml
+          path: coverage-${{ matrix.python-version }}-${{ matrix.pytest-asyncio-version }}-${{ matrix.sqlalchemy-version }}-asyncpg.xml
 
       - name: Coveralls
         env:
