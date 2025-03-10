@@ -66,9 +66,9 @@ jobs:
       - run: poetry run make test
 
       - name: Store test result artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          path: coverage.xml
+          path: coverage-${{ matrix.python-version }}-${{ matrix.pytest-asyncio-version }-${{ matrix.sqlalchemy-version }}}.xml
 
       - name: Coveralls
         env:
@@ -121,9 +121,9 @@ jobs:
       - run: SQLALCHEMY_WARN_20=1 poetry run coverage run -a -m pytest src tests -vv -m 'asyncio'
 
       - name: Store test result artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          path: coverage.xml
+          path: coverage-${{ matrix.python-version }}-${{ matrix.pytest-asyncio-version }-${{ matrix.sqlalchemy-version }}}-asyncpg.xml
 
       - name: Coveralls
         env:
