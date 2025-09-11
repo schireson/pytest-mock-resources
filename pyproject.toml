@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-mock-resources"
-version = "2.12.2"
+version = "2.12.3"
 description = "A pytest plugin for easily instantiating reproducible mock resources."
 authors = [
     "Omar Khan <oakhan3@gmail.com>",
@@ -9,55 +9,50 @@ authors = [
     "Prateek Pisat <pisatprateek12@gmail.com>",
 ]
 license = "MIT"
-keywords = [ "pytest", "sqlalchemy", "docker", "fixture", "mock" ]
-classifiers = [ "Framework :: Pytest" ]
+keywords = ["pytest", "sqlalchemy", "docker", "fixture", "mock"]
+classifiers = ["Framework :: Pytest"]
 repository = "https://github.com/schireson/pytest-mock-resources"
-packages = [
-    { include = "pytest_mock_resources", from = "src" },
-]
+packages = [{ include = "pytest_mock_resources", from = "src" }]
 readme = 'README.md'
-include = [
-    "*.md",
-    "py.typed",
-]
+include = ["*.md", "py.typed"]
 
 [tool.poetry.dependencies]
 python = ">=3.7, <4"
 
-pytest = {version = ">=1.0"}
-sqlalchemy = {version = ">1.0, !=1.4.0, !=1.4.1, !=1.4.2, !=1.4.3, !=1.4.4, !=1.4.5, !=1.4.6, !=1.4.7, !=1.4.8, !=1.4.9, !=1.4.10, !=1.4.11, !=1.4.12, !=1.4.13, !=1.4.14, !=1.4.15, !=1.4.16, !=1.4.17, !=1.4.18, !=1.4.19, !=1.4.20, !=1.4.21, !=1.4.22, !=1.4.23"}
+pytest = { version = ">=1.0" }
+sqlalchemy = { version = ">1.0, !=1.4.0, !=1.4.1, !=1.4.2, !=1.4.3, !=1.4.4, !=1.4.5, !=1.4.6, !=1.4.7, !=1.4.8, !=1.4.9, !=1.4.10, !=1.4.11, !=1.4.12, !=1.4.13, !=1.4.14, !=1.4.15, !=1.4.16, !=1.4.17, !=1.4.18, !=1.4.19, !=1.4.20, !=1.4.21, !=1.4.22, !=1.4.23" }
 
 typing_extensions = "*"
-importlib-metadata = {version = "*", python = "<3.8"}
+importlib-metadata = { version = "*", python = "<3.8" }
 
 # extra [postgres]
-psycopg2 = {version = "*", optional = true}
-psycopg2-binary = {version = "*", optional = true}
-asyncpg = {version = "*", optional = true}
+psycopg2 = { version = "*", optional = true }
+psycopg2-binary = { version = "*", optional = true }
+asyncpg = { version = "*", optional = true }
 
 # extra [redshift]
-moto = {version = "*", optional = true}
-boto3 = {version = "*", optional = true}
-sqlparse = {version = "*", optional = true}
+moto = { version = "*", optional = true }
+boto3 = { version = "*", optional = true }
+sqlparse = { version = "*", optional = true }
 
 # extra [mongo]
-pymongo = {version = "*", optional = true}
+pymongo = { version = "*", optional = true }
 
 # extra [redis]
-redis = {version = "*", optional = true}
+redis = { version = "*", optional = true }
 
 # extra [mysql]
-pymysql = {version = ">=1.0", optional = true}
+pymysql = { version = ">=1.0", optional = true }
 
 # extra [docker]
-filelock = {version = "*", optional = true}
-python-on-whales = {version = ">=0.22.0", optional = true}
+filelock = { version = "*", optional = true }
+python-on-whales = { version = ">=0.22.0", optional = true }
 
 [tool.poetry.dev-dependencies]
 botocore = "1.33.13"
 coverage = "*"
 moto = ">=2.3.2"
-mypy = {version = "0.982"}
+mypy = { version = "0.982" }
 pytest-asyncio = "*"
 pytest-xdist = "*"
 responses = ">=0.23.0"
@@ -93,21 +88,21 @@ line-length = 100
 target-version = "py37"
 select = ["C", "D", "E", "F", "I", "N", "Q", "RET", "RUF", "S", "T", "UP", "YTT"]
 ignore = [
-  "D1",
-  "D203",
-  "D204",
-  "D213",
-  "D215",
-  "D400",
-  "D404",
-  "D406",
-  "D407",
-  "D408",
-  "D409",
-  "D413",
-  "C901",
-  "E501",
-  "S101",
+    "D1",
+    "D203",
+    "D204",
+    "D213",
+    "D215",
+    "D400",
+    "D404",
+    "D406",
+    "D407",
+    "D408",
+    "D409",
+    "D413",
+    "C901",
+    "E501",
+    "S101",
 ]
 
 [tool.ruff.isort]
@@ -132,19 +127,13 @@ addopts = "--doctest-modules -vv --ff --strict-markers"
 norecursedirs = ".* build dist *.egg tests/examples"
 pytester_example_dir = "tests/examples"
 pmr_multiprocess_safe = true
-markers = [
-    "postgres",
-    "redshift",
-    "mongo",
-    "redis",
-    "mysql",
-]
+markers = ["postgres", "redshift", "mongo", "redis", "mysql"]
 filterwarnings = [
-  "error",
-  "ignore:There is no current event loop:DeprecationWarning",
-  "ignore:stream argument is deprecated. Use stream parameter in request directly:DeprecationWarning",
-  "ignore:Boto3 will no longer support Python 3.7.*::boto3",
-  "ignore:datetime.datetime.utcnow.*:DeprecationWarning",
+    "error",
+    "ignore:There is no current event loop:DeprecationWarning",
+    "ignore:stream argument is deprecated. Use stream parameter in request directly:DeprecationWarning",
+    "ignore:Boto3 will no longer support Python 3.7.*::boto3",
+    "ignore:datetime.datetime.utcnow.*:DeprecationWarning",
 ]
 
 [build-system]
