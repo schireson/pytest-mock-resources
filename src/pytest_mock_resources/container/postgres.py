@@ -114,7 +114,7 @@ def get_sqlalchemy_engine(config, database_name, async_=False, autocommit=False,
     if autocommit:
         engine_kwargs["isolation_level"] = "AUTOCOMMIT"
 
-    if getattr(url.get_dialect(), "is_async", None):
+    if async_ or getattr(url.get_dialect(), "is_async", None):
         from sqlalchemy.ext.asyncio import create_async_engine
 
         engine = create_async_engine(url, **engine_kwargs)
@@ -128,7 +128,8 @@ def detect_driver(drivername: Optional[str] = None, async_: bool = False) -> str
     if drivername:
         return drivername
 
-    if any(Distribution.discover(name="psycopg")):
+    sqlalchemy = Distribution.from_name(name="sqlalchemy")
+    if sqlalchemy.version >= "2.0" and any(Distribution.discover(name="psycopg")):
         return "postgresql+psycopg"
 
     if async_:
