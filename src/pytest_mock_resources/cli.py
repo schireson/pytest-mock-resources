@@ -81,7 +81,7 @@ def execute(fixture: str, pytestconfig: StubPytestConfig, start=True, stop=False
             pass
 
     if stop:
-        docker = get_docker_client(config)
+        docker = get_docker_client(pytestconfig)
 
         assert config.port
         name = container_name(fixture, int(config.port))
