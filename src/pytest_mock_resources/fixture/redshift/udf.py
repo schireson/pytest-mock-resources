@@ -116,6 +116,103 @@ convert_timezone_no_source = create_udf(
     language=UdfLanguage.SQL.value,
 )
 
+# median is implemented by collecting inputs into an array via array_append
+# and, in the final function, computing percentile_cont(0.5) over the
+# unnested array. this matches redshift's MEDIAN semantics, which is
+# equivalent to percentile_cont(0.5) within group (order by col).
+_median_final_numeric = text(
+    """
+    CREATE FUNCTION public._median_final(NUMERIC[]) RETURNS NUMERIC AS $$
+        SELECT (percentile_cont(0.5)
+                WITHIN GROUP (ORDER BY v::double precision))::NUMERIC
+        FROM unnest($1) AS v
+        WHERE v IS NOT NULL;
+    $$ LANGUAGE SQL IMMUTABLE;
+    """
+)
+
+_median_final_double = text(
+    """
+    CREATE FUNCTION public._median_final(DOUBLE PRECISION[]) RETURNS DOUBLE PRECISION AS $$
+        SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY v)
+        FROM unnest($1) AS v
+        WHERE v IS NOT NULL;
+    $$ LANGUAGE SQL IMMUTABLE;
+    """
+)
+
+median_numeric = text(
+    """
+    CREATE AGGREGATE public.median(NUMERIC) (
+        SFUNC = array_append,
+        STYPE = NUMERIC[],
+        FINALFUNC = public._median_final,
+        INITCOND = '{}'
+    );
+    """
+)
+
+median_double = text(
+    """
+    CREATE AGGREGATE public.median(DOUBLE PRECISION) (
+        SFUNC = array_append,
+        STYPE = DOUBLE PRECISION[],
+        FINALFUNC = public._median_final,
+        INITCOND = '{}'
+    );
+    """
+)
+
+# listagg concatenates non-null values into a single string with a
+# delimiter. the two-argument state function coerces each input to text
+# and appends it with the separator; the final function trims the leading
+# separator. redshift also supports LISTAGG(col) without a delimiter,
+# which defaults to an empty string between values.
+_listagg_sfunc = text(
+    """
+    CREATE FUNCTION public._listagg_sfunc(state TEXT, value TEXT, delimiter TEXT)
+    RETURNS TEXT AS $$
+        SELECT CASE
+            WHEN value IS NULL THEN state
+            WHEN state IS NULL OR state = '' THEN value
+            ELSE state || delimiter || value
+        END;
+    $$ LANGUAGE SQL IMMUTABLE;
+    """
+)
+
+_listagg_sfunc_no_delim = text(
+    """
+    CREATE FUNCTION public._listagg_sfunc_no_delim(state TEXT, value TEXT)
+    RETURNS TEXT AS $$
+        SELECT CASE
+            WHEN value IS NULL THEN state
+            ELSE COALESCE(state, '') || value
+        END;
+    $$ LANGUAGE SQL IMMUTABLE;
+    """
+)
+
+listagg_text_delim = text(
+    """
+    CREATE AGGREGATE public.listagg(TEXT, TEXT) (
+        SFUNC = public._listagg_sfunc,
+        STYPE = TEXT,
+        INITCOND = ''
+    );
+    """
+)
+
+listagg_text = text(
+    """
+    CREATE AGGREGATE public.listagg(TEXT) (
+        SFUNC = public._listagg_sfunc_no_delim,
+        STYPE = TEXT,
+        INITCOND = ''
+    );
+    """
+)
+
 
 datediff_kwargs = {
     "returns": "BIGINT",
@@ -223,4 +320,12 @@ REDSHIFT_UDFS = Statements(
     len_varchar,
     convert_timezone,
     convert_timezone_no_source,
+    _median_final_numeric,
+    _median_final_double,
+    median_numeric,
+    median_double,
+    _listagg_sfunc,
+    _listagg_sfunc_no_delim,
+    listagg_text_delim,
+    listagg_text,
 )
