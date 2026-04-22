@@ -141,7 +141,10 @@ def wait_for_container(
 
     check_fn = config.check_fn
     run_args = (config.image,)
+    # user-supplied kwargs come first; pmr-managed kwargs override so that
+    # the fixture plumbing (ports, env, name) cannot be accidentally broken.
     run_kwargs = {
+        **dict(config.container_args or {}),
         "publish": [(dest, source) for source, dest in config.ports().items()],
         "envs": config.environment(),
         "name": container_name(config.name, config.port),

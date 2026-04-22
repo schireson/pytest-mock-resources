@@ -72,3 +72,30 @@ class Test_FooConfig:
                 result
                 == "FooConfig(image='foo', host='localhost', port=555, ci_port=None, extra_config='bar', no_value_default=None)"
             )
+
+
+class BarConfig(DockerContainerConfig):
+    # dedicated subclass that includes container_args so we can exercise
+    # the new behavior without polluting FooConfig's repr test.
+    name = "bar"
+    _fields = ("image", "host", "port", "ci_port", "container_args")
+    _fields_defaults = {"image": "test", "port": 555}
+
+
+class Test_container_args:
+    def test_default_is_empty_dict(self):
+        bar = BarConfig()
+        assert bar.container_args == {}
+
+    def test_accepts_user_supplied_mapping(self):
+        extras = {"memory": "2g", "cpus": 4, "labels": {"owner": "pmr"}}
+        bar = BarConfig(container_args=extras)
+        assert bar.container_args == extras
+
+    def test_env_var_fallback_is_used_when_present(self):
+        # env-var fallback predates this field; we just verify the
+        # mechanism still resolves for container_args, even though a string
+        # is not a natural value for a mapping-typed field.
+        with mock.patch("os.environ", {"PMR_BAR_CONTAINER_ARGS": "from-env"}):
+            bar = BarConfig()
+            assert bar.container_args == "from-env"

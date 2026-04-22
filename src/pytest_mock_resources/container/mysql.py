@@ -25,6 +25,12 @@ class MysqlConfig(DockerContainerConfig):
             Defaults to :code:`"password"`.
         root_database (str): The name of the root database to create.
             Defaults to :code:`"dev"`.
+        container_args (Mapping[str, Any]): Extra keyword arguments forwarded
+            to :code:`python_on_whales.DockerClient.run`. Useful for flags
+            that are not otherwise exposed by PMR, such as :code:`memory`,
+            :code:`cpus`, :code:`labels`, or :code:`platform`.
+            Defaults to :code:`{}`. PMR-managed kwargs (ports, env, name,
+            detach, remove) override any conflicting entries.
     """
 
     name = "mysql"
@@ -36,6 +42,7 @@ class MysqlConfig(DockerContainerConfig):
         "username",
         "password",
         "root_database",
+        "container_args",
     }
     _fields_defaults: ClassVar[dict] = {
         "image": "mysql:5.6",

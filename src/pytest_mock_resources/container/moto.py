@@ -20,7 +20,7 @@ class MotoConfig(DockerContainerConfig):
 
     name = "moto"
 
-    _fields: ClassVar[Iterable] = {"image", "host", "port"}
+    _fields: ClassVar[Iterable] = {"image", "host", "port", "container_args"}
     _fields_defaults: ClassVar[dict] = {
         "image": "motoserver/moto:4.0.6",
         "port": 5555,

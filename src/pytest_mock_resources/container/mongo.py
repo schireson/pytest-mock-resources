@@ -19,11 +19,24 @@ class MongoConfig(DockerContainerConfig):
             Defaults to :code:`27017`.
         root_database (str): The name of the root mongo database to create.
             Defaults to :code:`"dev-mongo"`.
+        container_args (Mapping[str, Any]): Extra keyword arguments forwarded
+            to :code:`python_on_whales.DockerClient.run`. Useful for flags
+            that are not otherwise exposed by PMR, such as :code:`memory`,
+            :code:`cpus`, :code:`labels`, or :code:`platform`.
+            Defaults to :code:`{}`. PMR-managed kwargs (ports, env, name,
+            detach, remove) override any conflicting entries.
     """
 
     name = "mongo"
 
-    _fields: ClassVar[Iterable] = {"image", "host", "port", "ci_port", "root_database"}
+    _fields: ClassVar[Iterable] = {
+        "image",
+        "host",
+        "port",
+        "ci_port",
+        "root_database",
+        "container_args",
+    }
     _fields_defaults: ClassVar[dict] = {
         "image": "mongo:3.6",
         "port": 28017,
