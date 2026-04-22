@@ -2,8 +2,13 @@ from unittest import mock
 
 import pytest
 
-from pytest_mock_resources.config import DockerContainerConfig, fallback
-from pytest_mock_resources.container.base import (
+# the wiring under test calls into python-on-whales at runtime, so skip
+# this module entirely when running in a base test environment that does
+# not install the docker extras.
+pytest.importorskip("python_on_whales")
+
+from pytest_mock_resources.config import DockerContainerConfig, fallback  # noqa: E402
+from pytest_mock_resources.container.base import (  # noqa: E402
     ContainerCheckFailed,
     wait_for_container,
 )
