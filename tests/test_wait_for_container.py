@@ -1,11 +1,31 @@
+import importlib
 from unittest import mock
 
 import pytest
 
-# the wiring under test calls into python-on-whales at runtime, so skip
-# this module entirely when running in a base test environment that does
-# not install the docker extras.
-pytest.importorskip("python_on_whales")
+# wait_for_container imports DockerException from either python_on_whales
+# .exceptions or .utils, depending on the installed version. The bare
+# `make test-base` environment may only have a transitive python_on_whales
+# package without either submodule, which would make wait_for_container
+# unusable. Skip the whole module in that case so test-base stays green.
+
+
+def _docker_exception_is_importable():
+    for module_path in ("python_on_whales.exceptions", "python_on_whales.utils"):
+        try:
+            module = importlib.import_module(module_path)
+        except ImportError:
+            continue
+        if hasattr(module, "DockerException"):
+            return True
+    return False
+
+
+if not _docker_exception_is_importable():
+    pytest.skip(
+        "python-on-whales DockerException not importable",
+        allow_module_level=True,
+    )
 
 from pytest_mock_resources.config import DockerContainerConfig, fallback  # noqa: E402
 from pytest_mock_resources.container.base import (  # noqa: E402
