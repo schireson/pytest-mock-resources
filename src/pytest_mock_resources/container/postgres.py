@@ -34,6 +34,12 @@ class PostgresConfig(DockerContainerConfig):
             Defaults to :code:`"dev"`.
         drivername (str): The sqlalchemy driver to use
             Defaults to :code:`"postgresql+psycopg2"`.
+        container_args (Mapping[str, Any]): Extra keyword arguments forwarded
+            to :code:`python_on_whales.DockerClient.run`. Useful for flags
+            that are not otherwise exposed by PMR, such as :code:`memory`,
+            :code:`cpus`, :code:`labels`, or :code:`platform`.
+            Defaults to :code:`{}`. PMR-managed kwargs (ports, env, name,
+            detach, remove) override any conflicting entries.
     """
 
     name = "postgres"
@@ -46,6 +52,7 @@ class PostgresConfig(DockerContainerConfig):
         "password",
         "root_database",
         "drivername",
+        "container_args",
     }
     _fields_defaults: ClassVar[dict] = {
         "image": "postgres:9.6.10-alpine",

@@ -19,6 +19,12 @@ class RedisConfig(DockerContainerConfig):
             Defaults to :code:`6379`.
         decode_responses (bool): Whether to decode responses from the server on the client.
             Defaults to :code:`False`.
+        container_args (Mapping[str, Any]): Extra keyword arguments forwarded
+            to :code:`python_on_whales.DockerClient.run`. Useful for flags
+            that are not otherwise exposed by PMR, such as :code:`memory`,
+            :code:`cpus`, :code:`labels`, or :code:`platform`.
+            Defaults to :code:`{}`. PMR-managed kwargs (ports, env, name,
+            detach, remove) override any conflicting entries.
     """
 
     name = "redis"
@@ -29,6 +35,7 @@ class RedisConfig(DockerContainerConfig):
         "port",
         "ci_port",
         "decode_responses",
+        "container_args",
     }
     _fields_defaults: ClassVar[dict] = {
         "image": "redis:5.0.7",

@@ -117,7 +117,9 @@ class DockerContainerConfig:
 
     @fallback
     def container_args(self):
-        return ()
+        # empty dict by default; users can pass arbitrary python-on-whales
+        # `DockerClient.run` keyword arguments (e.g. memory, cpus, labels).
+        return {}
 
     def ports(self):
         return {}
