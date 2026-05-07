@@ -57,7 +57,7 @@ def create_parser():
         metavar="Fixture",
         type=str,
         nargs="+",
-        help="Available Fixtures: {}".format(", ".join(DockerContainerConfig.subclasses)),
+        help=f"Available Fixtures: {', '.join(DockerContainerConfig.subclasses)}",
     )
     parser.add_argument(
         "--stop", action="store_true", help="Stop previously started PMR containers"
@@ -76,13 +76,11 @@ def execute(fixture: str, pytestconfig: StubPytestConfig, start=True, stop=False
     config = config_cls()
 
     if start:
-        generator = get_container(pytestconfig, config)
-        for _ in generator:
+        for _ in get_container(pytestconfig, config):
             pass
 
     if stop:
         docker = get_docker_client(pytestconfig)
-
         assert config.port
         name = container_name(fixture, int(config.port))
         try:
