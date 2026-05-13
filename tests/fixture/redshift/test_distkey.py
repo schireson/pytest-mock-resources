@@ -51,6 +51,14 @@ class TestStripRedshiftTableOptions:
         sql = "CREATE TABLE t (c INT)"
         assert strip_redshift_table_options(sql) == sql
 
+    def test_does_not_match_keywords_inside_identifiers(self):
+        sql = (
+            "CREATE TABLE example_distkey_sortkey "
+            "(col1 INT, col2 VARCHAR(20)) DISTKEY(col1) SORTKEY(col1, col2);"
+        )
+        expected = "CREATE TABLE example_distkey_sortkey (col1 INT, col2 VARCHAR(20));"
+        assert strip_redshift_table_options(sql) == expected
+
 
 class TestIsCreateTable:
     def test_matches_create_table(self):

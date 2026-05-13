@@ -6,10 +6,10 @@ must have them removed before forwarding to the cursor.
 """
 import re
 
-_DISTKEY_RE = re.compile(r"\s*DISTKEY\s*\(\s*[^)]*\)", re.IGNORECASE)
-_DISTSTYLE_RE = re.compile(r"\s*DISTSTYLE\s+(?:AUTO|EVEN|KEY|ALL)", re.IGNORECASE)
+_DISTKEY_RE = re.compile(r"\s*\bDISTKEY\b\s*\(\s*[^)]*\)", re.IGNORECASE)
+_DISTSTYLE_RE = re.compile(r"\s*\bDISTSTYLE\b\s+(?:AUTO|EVEN|KEY|ALL)\b", re.IGNORECASE)
 _SORTKEY_RE = re.compile(
-    r"\s*(?:COMPOUND\s+|INTERLEAVED\s+)?SORTKEY\s*(?:AUTO|\(\s*[^)]*\))",
+    r"\s*(?:\b(?:COMPOUND|INTERLEAVED)\s+)?\bSORTKEY\b\s*(?:\bAUTO\b|\(\s*[^)]*\))",
     re.IGNORECASE,
 )
 _CREATE_TABLE_RE = re.compile(r"^\s*create\s+(?:temp(?:orary)?\s+)?table\b", re.IGNORECASE)
