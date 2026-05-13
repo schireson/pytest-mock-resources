@@ -6,6 +6,10 @@ from sqlalchemy.sql.base import Executable
 from pytest_mock_resources.container.postgres import PostgresConfig
 from pytest_mock_resources.patch.redshift.mock_s3_copy import mock_s3_copy_command, strip
 from pytest_mock_resources.patch.redshift.mock_s3_unload import mock_s3_unload_command
+from pytest_mock_resources.patch.redshift.redshift_ddl import (
+    is_create_table,
+    strip_redshift_table_options,
+)
 
 
 @contextlib.contextmanager
@@ -38,6 +42,9 @@ def mock_psycopg2_connect(config: PostgresConfig, database: str, _connect):
         def execute(self, sql, args=None):
             if isinstance(sql, Executable):
                 return super().execute(sql, args)
+
+            if is_create_table(sql):
+                sql = strip_redshift_table_options(sql)
 
             if strip(sql).lower().startswith("copy"):
                 mock_s3_copy_command(sql, self)
