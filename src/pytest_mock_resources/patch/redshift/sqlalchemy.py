@@ -6,6 +6,10 @@ from sqlalchemy.sql.base import Executable
 from pytest_mock_resources.compat import sqlparse
 from pytest_mock_resources.patch.redshift.mock_s3_copy import mock_s3_copy_command
 from pytest_mock_resources.patch.redshift.mock_s3_unload import mock_s3_unload_command
+from pytest_mock_resources.patch.redshift.redshift_ddl import (
+    is_create_table,
+    strip_redshift_table_options,
+)
 
 
 def register_redshift_behavior(engine):
@@ -46,6 +50,9 @@ def receive_before_cursor_execute(_, cursor, statement: str, parameters, context
     we return a no-op query to be executed by sqlalchemy for certain kinds of supported
     extra features.
     """
+    if is_create_table(statement):
+        statement = strip_redshift_table_options(statement)
+
     normalized_statement = _preprocess(statement).lower()
     if normalized_statement.startswith("unload"):
         mock_s3_unload_command(statement, cursor)
