@@ -19,7 +19,8 @@ containers so you don't have to, by default all containers will be spun up/down 
 invocation.
 
 
-.. mdinclude:: ../../README.md
+.. include:: ../../README.md
+   :parser: myst_parser.sphinx_
 
 
 .. _MacOs: https://docs.docker.com/docker-for-mac/install/

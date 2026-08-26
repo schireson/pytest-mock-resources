@@ -8,14 +8,18 @@
 import os
 import sys
 
+from sphinx_pyproject import SphinxConfig
+
 sys.path.insert(0, os.path.abspath(".."))
 
+config = SphinxConfig("../../pyproject.toml")
+
 project = "Pytest Mock Resources"
-release = "1.2.2"
-version = "1.2.2"
+release = config.version
+version = config.version
 
 extensions = [
-    "m2r2",
+    "myst_parser",
     "sphinx.ext.autodoc",
     "sphinx_autodoc_typehints",
     "sphinx.ext.autosectionlabel",
