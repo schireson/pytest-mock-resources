@@ -3,13 +3,13 @@
 
 # Install
 lock:
-	poetry lock
+	uv lock
 
 install-base:
-	poetry install
+	uv sync
 
 install:
-	poetry install -E postgres -E postgres-async -E redshift -E mongo -E redis -E mysql -E moto
+	uv sync --extra postgres --extra postgres-async --extra redshift --extra mongo --extra redis --extra mysql --extra moto
 
 ## Test
 test-base:
@@ -37,13 +37,13 @@ format:
 
 ## Build
 build-package:
-	poetry build
+	uv build
 
 build-docs:
-	pip install -r docs/requirements.txt
-	make -C docs html
+	uv sync --group docs
+	uv run make -C docs html
 
 build: build-package
 
 publish: build
-	poetry publish -u __token__ -p '${PYPI_PASSWORD}' --no-interaction
+	uv publish --token '${PYPI_PASSWORD}'

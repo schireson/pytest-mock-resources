@@ -45,38 +45,30 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install poetry
-        uses: abatilo/actions-poetry@v2.0.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          poetry-version: 1.5.1
-
-      - name: Set up cache
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pypoetry/virtualenvs
-          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-poetry-
+          enable-caching: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Install base dependencies
-        run: poetry run make install-base
+        run: uv sync
 
       - name: Install specific sqlalchemy version
-        run: |
-          poetry run pip install 'sqlalchemy~=${{ matrix.sqlalchemy-version }}'
+        run: uv pip install 'sqlalchemy~=${{ matrix.sqlalchemy-version }}'
 
       - name: Install specific pytest-asyncio version
-        run: pip install 'pytest-asyncio~=${{ matrix.pytest-asyncio-version }}'
+        run: uv pip install 'pytest-asyncio~=${{ matrix.pytest-asyncio-version }}'
 
-      - if: ${{ matrix.python-version == '3.15' }}
-        run: poetry run make lint
+      - if: ${{ matrix.python-version == '3.12' && matrix.sqlalchemy-version == '2.0.0' && matrix.pytest-asyncio-version == '0.19.0' }}
+        run: uv run make lint
 
-      - run: poetry run make test-base
+      - run: uv run make test-base
 
       - name: Install dependencies
-        run: poetry run make install
+        run: uv sync --extra postgres --extra postgres-async --extra redshift --extra mongo --extra redis --extra mysql --extra moto
 
-      - run: poetry run make test
+      - run: uv run make test
 
       - name: Store test result artifacts
         uses: actions/upload-artifact@v4
@@ -89,8 +81,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_PARALLEL: true
         run: |
-          pip install tomli coveralls
-          coveralls --service=github
+          uv pip install tomli coveralls
+          uv run coveralls --service=github
 
   # Tests that postgres async fixture functions without psycopg2 installed.
   test-asyncpg:
@@ -111,27 +103,19 @@ jobs:
           python-version: ${{ matrix.python-version }}
           architecture: x64
 
-      - name: Install poetry
-        uses: abatilo/actions-poetry@v2.0.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          poetry-version: 1.5.1
+          enable-caching: true
+          cache-dependency-glob: "uv.lock"
 
-      - name: Set up cache
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pypoetry/virtualenvs
-          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-poetry-
-
-      - name: Install base dependencies
-        run: poetry run poetry install -E postgres-async
+      - name: Install dependencies
+        run: uv sync --extra postgres-async
 
       - name: Install specific sqlalchemy version
-        run: |
-          poetry run pip install 'sqlalchemy~=${{ matrix.sqlalchemy-version }}'
+        run: uv pip install 'sqlalchemy~=${{ matrix.sqlalchemy-version }}'
 
-      - run: SQLALCHEMY_WARN_20=1 poetry run coverage run -a -m pytest src tests -vv -m 'asyncio'
+      - run: SQLALCHEMY_WARN_20=1 uv run coverage run -a -m pytest src tests -vv -m 'asyncio'
 
       - name: Store test result artifacts
         uses: actions/upload-artifact@v4
@@ -144,8 +128,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_PARALLEL: true
         run: |
-          pip install tomli coveralls
-          coveralls --service=github
+          uv pip install tomli coveralls
+          uv run coveralls --service=github
 
   finish:
     needs:

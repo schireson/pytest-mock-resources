@@ -1,85 +1,78 @@
-[tool.poetry]
+[project]
 name = "pytest-mock-resources"
-version = "2.12.5"
+version = "2.13.0"
 description = "A pytest plugin for easily instantiating reproducible mock resources."
 authors = [
-    "Omar Khan <oakhan3@gmail.com>",
-    "Dan Cardin <ddcardin@gmail.com>",
-    "Gabriel Michael <gabriel.j.michael@gmail.com>",
-    "Prateek Pisat <pisatprateek12@gmail.com>",
+    { name = "Omar Khan", email = "oakhan3@gmail.com" },
+    { name = "Dan Cardin", email = "ddcardin@gmail.com" },
+    { name = "Gabriel Michael", email = "gabriel.j.michael@gmail.com" },
+    { name = "Prateek Pisat", email = "pisatprateek12@gmail.com" },
 ]
-license = "MIT"
+license = { text = "MIT" }
 keywords = ["pytest", "sqlalchemy", "docker", "fixture", "mock"]
 classifiers = ["Framework :: Pytest"]
-repository = "https://github.com/schireson/pytest-mock-resources"
-packages = [{ include = "pytest_mock_resources", from = "src" }]
-readme = 'README.md'
-include = ["*.md", "py.typed"]
+readme = "README.md"
+requires-python = ">=3.8,<4"
+dependencies = [
+    "pytest>=1.0",
+    "sqlalchemy>1.0,!=1.4.0,!=1.4.1,!=1.4.2,!=1.4.3,!=1.4.4,!=1.4.5,!=1.4.6,!=1.4.7,!=1.4.8,!=1.4.9,!=1.4.10,!=1.4.11,!=1.4.12,!=1.4.13,!=1.4.14,!=1.4.15,!=1.4.16,!=1.4.17,!=1.4.18,!=1.4.19,!=1.4.20,!=1.4.21,!=1.4.22,!=1.4.23",
+    "typing_extensions",
+    "importlib-metadata; python_version < '3.8'",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.7, <4"
+[project.optional-dependencies]
+docker = ["python-on-whales>=0.22.0", "filelock"]
+postgres = ["psycopg2", "python-on-whales>=0.22.0", "filelock"]
+postgres-binary = ["psycopg2-binary", "python-on-whales>=0.22.0", "filelock"]
+postgres-async = ["asyncpg", "python-on-whales>=0.22.0", "filelock"]
+redshift = ["boto3", "moto", "sqlparse", "python-on-whales>=0.22.0", "filelock"]
+mongo = ["pymongo", "python-on-whales>=0.22.0", "filelock"]
+moto = ["boto3", "python-on-whales>=0.22.0", "filelock"]
+redis = ["redis", "python-on-whales>=0.22.0", "filelock"]
+mysql = ["pymysql>=1.0", "python-on-whales>=0.22.0", "filelock"]
 
-pytest = { version = ">=1.0" }
-sqlalchemy = { version = ">1.0, !=1.4.0, !=1.4.1, !=1.4.2, !=1.4.3, !=1.4.4, !=1.4.5, !=1.4.6, !=1.4.7, !=1.4.8, !=1.4.9, !=1.4.10, !=1.4.11, !=1.4.12, !=1.4.13, !=1.4.14, !=1.4.15, !=1.4.16, !=1.4.17, !=1.4.18, !=1.4.19, !=1.4.20, !=1.4.21, !=1.4.22, !=1.4.23" }
+[project.urls]
+Repository = "https://github.com/schireson/pytest-mock-resources"
 
-typing_extensions = "*"
-importlib-metadata = { version = "*", python = "<3.8" }
+[project.scripts]
+pmr = "pytest_mock_resources.cli:main"
 
-# extra [postgres]
-psycopg2 = { version = "*", optional = true }
-psycopg2-binary = { version = "*", optional = true }
-asyncpg = { version = "*", optional = true }
-
-# extra [redshift]
-moto = { version = "*", optional = true }
-boto3 = { version = "*", optional = true }
-sqlparse = { version = "*", optional = true }
-
-# extra [mongo]
-pymongo = { version = "*", optional = true }
-
-# extra [redis]
-redis = { version = "*", optional = true }
-
-# extra [mysql]
-pymysql = { version = ">=1.0", optional = true }
-
-# extra [docker]
-filelock = { version = "*", optional = true }
-python-on-whales = { version = ">=0.22.0", optional = true }
-
-[tool.poetry.dev-dependencies]
-botocore = "1.33.13"
-coverage = "*"
-moto = ">=2.3.2"
-mypy = { version = "0.982" }
-pytest-asyncio = "*"
-pytest-xdist = "*"
-responses = ">=0.23.0"
-ruff = "0.1.15"
-types-PyMySQL = "^1.0.2"
-types-dataclasses = "^0.6.5"
-types-filelock = "^3.2.7"
-types-redis = "^3.5.6"
-types-requests = "*"
-types-six = "^1.16.0"
-
-[tool.poetry.extras]
-docker = ['python-on-whales', 'filelock']
-postgres = ['psycopg2', 'python-on-whales', 'filelock']
-postgres-binary = ['psycopg2-binary', 'python-on-whales', 'filelock']
-postgres-async = ['asyncpg', 'python-on-whales', 'filelock']
-redshift = ['boto3', 'moto', 'sqlparse', 'python-on-whales', 'filelock']
-mongo = ['pymongo', 'python-on-whales', 'filelock']
-moto = ['boto3', 'python-on-whales', 'filelock']
-redis = ['redis', 'python-on-whales', 'filelock']
-mysql = ['pymysql', 'python-on-whales', 'filelock']
-
-[tool.poetry.plugins.pytest11]
+[project.entry-points."pytest11"]
 pytest_mock_resources = "pytest_mock_resources"
 
-[tool.poetry.scripts]
-pmr = "pytest_mock_resources.cli:main"
+[dependency-groups]
+dev = [
+    "botocore==1.33.13",
+    "coverage<7.3",
+    "moto>=2.3.2,<5",
+    "pymongo<4.8",
+    "pytest<8",
+    "redis<6",
+    "mypy>=1.0",
+    "pytest-asyncio",
+    "pytest-xdist",
+    "responses>=0.23.0",
+    "ruff==0.1.15",
+    "types-PyMySQL>=1.0.2,<2",
+    "types-dataclasses>=0.6.5,<0.7",
+    "types-filelock>=3.2.7,<4",
+    "types-redis>=3.5.6,<4",
+    "types-requests",
+    "types-six>=1.16.0,<2",
+]
+docs = [
+    "sphinx==3.3.0",
+    "sphinx-rtd-theme",
+    "sphinx-autodoc-typehints",
+    "sphinx-autobuild",
+    "docutils<0.18",
+    "myst-parser",
+    "sphinx-pyproject",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.25"]
+build-backend = "uv_build"
 
 [tool.ruff]
 src = ["src", "tests"]
@@ -134,8 +127,16 @@ filterwarnings = [
     "ignore:stream argument is deprecated. Use stream parameter in request directly:DeprecationWarning",
     "ignore:Boto3 will no longer support Python 3.7.*::boto3",
     "ignore:datetime.datetime.utcnow.*:DeprecationWarning",
+    "ignore:'asyncio\\..*' is deprecated.*:DeprecationWarning",
+    "ignore:Module globals.*:DeprecationWarning",
 ]
 
-[build-system]
-requires = ["poetry_core==1.0.8"]
-build-backend = "poetry.core.masonry.api"
+[tool.coverage.run]
+source = ["src"]
+branch = true
+parallel = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_lines = ["pragma: no cover"]
