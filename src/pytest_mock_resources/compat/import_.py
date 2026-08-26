@@ -23,4 +23,6 @@ class ImportAdaptor(ModuleType):
         raise RuntimeError(fail_message)
 
     def __getattr__(self, attr):
+        if attr.startswith("__") and attr.endswith("__"):
+            raise AttributeError(attr)
         self.fail()

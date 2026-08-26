@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -11,6 +12,12 @@ from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.moto import endpoint_url, MotoConfig
 from pytest_mock_resources.fixture.base import Scope
 from pytest_mock_resources.fixture.moto.action import apply_ordered_actions, MotoAction
+
+if TYPE_CHECKING:
+    from boto3 import Session as Boto3Session
+else:
+    # Avoid NameError. This is being defensive because the annotation shouldn't actually be evaluated.
+    Boto3Session = object
 
 
 @pytest.fixture(scope="session")
@@ -133,7 +140,7 @@ class Credentials:
 class Session:
     """Wrap the vanilla boto3 Session object, automatically inserting the endpoint_url field."""
 
-    session: boto3.Session
+    session: Boto3Session
     endpoint_url: str
     pmr_credentials: Credentials
 
