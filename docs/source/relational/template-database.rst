@@ -16,6 +16,10 @@ setup through the creation of database templates
 If, for whatever reason, this feature does not interact well with your test setup,
 you can disable the behavior by setting ``template_database=False``.
 
+For a persistent Postgres server, set ``cleanup_databases=True`` to remove PMR-created
+test and template databases at fixture teardown. Cleanup is disabled by default so a
+failed test's database remains available for debugging.
+
 With this feature enabled, all actions considered to be "safe" to statically
 will performed exactly once per test session, in a template database.
 This amortizes their initial cost and offloads the majority of the work to postgres

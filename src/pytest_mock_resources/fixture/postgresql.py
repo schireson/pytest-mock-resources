@@ -114,6 +114,7 @@ def create_postgres_fixture(
     engine_kwargs=None,
     template_database=True,
     actions_share_transaction=None,
+    cleanup_databases=False,
 ):
     """Produce a Postgres fixture.
 
@@ -141,6 +142,8 @@ def create_postgres_fixture(
             fixtures for backwards compatibility; and disabled by default for
             asynchronous fixtures (the way v2-style/async features work in SQLAlchemy can lead
             to bad default behavior).
+        cleanup_databases: When True, removes PMR-created test and template databases after each
+            fixture lifecycle. Defaults to False.
     """
     fixture_id = generate_fixture_id(enabled=template_database, name="pg")
 
@@ -156,12 +159,22 @@ def create_postgres_fixture(
 
     @pytest.fixture(scope=scope)
     def _sync(*_, pmr_postgres_container, pmr_postgres_config):
-        fixture = _sync_fixture(pmr_postgres_config, engine_manager_kwargs, engine_kwargs_)
+        fixture = _sync_fixture(
+            pmr_postgres_config,
+            engine_manager_kwargs,
+            engine_kwargs_,
+            cleanup_databases=cleanup_databases,
+        )
         for _, conn in fixture:
             yield conn
 
     async def _async(*_, pmr_postgres_container, pmr_postgres_config):
-        fixture = _async_fixture(pmr_postgres_config, engine_manager_kwargs, engine_kwargs_)
+        fixture = _async_fixture(
+            pmr_postgres_config,
+            engine_manager_kwargs,
+            engine_kwargs_,
+            cleanup_databases=cleanup_databases,
+        )
         async for _, conn in fixture:
             yield conn
 
@@ -170,7 +183,14 @@ def create_postgres_fixture(
     return _sync
 
 
-def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="postgres"):
+def _sync_fixture(
+    pmr_config,
+    engine_manager_kwargs,
+    engine_kwargs,
+    *,
+    fixture="postgres",
+    cleanup_databases=False,
+):
     root_engine = cast(Engine, get_sqlalchemy_engine(pmr_config, pmr_config.root_database))
     conn = retry(root_engine.connect, retries=DEFAULT_RETRIES)
     conn.close()
@@ -211,13 +231,29 @@ def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="
         with root_conn.begin() as trans:
             database_name = _produce_clean_database(root_conn, createdb_template=template_database)
             trans.commit()
-    root_engine.dispose()
 
     engine = get_sqlalchemy_engine(pmr_config, database_name, **engine_kwargs)
-    yield from engine_manager.manage_sync(engine)
+    try:
+        yield from engine_manager.manage_sync(engine)
+
+    finally:
+        if cleanup_databases:
+            with root_engine.connect() as root_conn:
+                _drop_database(root_conn, database_name)
+                if template_database.startswith("pmr_template_pg_"):
+                    _drop_database(root_conn, template_database)
+
+        root_engine.dispose()
 
 
-async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="postgres"):
+async def _async_fixture(
+    pmr_config,
+    engine_manager_kwargs,
+    engine_kwargs,
+    *,
+    fixture="postgres",
+    cleanup_databases=False,
+):
     root_engine = get_sqlalchemy_engine(
         pmr_config, pmr_config.root_database, async_=True, autocommit=True
     )
@@ -254,11 +290,19 @@ async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fi
             )
             await trans.commit()
 
-    await root_engine.dispose()
-
     engine = get_sqlalchemy_engine(pmr_config, database_name, **engine_kwargs, async_=True)
-    async for engine, conn in engine_manager.manage_async(engine):
-        yield engine, conn
+    try:
+        async for engine, conn in engine_manager.manage_async(engine):
+            yield engine, conn
+
+    finally:
+        if cleanup_databases:
+            async with root_engine.connect() as root_conn:
+                await root_conn.run_sync(_drop_database, database_name)
+                if template_database.startswith("pmr_template_pg_"):
+                    await root_conn.run_sync(_drop_database, template_database)
+
+        await root_engine.dispose()
 
 
 def create_engine_manager(
@@ -314,6 +358,17 @@ def create_engine_manager(
         actions_share_transaction=actions_share_transaction,
     )
     return template_database, template_manager, fixture_manager
+
+
+def _drop_database(root_conn: Connection, database_name: str):
+    root_conn.execute(
+        text(
+            "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+            "WHERE datname = :database_name AND pid <> pg_backend_pid()"
+        ),
+        {"database_name": database_name},
+    )
+    root_conn.execute(text(f'DROP DATABASE "{database_name}"'))
 
 
 def _produce_clean_database(
