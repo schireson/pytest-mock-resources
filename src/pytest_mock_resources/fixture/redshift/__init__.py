@@ -36,6 +36,7 @@ def create_redshift_fixture(
     engine_kwargs=None,
     template_database=True,
     actions_share_transaction=None,
+    cleanup_databases=False,
 ):
     """Produce a Redshift fixture.
 
@@ -67,6 +68,9 @@ def create_redshift_fixture(
             fixtures for backwards compatibility; and disabled by default for
             asynchronous fixtures (the way v2-style/async features work in SQLAlchemy can lead
             to bad default behavior).
+        cleanup_databases: Defaults to False. When True, the per-test database created by
+            this fixture is dropped when the fixture's scope ends, even if the test failed.
+            See :func:`create_postgres_fixture` for details.
     """
     from pytest_mock_resources.fixture.redshift.udf import REDSHIFT_UDFS
 
@@ -91,6 +95,7 @@ def create_redshift_fixture(
             engine_manager_kwargs,
             engine_kwargs_,
             fixture="redshift",
+            cleanup_databases=cleanup_databases,
         ):
             sqlalchemy.register_redshift_behavior(engine)
             with psycopg2.patch_connect(pmr_redshift_config, engine.url.database):
@@ -102,6 +107,7 @@ def create_redshift_fixture(
             engine_manager_kwargs,
             engine_kwargs_,
             fixture="redshift",
+            cleanup_databases=cleanup_databases,
         )
         async for engine, conn in fixture:
             sqlalchemy.register_redshift_behavior(engine.sync_engine)
