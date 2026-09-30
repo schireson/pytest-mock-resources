@@ -18,6 +18,7 @@ from pytest_mock_resources.container.postgres import (
     PostgresConfig,
 )
 from pytest_mock_resources.fixture.base import asyncio_fixture, generate_fixture_id, Scope
+from pytest_mock_resources.hooks import use_cleanup_databases
 from pytest_mock_resources.sqlalchemy import (
     bifurcate_actions,
     EngineManager,
@@ -120,7 +121,7 @@ def create_postgres_fixture(
     engine_kwargs=None,
     template_database=True,
     actions_share_transaction=None,
-    cleanup_databases=False,
+    cleanup_databases=None,
 ):
     """Produce a Postgres fixture.
 
@@ -148,13 +149,14 @@ def create_postgres_fixture(
             fixtures for backwards compatibility; and disabled by default for
             asynchronous fixtures (the way v2-style/async features work in SQLAlchemy can lead
             to bad default behavior).
-        cleanup_databases: Defaults to False. When True, the per-test database created by
-            this fixture is dropped when the fixture's scope ends, even if the test failed. Only
-            that database is dropped: template databases and the container are left alone, and
-            this is independent of `pmr_cleanup_container`. Connections still open to the
-            database are terminated first. A failure to drop emits a
-            :class:`DatabaseDropWarning` naming the database. A database which is already gone
-            is ignored.
+        cleanup_databases: When True, the per-test database created by this fixture is dropped
+            when the fixture's scope ends, even if the test failed. Only that database is
+            dropped: template databases and the container are left alone, and this is
+            independent of `pmr_cleanup_container`. Connections still open to the database are
+            terminated first. A failure to drop emits a :class:`DatabaseDropWarning` naming the
+            database. A database which is already gone is ignored. When left unspecified, this
+            follows the `--pmr-cleanup-databases`/`--no-pmr-cleanup-databases` command line
+            flags, then the `pmr_cleanup_databases` ini setting, and otherwise defaults to True.
     """
     fixture_id = generate_fixture_id(enabled=template_database, name="pg")
 
@@ -167,19 +169,24 @@ def create_postgres_fixture(
         "fixture_id": fixture_id,
         "actions_share_transaction": actions_share_transaction,
     }
-    drop_kwargs = {"cleanup_databases": cleanup_databases}
 
     @pytest.fixture(scope=scope)
-    def _sync(*_, pmr_postgres_container, pmr_postgres_config):
+    def _sync(*_, pytestconfig, pmr_postgres_container, pmr_postgres_config):
         fixture = _sync_fixture(
-            pmr_postgres_config, engine_manager_kwargs, engine_kwargs_, **drop_kwargs
+            pmr_postgres_config,
+            engine_manager_kwargs,
+            engine_kwargs_,
+            cleanup_databases=use_cleanup_databases(pytestconfig, override=cleanup_databases),
         )
         for _, conn in fixture:
             yield conn
 
-    async def _async(*_, pmr_postgres_container, pmr_postgres_config):
+    async def _async(*_, pytestconfig, pmr_postgres_container, pmr_postgres_config):
         fixture = _async_fixture(
-            pmr_postgres_config, engine_manager_kwargs, engine_kwargs_, **drop_kwargs
+            pmr_postgres_config,
+            engine_manager_kwargs,
+            engine_kwargs_,
+            cleanup_databases=use_cleanup_databases(pytestconfig, override=cleanup_databases),
         )
         async for _, conn in fixture:
             yield conn
@@ -195,7 +202,7 @@ def _sync_fixture(
     engine_kwargs,
     *,
     fixture="postgres",
-    cleanup_databases=False,
+    cleanup_databases,
 ):
     root_engine = cast(Engine, get_sqlalchemy_engine(pmr_config, pmr_config.root_database))
     conn = retry(root_engine.connect, retries=DEFAULT_RETRIES)
@@ -254,7 +261,7 @@ async def _async_fixture(
     engine_kwargs,
     *,
     fixture="postgres",
-    cleanup_databases=False,
+    cleanup_databases,
 ):
     root_engine = get_sqlalchemy_engine(
         pmr_config, pmr_config.root_database, async_=True, autocommit=True

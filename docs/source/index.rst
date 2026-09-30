@@ -12,6 +12,7 @@ Welcome to Pytest Mock Resource's documentation!
    CLI (Startup Lag) <cli>
    CI Support <ci>
    Docker/Podman/Nerdctl <docker_client>
+   Database Cleanup <cleanup_databases>
    API <api>
    Contributing <contributing>
 

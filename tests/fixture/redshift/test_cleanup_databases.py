@@ -6,25 +6,25 @@ from pytest_mock_resources.container.postgres import get_sqlalchemy_engine
 from pytest_mock_resources.fixture.base import asyncio_fixture
 from tests import skip_if_not_sqlalchemy2
 
-redshift_kept = create_redshift_fixture()
-redshift_cleaned = create_redshift_fixture(cleanup_databases=True)
-redshift_cleaned_async = create_redshift_fixture(cleanup_databases=True, async_=True)
+redshift_kept = create_redshift_fixture(cleanup_databases=False)
+redshift_cleaned = create_redshift_fixture()
+redshift_cleaned_async = create_redshift_fixture(async_=True)
 
 
-def test_database_is_kept_by_default(pmr_redshift_config, redshift_kept):
+def test_database_is_kept_when_disabled(pmr_redshift_config, redshift_kept):
     database_name = redshift_kept.url.database
 
     assert database_name in list_databases(pmr_redshift_config)
     drop_database(pmr_redshift_config, redshift_kept)
 
 
-def test_database_is_dropped_when_enabled(assert_databases_dropped, redshift_cleaned):
+def test_database_is_dropped_by_default(assert_databases_dropped, redshift_cleaned):
     assert_databases_dropped.append(redshift_cleaned.url.database)
 
 
 @pytest.mark.asyncio
 @skip_if_not_sqlalchemy2
-async def test_async_database_is_dropped_when_enabled(
+async def test_async_database_is_dropped_by_default(
     assert_databases_dropped_async, redshift_cleaned_async
 ):
     assert_databases_dropped_async.append(redshift_cleaned_async.url.database)

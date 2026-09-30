@@ -18,6 +18,12 @@ def pytest_addoption(parser):
         default=True,
     )
     parser.addini(
+        "pmr_cleanup_databases",
+        "Optionally disable dropping the per-test databases created by postgres fixtures",
+        type="bool",
+        default=True,
+    )
+    parser.addini(
         "pmr_docker_client",
         "Optional docker client name to use: docker, podman, nerdctl",
         type="string",
@@ -39,6 +45,21 @@ def pytest_addoption(parser):
         help="Optionally disable attempts to cleanup created containers",
         dest="pmr_cleanup_container",
     )
+    # NOTE: The default is `None` so that an unset flag can defer to the ini file setting.
+    group.addoption(
+        "--pmr-cleanup-databases",
+        action="store_true",
+        default=None,
+        help="Drop the per-test databases created by postgres fixtures when their scope ends",
+        dest="pmr_cleanup_databases",
+    )
+    group.addoption(
+        "--no-pmr-cleanup-databases",
+        action="store_false",
+        default=None,
+        help="Keep the per-test databases created by postgres fixtures",
+        dest="pmr_cleanup_databases",
+    )
     group.addoption(
         "--pmr-docker-client",
         default=None,
@@ -53,6 +74,17 @@ def get_pytest_flag(config, name, *, default=None):
         return value
 
     return config.getini(name)
+
+
+def use_cleanup_databases(config, *, override=None):
+    if override is not None:
+        return override
+
+    option = config.option.pmr_cleanup_databases
+    if option is not None:
+        return option
+
+    return config.getini("pmr_cleanup_databases")
 
 
 def use_multiprocess_safe_mode(config):

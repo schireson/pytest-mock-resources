@@ -3,13 +3,19 @@ import copy
 import pytest
 from sqlalchemy import text
 
+from pytest_mock_resources import create_postgres_fixture
 from pytest_mock_resources.container.postgres import get_sqlalchemy_engine
+from pytest_mock_resources.fixture.base import asyncio_fixture
 from pytest_mock_resources.fixture.postgresql import (
     _async_fixture,
     _sync_fixture,
     DatabaseDropWarning,
 )
 from tests import skip_if_not_sqlalchemy2
+
+postgres_default = create_postgres_fixture()
+postgres_disabled = create_postgres_fixture(cleanup_databases=False)
+postgres_default_async = create_postgres_fixture(async_=True)
 
 MANAGER_KWARGS = {
     "ordered_actions": (),
@@ -21,8 +27,8 @@ MANAGER_KWARGS = {
 }
 
 
-def test_database_is_kept_by_default(pmr_postgres_container, pmr_postgres_config):
-    fixture = _sync_fixture(pmr_postgres_config, MANAGER_KWARGS, {})
+def test_database_is_kept_when_disabled(pmr_postgres_container, pmr_postgres_config):
+    fixture = _sync_fixture(pmr_postgres_config, MANAGER_KWARGS, {}, cleanup_databases=False)
     engine, _ = next(fixture)
     database_name = engine.url.database
 
@@ -74,7 +80,7 @@ def test_database_is_dropped_with_leaked_connection(pmr_postgres_container, pmr_
 
 def test_other_databases_are_left_alone(pmr_postgres_container, pmr_postgres_config):
     dropped = _sync_fixture(pmr_postgres_config, MANAGER_KWARGS, {}, cleanup_databases=True)
-    kept = _sync_fixture(pmr_postgres_config, MANAGER_KWARGS, {})
+    kept = _sync_fixture(pmr_postgres_config, MANAGER_KWARGS, {}, cleanup_databases=False)
     next(dropped)
     kept_engine, _ = next(kept)
     kept_name = kept_engine.url.database
@@ -135,8 +141,8 @@ async def test_async_database_is_dropped_when_enabled(pmr_postgres_container, pm
 
 @pytest.mark.asyncio
 @skip_if_not_sqlalchemy2
-async def test_async_database_is_kept_by_default(pmr_postgres_container, pmr_postgres_config):
-    fixture = _async_fixture(pmr_postgres_config, MANAGER_KWARGS, {})
+async def test_async_database_is_kept_when_disabled(pmr_postgres_container, pmr_postgres_config):
+    fixture = _async_fixture(pmr_postgres_config, MANAGER_KWARGS, {}, cleanup_databases=False)
     engine, _ = await fixture.__anext__()
     database_name = engine.url.database
 
@@ -145,6 +151,57 @@ async def test_async_database_is_kept_by_default(pmr_postgres_container, pmr_pos
 
     assert database_name in await list_databases_async(pmr_postgres_config)
     await drop_database_async(pmr_postgres_config, database_name)
+
+
+def test_database_is_dropped_by_default(assert_databases_dropped, postgres_default):
+    assert_databases_dropped.append(postgres_default.url.database)
+
+
+def test_database_is_kept_when_fixture_disables_it(assert_databases_kept, postgres_disabled):
+    assert_databases_kept.append(postgres_disabled.url.database)
+
+
+@pytest.mark.asyncio
+@skip_if_not_sqlalchemy2
+async def test_async_database_is_dropped_by_default(
+    assert_databases_dropped_async, postgres_default_async
+):
+    assert_databases_dropped_async.append(postgres_default_async.url.database)
+
+
+# NOTE: Fixtures are torn down in reverse order of setup. The tests above request these fixtures
+#       before the postgres fixture, so their teardown runs after the postgres database is handled.
+@pytest.fixture
+def assert_databases_dropped(pmr_postgres_container, pmr_postgres_config):
+    database_names = []
+
+    yield database_names
+
+    assert len(database_names) == 1
+    assert list_databases(pmr_postgres_config).isdisjoint(database_names)
+
+
+@pytest.fixture
+def assert_databases_kept(pmr_postgres_container, pmr_postgres_config):
+    database_names = []
+
+    yield database_names
+
+    assert len(database_names) == 1
+    assert list_databases(pmr_postgres_config).issuperset(database_names)
+    drop_database(pmr_postgres_config, database_names[0])
+
+
+async def check_databases_dropped_async(pmr_postgres_container, pmr_postgres_config):
+    database_names = []
+
+    yield database_names
+
+    assert len(database_names) == 1
+    assert (await list_databases_async(pmr_postgres_config)).isdisjoint(database_names)
+
+
+assert_databases_dropped_async = asyncio_fixture(check_databases_dropped_async)
 
 
 def list_databases(config):
