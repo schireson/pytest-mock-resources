@@ -1,4 +1,5 @@
 import logging
+import warnings
 from typing import cast, Optional
 
 import pytest
@@ -17,6 +18,7 @@ from pytest_mock_resources.container.postgres import (
     PostgresConfig,
 )
 from pytest_mock_resources.fixture.base import asyncio_fixture, generate_fixture_id, Scope
+from pytest_mock_resources.hooks import use_cleanup_databases
 from pytest_mock_resources.sqlalchemy import (
     bifurcate_actions,
     EngineManager,
@@ -24,6 +26,7 @@ from pytest_mock_resources.sqlalchemy import (
 )
 
 __all__ = [
+    "DatabaseDropWarning",
     "DatabaseExistsError",
     "PostgresConfig",
     "create_postgres_config_fixture",
@@ -43,6 +46,10 @@ class DatabaseExistsError(RuntimeError):
     sentinel for gracefully continuing among test workers which attempt to create
     the same database.
     """
+
+
+class DatabaseDropWarning(UserWarning):
+    """Warn when a per-test database could not be dropped at fixture teardown."""
 
 
 def create_postgres_config_fixture(
@@ -114,6 +121,7 @@ def create_postgres_fixture(
     engine_kwargs=None,
     template_database=True,
     actions_share_transaction=None,
+    cleanup_databases=None,
 ):
     """Produce a Postgres fixture.
 
@@ -141,6 +149,14 @@ def create_postgres_fixture(
             fixtures for backwards compatibility; and disabled by default for
             asynchronous fixtures (the way v2-style/async features work in SQLAlchemy can lead
             to bad default behavior).
+        cleanup_databases: When True, the per-test database created by this fixture is dropped
+            when the fixture's scope ends, even if the test failed. Only that database is
+            dropped: template databases and the container are left alone, and this is
+            independent of `pmr_cleanup_container`. Connections still open to the database are
+            terminated first. A failure to drop emits a :class:`DatabaseDropWarning` naming the
+            database. A database which is already gone is ignored. When left unspecified, this
+            follows the `--pmr-cleanup-databases`/`--no-pmr-cleanup-databases` command line
+            flags, then the `pmr_cleanup_databases` ini setting, and otherwise defaults to True.
     """
     fixture_id = generate_fixture_id(enabled=template_database, name="pg")
 
@@ -155,13 +171,23 @@ def create_postgres_fixture(
     }
 
     @pytest.fixture(scope=scope)
-    def _sync(*_, pmr_postgres_container, pmr_postgres_config):
-        fixture = _sync_fixture(pmr_postgres_config, engine_manager_kwargs, engine_kwargs_)
+    def _sync(*_, pytestconfig, pmr_postgres_container, pmr_postgres_config):
+        fixture = _sync_fixture(
+            pmr_postgres_config,
+            engine_manager_kwargs,
+            engine_kwargs_,
+            cleanup_databases=use_cleanup_databases(pytestconfig, override=cleanup_databases),
+        )
         for _, conn in fixture:
             yield conn
 
-    async def _async(*_, pmr_postgres_container, pmr_postgres_config):
-        fixture = _async_fixture(pmr_postgres_config, engine_manager_kwargs, engine_kwargs_)
+    async def _async(*_, pytestconfig, pmr_postgres_container, pmr_postgres_config):
+        fixture = _async_fixture(
+            pmr_postgres_config,
+            engine_manager_kwargs,
+            engine_kwargs_,
+            cleanup_databases=use_cleanup_databases(pytestconfig, override=cleanup_databases),
+        )
         async for _, conn in fixture:
             yield conn
 
@@ -170,7 +196,14 @@ def create_postgres_fixture(
     return _sync
 
 
-def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="postgres"):
+def _sync_fixture(
+    pmr_config,
+    engine_manager_kwargs,
+    engine_kwargs,
+    *,
+    fixture="postgres",
+    cleanup_databases,
+):
     root_engine = cast(Engine, get_sqlalchemy_engine(pmr_config, pmr_config.root_database))
     conn = retry(root_engine.connect, retries=DEFAULT_RETRIES)
     conn.close()
@@ -214,10 +247,22 @@ def _sync_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="
     root_engine.dispose()
 
     engine = get_sqlalchemy_engine(pmr_config, database_name, **engine_kwargs)
-    yield from engine_manager.manage_sync(engine)
+    try:
+        yield from engine_manager.manage_sync(engine)
+
+    finally:
+        if cleanup_databases:
+            _drop_database(pmr_config, database_name)
 
 
-async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fixture="postgres"):
+async def _async_fixture(
+    pmr_config,
+    engine_manager_kwargs,
+    engine_kwargs,
+    *,
+    fixture="postgres",
+    cleanup_databases,
+):
     root_engine = get_sqlalchemy_engine(
         pmr_config, pmr_config.root_database, async_=True, autocommit=True
     )
@@ -257,8 +302,13 @@ async def _async_fixture(pmr_config, engine_manager_kwargs, engine_kwargs, *, fi
     await root_engine.dispose()
 
     engine = get_sqlalchemy_engine(pmr_config, database_name, **engine_kwargs, async_=True)
-    async for engine, conn in engine_manager.manage_async(engine):
-        yield engine, conn
+    try:
+        async for engine, conn in engine_manager.manage_async(engine):
+            yield engine, conn
+
+    finally:
+        if cleanup_databases:
+            await _drop_database_async(pmr_config, database_name)
 
 
 def create_engine_manager(
@@ -338,6 +388,60 @@ def _produce_clean_database(
         raise DatabaseExistsError()
 
     return database_name
+
+
+def _drop_database(pmr_config, database_name):
+    root_engine = cast(
+        Engine,
+        get_sqlalchemy_engine(pmr_config, pmr_config.root_database, autocommit=True),
+    )
+    try:
+        with root_engine.connect() as root_conn:
+            root_conn.execute(_build_terminate_statement(database_name))
+            root_conn.execute(_build_drop_statement(database_name))
+
+    except sqlalchemy.exc.SQLAlchemyError as e:
+        _warn_drop_failed(database_name, e)
+
+    finally:
+        root_engine.dispose()
+
+
+async def _drop_database_async(pmr_config, database_name):
+    root_engine = get_sqlalchemy_engine(
+        pmr_config, pmr_config.root_database, async_=True, autocommit=True
+    )
+    try:
+        async with root_engine.connect() as root_conn:
+            await root_conn.execute(_build_terminate_statement(database_name))
+            await root_conn.execute(_build_drop_statement(database_name))
+
+    except sqlalchemy.exc.SQLAlchemyError as e:
+        _warn_drop_failed(database_name, e)
+
+    finally:
+        await root_engine.dispose()
+
+
+def _build_terminate_statement(database_name):
+    # NOTE: `DROP DATABASE ... WITH (FORCE)` only exists from Postgres 13, so open connections are
+    #       terminated explicitly instead, which also works on Postgres 9.6 and later.
+    return text(
+        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity"
+        " WHERE datname = :name AND pid <> pg_backend_pid()"
+    ).bindparams(name=database_name)
+
+
+def _build_drop_statement(database_name):
+    return text(f'DROP DATABASE IF EXISTS "{database_name}"')
+
+
+def _warn_drop_failed(database_name, error):
+    warnings.warn(
+        f"Failed to drop database {database_name!r} at fixture teardown: {error}",
+        DatabaseDropWarning,
+        stacklevel=2,
+    )
 
 
 def _generate_database_name(conn):

@@ -4,6 +4,7 @@ from pytest_mock_resources.container.base import get_container
 from pytest_mock_resources.container.redshift import RedshiftConfig
 from pytest_mock_resources.fixture.base import asyncio_fixture, generate_fixture_id
 from pytest_mock_resources.fixture.postgresql import _async_fixture, _sync_fixture
+from pytest_mock_resources.hooks import use_cleanup_databases
 from pytest_mock_resources.patch.redshift import psycopg2, sqlalchemy
 
 
@@ -36,6 +37,7 @@ def create_redshift_fixture(
     engine_kwargs=None,
     template_database=True,
     actions_share_transaction=None,
+    cleanup_databases=None,
 ):
     """Produce a Redshift fixture.
 
@@ -67,6 +69,10 @@ def create_redshift_fixture(
             fixtures for backwards compatibility; and disabled by default for
             asynchronous fixtures (the way v2-style/async features work in SQLAlchemy can lead
             to bad default behavior).
+        cleanup_databases: When True, the per-test database created by this fixture is dropped
+            when the fixture's scope ends, even if the test failed. When left unspecified, this
+            follows the command line flags and ini setting described in
+            :func:`create_postgres_fixture`, and otherwise defaults to True.
     """
     from pytest_mock_resources.fixture.redshift.udf import REDSHIFT_UDFS
 
@@ -85,23 +91,25 @@ def create_redshift_fixture(
     }
 
     @pytest.fixture(scope=scope)
-    def _sync(*_, pmr_redshift_container, pmr_redshift_config):
+    def _sync(*_, pytestconfig, pmr_redshift_container, pmr_redshift_config):
         for engine, conn in _sync_fixture(
             pmr_redshift_config,
             engine_manager_kwargs,
             engine_kwargs_,
             fixture="redshift",
+            cleanup_databases=use_cleanup_databases(pytestconfig, override=cleanup_databases),
         ):
             sqlalchemy.register_redshift_behavior(engine)
             with psycopg2.patch_connect(pmr_redshift_config, engine.url.database):
                 yield conn
 
-    async def _async(*_, pmr_redshift_container, pmr_redshift_config):
+    async def _async(*_, pytestconfig, pmr_redshift_container, pmr_redshift_config):
         fixture = _async_fixture(
             pmr_redshift_config,
             engine_manager_kwargs,
             engine_kwargs_,
             fixture="redshift",
+            cleanup_databases=use_cleanup_databases(pytestconfig, override=cleanup_databases),
         )
         async for engine, conn in fixture:
             sqlalchemy.register_redshift_behavior(engine.sync_engine)
