@@ -1,6 +1,6 @@
 [project]
 name = "pytest-mock-resources"
-version = "2.14.0"
+version = "2.14.1"
 description = "A pytest plugin for easily instantiating reproducible mock resources."
 authors = [
     { name = "Omar Khan", email = "oakhan3@gmail.com" },

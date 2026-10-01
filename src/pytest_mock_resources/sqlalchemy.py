@@ -148,7 +148,7 @@ class EngineManager:
                 else:
                     session_factory = sessionmaker(
                         expire_on_commit=False,
-                        class_=compat.sqlalchemy.asyncio.AsyncSession,
+                        class_=AsyncSession,
                     )
 
                 async with session_factory(bind=engine) as session:

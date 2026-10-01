@@ -79,7 +79,8 @@ postgres_3 = create_postgres_fixture()
 def test_create_custom_connection(postgres_3):
     creds = postgres_3.pmr_credentials
     engine = create_engine(
-        "postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=disable".format(
+        "{drivername}://{username}:{password}@{host}:{port}/{database}?sslmode=disable".format(
+            drivername=creds.drivername,
             database=creds.database,
             username=creds.username,
             password=creds.password,
@@ -91,11 +92,12 @@ def test_create_custom_connection(postgres_3):
 
     with engine.connect() as conn:
         conn.execute(text("select 1"))
+    engine.dispose()
 
 
 def test_create_custom_connection_from_dict(postgres_3):
     engine = create_engine(
-        "postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=disable".format(
+        "{drivername}://{username}:{password}@{host}:{port}/{database}?sslmode=disable".format(
             **dict(postgres_3.pmr_credentials)
         ),
         isolation_level="AUTOCOMMIT",
@@ -103,6 +105,7 @@ def test_create_custom_connection_from_dict(postgres_3):
 
     with engine.connect() as conn:
         conn.execute(text("select 1"))
+    engine.dispose()
 
 
 def test_create_custom_connection_url(postgres_3):
@@ -110,6 +113,7 @@ def test_create_custom_connection_url(postgres_3):
     engine = create_engine(url, isolation_level="AUTOCOMMIT")
     with engine.connect() as conn:
         conn.execute(text("select 1"))
+    engine.dispose()
 
 
 def test_bad_actions(postgres):
