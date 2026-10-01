@@ -4,13 +4,20 @@ Database Cleanup
 Each postgres (and redshift) fixture creates a new database for every test. By default, that
 database is dropped when the fixture's scope ends, including when the test failed.
 
-Only the database created by the fixture is dropped. Template databases and the container are left
-alone, and this setting is independent of the container cleanup controlled by
+The template database a fixture creates (:code:`pmr_template_pg_<uuid>`) is dropped as well. Each
+pytest process creates its own templates, so each process drops only its own. They are dropped when
+the container fixture ends, after every fixture using the container has finished, which for the
+default session scoped container is the end of the test session.
+
+Only databases created by PMR are dropped, so a template you name with :code:`createdb_template`
+is left alone. The setting is independent of the container cleanup controlled by
 :code:`pmr_cleanup_container`.
 
-Any connection still open to the database is terminated before it is dropped. A database which is
+Any connection still open to a database is terminated before it is dropped. A database which is
 already gone is ignored. If a database cannot be dropped, a :code:`DatabaseDropWarning` naming the
 database is emitted, and the remaining fixtures are still cleaned up.
+
+Templates left behind by a pytest process that was killed are not dropped.
 
 The behavior can be changed in a number of ways. The first setting found, in the following
 order, is used.

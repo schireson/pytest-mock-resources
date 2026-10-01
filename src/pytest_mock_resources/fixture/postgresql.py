@@ -24,6 +24,7 @@ from pytest_mock_resources.sqlalchemy import (
     EngineManager,
     normalize_actions,
 )
+from pytest_mock_resources.templates import record_template
 
 __all__ = [
     "DatabaseDropWarning",
@@ -150,9 +151,10 @@ def create_postgres_fixture(
             asynchronous fixtures (the way v2-style/async features work in SQLAlchemy can lead
             to bad default behavior).
         cleanup_databases: When True, the per-test database created by this fixture is dropped
-            when the fixture's scope ends, even if the test failed. Only that database is
-            dropped: template databases and the container are left alone, and this is
-            independent of `pmr_cleanup_container`. Connections still open to the database are
+            when the fixture's scope ends, even if the test failed. The template database this
+            fixture created is dropped when the container fixture ends, after every fixture using
+            the container has finished. Only databases PMR created are dropped, and this is
+            independent of `pmr_cleanup_container`. Connections still open to a database are
             terminated first. A failure to drop emits a :class:`DatabaseDropWarning` naming the
             database. A database which is already gone is ignored. When left unspecified, this
             follows the `--pmr-cleanup-databases`/`--no-pmr-cleanup-databases` command line
@@ -223,6 +225,8 @@ def _sync_fixture(
 
     if template_manager:
         assert template_database
+        if cleanup_databases:
+            record_template(pmr_config, template_database, async_=False)
 
         template_engine = cast(
             Engine,
@@ -283,6 +287,8 @@ async def _async_fixture(
 
     if template_manager:
         assert template_database
+        if cleanup_databases:
+            record_template(pmr_config, template_database, async_=True)
 
         engine = get_sqlalchemy_engine(pmr_config, template_database, **engine_kwargs, async_=True)
         async with engine.begin() as conn:

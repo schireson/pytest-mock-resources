@@ -13,6 +13,7 @@ from pytest_mock_resources.hooks import (
     get_pytest_flag,
     use_multiprocess_safe_mode,
 )
+from pytest_mock_resources.templates import drop_templates
 
 try:
     import responses as _responses
@@ -123,9 +124,12 @@ def get_container(pytestconfig, config, *, retries=DEFAULT_RETRIES, interval=DEF
 
         yield config
     finally:
-        cleanup_container = get_pytest_flag(pytestconfig, "pmr_cleanup_container", default=True)
-        if cleanup_container and container and not multiprocess_safe_mode:
-            container.kill()
+        try:
+            drop_templates(config)
+        finally:
+            cleanup_container = get_pytest_flag(pytestconfig, "pmr_cleanup_container", default=True)
+            if cleanup_container and container and not multiprocess_safe_mode:
+                container.kill()
 
 
 def wait_for_container(
